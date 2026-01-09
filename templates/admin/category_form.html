@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('edit_category') if category else t('new_category') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-tags me-2"></i>
+                        {{ t('edit_category') if category else t('new_category') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="code" class="form-label">{{ t('code') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="code" name="code" 
+                                       value="{{ category.code if category else '' }}" 
+                                       maxlength="20" placeholder="z.B. KSt, COMPL, AUDIT"
+                                       {{ 'readonly' if category }} required>
+                                {% if category %}
+                                <div class="form-text">{{ t('code_readonly') }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="color" class="form-label">{{ t('category_color') }}</label>
+                                <div class="input-group">
+                                    <input type="color" class="form-control form-control-color" id="color" name="color" 
+                                           value="{{ category.color if category else '#6c757d' }}" style="width: 50px;">
+                                    <input type="text" class="form-control" id="color_text" 
+                                           value="{{ category.color if category else '#6c757d' }}" 
+                                           pattern="^#[0-9A-Fa-f]{6}$" placeholder="#6c757d">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="icon" class="form-label">{{ t('category_icon') }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" id="icon-preview"><i class="{{ category.icon if category else 'bi-folder' }}"></i></span>
+                                    <select class="form-select" id="icon" name="icon">
+                                        <option value="bi-folder" {{ 'selected' if not category or category.icon == 'bi-folder' }}>📁 Folder</option>
+                                        <option value="bi-calculator" {{ 'selected' if category and category.icon == 'bi-calculator' }}>🧮 Calculator (Tax)</option>
+                                        <option value="bi-file-earmark-text" {{ 'selected' if category and category.icon == 'bi-file-earmark-text' }}>📄 Document</option>
+                                        <option value="bi-shield-check" {{ 'selected' if category and category.icon == 'bi-shield-check' }}>🛡️ Compliance</option>
+                                        <option value="bi-graph-up" {{ 'selected' if category and category.icon == 'bi-graph-up' }}>📈 Reporting</option>
+                                        <option value="bi-clipboard-check" {{ 'selected' if category and category.icon == 'bi-clipboard-check' }}>✅ Audit</option>
+                                        <option value="bi-briefcase" {{ 'selected' if category and category.icon == 'bi-briefcase' }}>💼 Legal</option>
+                                        <option value="bi-people" {{ 'selected' if category and category.icon == 'bi-people' }}>👥 HR</option>
+                                        <option value="bi-currency-euro" {{ 'selected' if category and category.icon == 'bi-currency-euro' }}>💶 Finance</option>
+                                        <option value="bi-gear" {{ 'selected' if category and category.icon == 'bi-gear' }}>⚙️ Operations</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="name_de" class="form-label">
+                                    <span class="fi fi-de me-1"></span>{{ t('name') }} ({{ t('german') }}) <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="name_de" name="name_de" 
+                                       value="{{ category.name_de if category else '' }}" 
+                                       placeholder="z.B. Körperschaftsteuer, Compliance" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="name_en" class="form-label">
+                                    <span class="fi fi-gb me-1"></span>{{ t('name') }} ({{ t('english') }}) <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="name_en" name="name_en" 
+                                       value="{{ category.name_en if category else '' }}" 
+                                       placeholder="e.g. Corporate Tax, Compliance" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="description_de" class="form-label">
+                                    <span class="fi fi-de me-1"></span>{{ t('description') }} ({{ t('german') }})
+                                </label>
+                                <textarea class="form-control" id="description_de" name="description_de" rows="3"
+                                          placeholder="{{ t('description_placeholder') }}">{{ category.description_de if category and category.description_de else '' }}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="description_en" class="form-label">
+                                    <span class="fi fi-gb me-1"></span>{{ t('description') }} ({{ t('english') }})
+                                </label>
+                                <textarea class="form-control" id="description_en" name="description_en" rows="3"
+                                          placeholder="Optional description...">{{ category.description_en if category and category.description_en else '' }}</textarea>
+                            </div>
+                        </div>
+                        
+                        {% if category %}
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                       {{ 'checked' if category.is_active }}>
+                                <label class="form-check-label" for="is_active">{{ t('active') }}</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.categories') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>{{ t('back') }}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>{{ t('save') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+// Sync color picker and text input
+document.getElementById('color').addEventListener('input', function() {
+    document.getElementById('color_text').value = this.value;
+});
+document.getElementById('color_text').addEventListener('input', function() {
+    if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+        document.getElementById('color').value = this.value;
+    }
+});
+
+// Update icon preview
+document.getElementById('icon').addEventListener('change', function() {
+    document.querySelector('#icon-preview i').className = this.value;
+});
+</script>
+{% endblock %}

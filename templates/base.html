@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/apple-icon-180x180.png') }}">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+          crossorigin="anonymous">
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet"
+          integrity="sha384-4LISF5TTJX/fLmGSxO53rV4miRxdg84mZsxmO8Rx5jGtp/LbrixFETvWa5a6sESd"
+          crossorigin="anonymous">
+    
+    <!-- App Colors & Custom Styles -->
+    <style nonce="{{ csp_nonce }}">
+        /* =========================
+           Brand Palette Variables
+           ========================= */
+        :root {
+            /* Primary palette */
+            --brand-primary: #4A90D9;
+            --dtt-black: #000000;
+            --dtt-gray-900: #222222;
+            --dtt-gray-100: #E6E6E6;
+            --dtt-white: #FFFFFF;
+
+            --dtt-green-bright: #0DF200;
+            --dtt-green-mid: #26890D;
+            --dtt-green-deep: #046A38;
+            --dtt-green-dark: #1C3D26;
+            --dtt-green-pale: #F1F6E4;
+
+            /* Secondary palette - Greens */
+            --dtt-sec-green-1: #E3E48D;
+            --dtt-sec-green-2: #C4D600;
+            --dtt-sec-green-4: #43B02A;
+            --dtt-sec-green-5: #009A44;
+
+            /* Secondary palette - Blues */
+            --dtt-sec-blue-1: #A0DCFF;
+            --dtt-sec-blue-2: #62B5E5;
+            --dtt-sec-blue-3: #00A3E0;
+            --dtt-sec-blue-4: #0076A8;
+            --dtt-sec-blue-5: #005587;
+            --dtt-sec-blue-6: #012169;
+            --dtt-sec-blue-7: #041E42;
+            --dtt-sec-blue-8-former-accessible: #007CB0;
+
+            /* Secondary palette - Teals */
+            --dtt-sec-teal-1: #DDEFE8;
+            --dtt-sec-teal-2: #9DD4CF;
+            --dtt-sec-teal-3: #6FC2B4;
+            --dtt-sec-teal-4: #00ABAB;
+            --dtt-sec-teal-5: #0097A9;
+            --dtt-sec-teal-6: #007680;
+            --dtt-sec-teal-7: #004F59;
+            --dtt-sec-teal-8-former-accessible: #0D8390;
+
+            /* Secondary palette - Cool Grays */
+            --dtt-cool-gray-2: #D0D0CE;
+            --dtt-cool-gray-4: #BBBCBC;
+            --dtt-cool-gray-6: #A7A8AA;
+            --dtt-cool-gray-7: #97999B;
+            --dtt-cool-gray-9: #75787B;
+            --dtt-cool-gray-10: #63666A;
+            --dtt-cool-gray-11: #53565A;
+
+            /* Limited use bright colors (digital highlight only) */
+            --dtt-bright-teal: #3EFAC5;
+            --dtt-bright-blue: #33F0FF;
+
+            /* Limited use functional colors (charts/alerts only) */
+            --dtt-danger-red: #DA291C;
+            --dtt-warning-orange: #ED8B00;
+            --dtt-warning-yellow: #FFCD00;
+            
+            /* Legacy aliases for backward compatibility */
+            --app-primary: var(--brand-primary);
+            --app-black: var(--dtt-black);
+            --app-white: var(--dtt-white);
+            --app-teal-light: var(--dtt-sec-teal-5);
+            --app-teal-dark: var(--dtt-sec-teal-6);
+            --app-blue-light: var(--dtt-sec-blue-3);
+            --app-blue-dark: var(--dtt-sec-blue-6);
+            --app-red: var(--dtt-danger-red);
+            --app-orange: var(--dtt-warning-orange);
+            --app-yellow: var(--dtt-warning-yellow);
+        }
+
+        /* ==================================
+           Bootstrap 5 Theme Mapping (Light)
+           ================================== */
+        :root, [data-bs-theme="light"] {
+            --bs-primary: var(--dtt-green);
+            --bs-secondary: var(--dtt-gray-900);
+            --bs-success: var(--dtt-sec-green-5);
+            --bs-info: var(--dtt-sec-blue-3);
+            --bs-warning: var(--dtt-warning-yellow);
+            --bs-danger: var(--dtt-danger-red);
+            --bs-light: var(--dtt-gray-100);
+            --bs-dark: var(--dtt-black);
+            --bs-link-color: var(--dtt-sec-blue-4);
+            --bs-link-hover-color: var(--dtt-sec-blue-5);
+        }
+
+        /* Helper classes for status/calendar pills */
+        .bg-dtt-green { background-color: var(--dtt-green) !important; }
+        .text-dtt-green { color: var(--dtt-green) !important; }
+        .bg-dtt-due-soon { background-color: var(--dtt-warning-yellow) !important; }
+        .bg-dtt-overdue { background-color: var(--dtt-danger-red) !important; }
+        .bg-dtt-done { background-color: var(--dtt-sec-green-5) !important; }
+        
+        /* Prevent layout shift from scrollbar appearing/disappearing */
+        html {
+            overflow-y: scroll;
+        }
+        
+        body {
+            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background-color: var(--app-black) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand img {
+            height: 68px;
+        }
+        
+        .navbar-dark .navbar-nav .nav-link {
+            color: rgba(255,255,255,0.85);
+        }
+        
+        .navbar-dark .navbar-nav .nav-link:hover {
+            color: var(--app-primary);
+        }
+        
+        .navbar-dark .navbar-nav .nav-link.active {
+            color: var(--app-primary);
+        }
+        
+        /* Main Content */
+        main {
+            flex: 1;
+            padding: 2rem 0;
+        }
+        
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .card-header {
+            background-color: var(--app-black);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--app-primary);
+            border-color: var(--app-primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a7bc8;
+            border-color: #3a7bc8;
+            color: white;
+        }
+        
+        .btn-outline-primary {
+            border-color: var(--app-primary);
+            color: var(--app-primary);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--app-primary);
+            color: white;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--app-black);
+            color: rgba(255,255,255,0.7);
+            padding: 1rem 0;
+            font-size: 0.875rem;
+        }
+        
+        footer a {
+            color: var(--app-primary);
+        }
+        
+        /* Utilities */
+        .bg-brand { background-color: var(--app-primary) !important; }
+        .bg-app-black { background-color: var(--app-black) !important; }
+        .text-brand { color: var(--app-primary) !important; }
+        
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--app-primary);
+        }
+        
+        .page-header h1 {
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        /* Workflow Steps */
+        .workflow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: #f8f9fa;
+            transition: all 0.2s ease;
+        }
+        
+        .workflow-step.active {
+            background: var(--dtt-green-pale);
+            border-left: 3px solid var(--dtt-green);
+        }
+        
+        .workflow-step.completed {
+            opacity: 0.7;
+        }
+        
+        .workflow-step.completed .step-icon {
+            background: var(--dtt-sec-green-5);
+            color: white;
+        }
+        
+        .workflow-step .step-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--dtt-cool-gray-4);
+            color: white;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+        
+        .workflow-step.active .step-icon {
+            background: var(--dtt-green);
+            color: var(--dtt-black);
+        }
+        
+        .workflow-step .step-label {
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
+                <span class="fw-bold fs-4" style="color: #4A90D9;">ProjectOps</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}" href="{{ url_for('main.dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> {{ t('nav_dashboard') }}
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if request.endpoint and 'task' in request.endpoint %}active{% endif %}" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-list-task"></i> {{ t('nav_tasks') }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item {% if request.endpoint == 'tasks.task_list' %}active{% endif %}" href="{{ url_for('tasks.task_list') }}">
+                                    <i class="bi bi-list-task me-2"></i>{{ 'Alle Aufgaben' if lang == 'de' else 'All Tasks' }}
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item {% if request.endpoint == 'tasks.task_archive_list' %}active{% endif %}" href="{{ url_for('tasks.task_archive_list') }}">
+                                    <i class="bi bi-archive me-2"></i>{{ 'Archiv' if lang == 'de' else 'Archive' }}
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'calendar' %}active{% endif %}" href="{{ url_for('main.calendar_view') }}">
+                            <i class="bi bi-calendar3"></i> {{ t('nav_calendar') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint and 'projects' in request.endpoint %}active{% endif %}" href="{{ url_for('projects.project_list') }}">
+                            <i class="bi bi-kanban"></i> {{ 'Projekte' if lang == 'de' else 'Projects' }}
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                    <!-- Quick Search Button -->
+                    <li class="nav-item me-2">
+                        <a class="nav-link d-flex align-items-center" href="#" id="quick-search-trigger" 
+                           title="{{ 'Schnellsuche' if lang == 'de' else 'Quick Search' }} (⌘K)" 
+                           data-bs-toggle="modal" data-bs-target="#quickSearchModal">
+                            <i class="bi bi-search"></i>
+                            <span class="d-none d-lg-inline ms-2 small text-muted" style="font-size: 0.75rem; opacity: 0.7;">⌘K</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Language Switcher -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-globe"></i> {{ lang|upper }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item {% if lang == 'de' %}active{% endif %}" href="{{ url_for('main.set_language', lang='de') }}">🇩🇪 Deutsch</a></li>
+                            <li><a class="dropdown-item {% if lang == 'en' %}active{% endif %}" href="{{ url_for('main.set_language', lang='en') }}">🇬🇧 English</a></li>
+                        </ul>
+                    </li>
+                    
+                    {% if current_user.is_authenticated %}
+                    <!-- Notification Bell -->
+                    <li class="nav-item dropdown" id="notification-dropdown">
+                        <a class="nav-link position-relative" href="#" id="notification-bell" data-bs-toggle="dropdown" aria-expanded="false" title="{{ t('notifications') }}">
+                            <i class="bi bi-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" 
+                                  style="display: none; font-size: 0.65rem;" id="notification-count">
+                                0
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end notification-menu shadow" style="width: 360px; max-height: 450px; overflow-y: auto;">
+                            <li class="dropdown-header d-flex justify-content-between align-items-center px-3 py-2">
+                                <span class="fw-semibold">{{ t('notifications') }}</span>
+                                <a href="#" class="small text-decoration-none" id="mark-all-read">{{ t('mark_all_read') }}</a>
+                            </li>
+                            <li><hr class="dropdown-divider my-0"></li>
+                            <div id="notification-list">
+                                <li class="text-center text-muted py-4" id="no-notifications">
+                                    <i class="bi bi-bell-slash fs-4 d-block mb-2"></i>
+                                    <span class="small">{{ t('no_notifications') }}</span>
+                                </li>
+                            </div>
+                            <li><hr class="dropdown-divider my-0"></li>
+                            <li class="text-center py-2">
+                                <a href="{{ url_for('main.notifications') }}" class="small text-decoration-none">{{ t('view_all_notifications') }}</a>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ current_user.name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% if current_tenant %}
+                            <!-- Tenant Info -->
+                            <li class="dropdown-header px-3 py-2">
+                                <small class="text-muted">{{ 'Mandant' if lang == 'de' else 'Tenant' }}</small>
+                                <div class="d-flex align-items-center">
+                                    {% if current_tenant.logo_data %}
+                                    <img src="data:{{ current_tenant.logo_mime_type or 'image/png' }};base64,{{ current_tenant.logo_data }}" 
+                                         alt="" class="rounded me-2" style="width: 20px; height: 20px; object-fit: contain;">
+                                    {% endif %}
+                                    <span class="fw-semibold">{{ current_tenant.name[:20] }}{% if current_tenant.name|length > 20 %}...{% endif %}</span>
+                                    {% if is_superadmin_mode %}
+                                    <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">SA</span>
+                                    {% endif %}
+                                </div>
+                            </li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.select_tenant') }}">
+                                <i class="bi bi-arrow-left-right me-2"></i>{{ 'Mandant wechseln' if lang == 'de' else 'Switch Tenant' }}
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% endif %}
+                            {% if current_user.is_admin() %}
+                            <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-speedometer2 me-2"></i>{{ t('admin_dashboard') }}</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.entities') }}"><i class="bi bi-building me-2"></i>{{ t('entities') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.categories') }}"><i class="bi bi-tags me-2"></i>{{ t('categories') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.teams') }}"><i class="bi bi-people-fill me-2"></i>{{ t('teams') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.users') }}"><i class="bi bi-person me-2"></i>{{ t('nav_users') }}</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% endif %}
+                            {% if current_user.is_superadmin %}
+                            <li><a class="dropdown-item text-primary" href="{{ url_for('admin_tenants.tenant_list') }}">
+                                <i class="bi bi-shield-lock me-2"></i>{{ 'Super-Admin' if lang == 'de' else 'Super-Admin' }}
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{{ url_for('main.calendar_subscription') }}"><i class="bi bi-calendar2-plus me-2"></i>{{ 'Kalender-Abonnement' if lang == 'de' else 'Calendar Subscription' }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.profile_notifications') }}"><i class="bi bi-envelope-at me-2"></i>{{ 'E-Mail-Einstellungen' if lang == 'de' else 'Email Preferences' }}</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>{{ t('nav_logout') }}</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">
+                            <i class="bi bi-box-arrow-in-right"></i> {{ t('nav_login') }}
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    
+    <!-- Main Content -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <span>© {{ current_year }} {{ app_name }} v{{ app_version }}</span>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="text-muted">ProjectOps Platform</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+            crossorigin="anonymous"></script>
+    
+    {% if current_user.is_authenticated %}
+    <!-- Socket.IO for real-time notifications -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"
+            integrity="sha384-mZLF4UVrpi/QTWPA7BjNPEnkIfRFn4ZEO3Qt/HFklTJBj/gBOV8G3HcKn4NfQblz"
+            crossorigin="anonymous"></script>
+    <script nonce="{{ csp_nonce }}">
+        // Initialize Socket.IO connection
+        const socket = io();
+        
+        // Handle connection
+        socket.on('connect', function() {
+            console.log('Connected to notification server');
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('Disconnected from notification server');
+        });
+        
+        // Handle incoming real-time notifications
+        socket.on('notification', function(data) {
+            console.log('New notification:', data);
+            updateNotificationBadge();
+            prependNotification(data);
+            showNotificationToast(data);
+        });
+        
+        // Update notification badge count
+        function updateNotificationBadge() {
+            fetch('/api/notifications/unread-count')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notification-count');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                            badge.style.display = 'block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(err => console.error('Error fetching notification count:', err));
+        }
+        
+        // Load notifications into dropdown
+        function loadNotifications() {
+            fetch('/api/notifications?limit=10')
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('notification-list');
+                    const noNotifications = document.getElementById('no-notifications');
+                    
+                    if (data.notifications && data.notifications.length > 0) {
+                        list.innerHTML = '';
+                        data.notifications.forEach(n => {
+                            list.appendChild(createNotificationItem(n));
+                        });
+                    } else if (noNotifications) {
+                        list.innerHTML = '';
+                        list.appendChild(noNotifications);
+                    }
+                    
+                    // Update badge
+                    const badge = document.getElementById('notification-count');
+                    if (badge && data.unread_count !== undefined) {
+                        if (data.unread_count > 0) {
+                            badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                            badge.style.display = 'block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(err => console.error('Error loading notifications:', err));
+        }
+        
+        // Create a notification list item
+        function createNotificationItem(notification) {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <a class="dropdown-item notification-item d-flex align-items-start py-2 px-3 ${notification.is_read ? '' : 'bg-light'}" 
+                   href="${notification.entity_type === 'task' ? '/tasks/' + notification.entity_id : '#'}"
+                   data-notification-id="${notification.id}">
+                    <div class="notification-icon me-3 mt-1">
+                        <i class="bi ${notification.icon} ${notification.color} fs-5"></i>
+                    </div>
+                    <div class="notification-content flex-grow-1">
+                        <div class="notification-title fw-semibold small ${notification.is_read ? 'text-muted' : ''}">${notification.title}</div>
+                        <div class="notification-message text-muted small text-truncate" style="max-width: 250px;">${notification.message || ''}</div>
+                        <div class="notification-meta text-muted" style="font-size: 0.7rem;">
+                            ${notification.actor ? '<i class="bi bi-person me-1"></i>' + notification.actor + ' • ' : ''}${notification.time_ago}
+                        </div>
+                    </div>
+                </a>
+            `;
+            
+            // Mark as read when clicked
+            li.querySelector('a').addEventListener('click', function() {
+                if (!notification.is_read) {
+                    markAsRead(notification.id);
+                }
+            });
+            
+            return li;
+        }
+        
+        // Prepend new notification to list
+        function prependNotification(notification) {
+            const list = document.getElementById('notification-list');
+            const noNotifications = document.getElementById('no-notifications');
+            
+            // Remove "no notifications" message if present
+            if (noNotifications && noNotifications.parentNode === list) {
+                list.removeChild(noNotifications);
+            }
+            
+            const item = createNotificationItem(notification);
+            list.insertBefore(item, list.firstChild);
+            
+            // Keep only last 10 items
+            while (list.children.length > 10) {
+                list.removeChild(list.lastChild);
+            }
+        }
+        
+        // Show toast notification
+        function showNotificationToast(notification) {
+            // Create toast container if it doesn't exist
+            let toastContainer = document.getElementById('notification-toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'notification-toast-container';
+                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '1100';
+                document.body.appendChild(toastContainer);
+            }
+            
+            const toastId = 'toast-' + Date.now();
+            const toastHtml = `
+                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <i class="bi ${notification.icon} ${notification.color} me-2"></i>
+                        <strong class="me-auto">${notification.title}</strong>
+                        <small>${notification.time_ago}</small>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${notification.message || ''}
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+            toast.show();
+            
+            // Remove from DOM after hidden
+            toastElement.addEventListener('hidden.bs.toast', function() {
+                toastElement.remove();
+            });
+        }
+        
+        // Mark single notification as read
+        function markAsRead(notificationId) {
+            fetch(`/api/notifications/${notificationId}/read`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateNotificationBadge();
+                }
+            })
+            .catch(err => console.error('Error marking notification as read:', err));
+        }
+        
+        // Mark all notifications as read
+        document.addEventListener('DOMContentLoaded', function() {
+            const markAllBtn = document.getElementById('mark-all-read');
+            if (markAllBtn) {
+                markAllBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    fetch('/api/notifications/mark-all-read', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            updateNotificationBadge();
+                            // Remove bg-light from all items
+                            document.querySelectorAll('.notification-item.bg-light').forEach(item => {
+                                item.classList.remove('bg-light');
+                            });
+                        }
+                    })
+                    .catch(err => console.error('Error marking all as read:', err));
+                });
+            }
+            
+            // Load notifications on dropdown open
+            const notificationDropdown = document.getElementById('notification-dropdown');
+            if (notificationDropdown) {
+                notificationDropdown.addEventListener('show.bs.dropdown', function() {
+                    loadNotifications();
+                });
+            }
+            
+            // Initial badge update
+            updateNotificationBadge();
+        });
+    </script>
+    {% endif %}
+    
+    <!-- Quick Search Modal -->
+    {% if current_user.is_authenticated %}
+    <div class="modal fade" id="quickSearchModal" tabindex="-1" aria-labelledby="quickSearchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="border: none; border-radius: 12px; box-shadow: 0 25px 50px rgba(0,0,0,0.25);">
+                <div class="modal-header border-0 pb-0">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-0" style="padding-left: 1rem;">
+                            <i class="bi bi-search text-muted fs-5"></i>
+                        </span>
+                        <input type="text" class="form-control form-control-lg border-0 shadow-none" 
+                               id="quickSearchInput" 
+                               placeholder="{{ 'Issues suchen... (z.B. TAX-1 oder Stichwort)' if lang == 'de' else 'Search issues... (e.g. TAX-1 or keyword)' }}"
+                               autocomplete="off" autofocus>
+                        <button type="button" class="btn-close me-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body pt-0" id="quickSearchResults" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Recent Issues (shown initially) -->
+                    <div id="recentIssues">
+                        <div class="px-3 py-2 text-muted small fw-semibold">
+                            <i class="bi bi-clock-history me-1"></i> {{ 'Zuletzt bearbeitet' if lang == 'de' else 'Recently Updated' }}
+                        </div>
+                        <div id="recentIssuesList" class="px-2">
+                            <div class="text-center text-muted py-3">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Results (shown after typing) -->
+                    <div id="searchResultsSection" style="display: none;">
+                        <div class="px-3 py-2 text-muted small fw-semibold">
+                            <i class="bi bi-search me-1"></i> <span id="searchResultsLabel">{{ 'Suchergebnisse' if lang == 'de' else 'Search Results' }}</span>
+                        </div>
+                        <div id="searchResultsList" class="px-2"></div>
+                    </div>
+                    
+                    <!-- No Results -->
+                    <div id="noResults" class="text-center py-5" style="display: none;">
+                        <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+                        <span class="text-muted">{{ 'Keine Ergebnisse gefunden' if lang == 'de' else 'No results found' }}</span>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 pb-2">
+                    <div class="d-flex justify-content-between w-100 small text-muted px-2">
+                        <div>
+                            <kbd class="bg-light text-dark border px-1">↵</kbd> {{ 'zum Öffnen' if lang == 'de' else 'to open' }}
+                            <span class="mx-2">|</span>
+                            <kbd class="bg-light text-dark border px-1">↑</kbd><kbd class="bg-light text-dark border px-1">↓</kbd> {{ 'Navigieren' if lang == 'de' else 'Navigate' }}
+                        </div>
+                        <div>
+                            <kbd class="bg-light text-dark border px-1">Esc</kbd> {{ 'Schließen' if lang == 'de' else 'Close' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style nonce="{{ csp_nonce }}">
+        /* Quick Search Modal Styles */
+        #quickSearchModal .modal-content {
+            background: #fff;
+        }
+        
+        #quickSearchInput {
+            font-size: 1.2rem;
+        }
+        
+        #quickSearchInput::placeholder {
+            color: #adb5bd;
+        }
+        
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            transition: background-color 0.15s ease;
+        }
+        
+        .search-result-item:hover,
+        .search-result-item.active {
+            background-color: var(--dtt-green-pale, #f1f6e4);
+        }
+        
+        .search-result-item .result-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+        }
+        
+        .search-result-item .result-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .search-result-item .result-key {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--dtt-sec-blue-4, #0076A8);
+        }
+        
+        .search-result-item .result-summary {
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .search-result-item .result-meta {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        
+        .search-result-item .result-status {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+    </style>
+    
+    <script nonce="{{ csp_nonce }}">
+        // Quick Search Functionality
+        (function() {
+            let searchTimeout = null;
+            let selectedIndex = -1;
+            let searchResults = [];
+            
+            // Open modal with Cmd+K or Ctrl+K
+            document.addEventListener('keydown', function(e) {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                    const modal = new bootstrap.Modal(document.getElementById('quickSearchModal'));
+                    modal.show();
+                }
+            });
+            
+            // When modal opens
+            const quickSearchModal = document.getElementById('quickSearchModal');
+            if (quickSearchModal) {
+                quickSearchModal.addEventListener('shown.bs.modal', function() {
+                    document.getElementById('quickSearchInput').focus();
+                    loadRecentIssues();
+                });
+                
+                quickSearchModal.addEventListener('hidden.bs.modal', function() {
+                    document.getElementById('quickSearchInput').value = '';
+                    resetSearch();
+                });
+            }
+            
+            // Search input handler
+            const searchInput = document.getElementById('quickSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const query = e.target.value.trim();
+                    
+                    if (searchTimeout) clearTimeout(searchTimeout);
+                    
+                    if (query.length < 2) {
+                        resetSearch();
+                        return;
+                    }
+                    
+                    searchTimeout = setTimeout(() => {
+                        performSearch(query);
+                    }, 200);
+                });
+                
+                // Keyboard navigation
+                searchInput.addEventListener('keydown', function(e) {
+                    const items = document.querySelectorAll('.search-result-item');
+                    
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                        updateSelection(items);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        selectedIndex = Math.max(selectedIndex - 1, 0);
+                        updateSelection(items);
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (selectedIndex >= 0 && items[selectedIndex]) {
+                            items[selectedIndex].click();
+                        }
+                    }
+                });
+            }
+            
+            function updateSelection(items) {
+                items.forEach((item, i) => {
+                    if (i === selectedIndex) {
+                        item.classList.add('active');
+                        item.scrollIntoView({ block: 'nearest' });
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            }
+            
+            function resetSearch() {
+                selectedIndex = -1;
+                searchResults = [];
+                document.getElementById('recentIssues').style.display = 'block';
+                document.getElementById('searchResultsSection').style.display = 'none';
+                document.getElementById('noResults').style.display = 'none';
+            }
+            
+            function loadRecentIssues() {
+                fetch('/projects/api/search/recent?limit=5')
+                    .then(response => response.json())
+                    .then(data => {
+                        const list = document.getElementById('recentIssuesList');
+                        if (data.recent && data.recent.length > 0) {
+                            list.innerHTML = data.recent.map(issue => createResultItem(issue)).join('');
+                        } else {
+                            list.innerHTML = '<div class="text-center text-muted py-3 small">{{ "Keine kürzlich bearbeiteten Issues" if lang == "de" else "No recently updated issues" }}</div>';
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error loading recent issues:', err);
+                        document.getElementById('recentIssuesList').innerHTML = '';
+                    });
+            }
+            
+            function performSearch(query) {
+                fetch('/projects/api/search?q=' + encodeURIComponent(query) + '&limit=15')
+                    .then(response => response.json())
+                    .then(data => {
+                        searchResults = data.results || [];
+                        selectedIndex = searchResults.length > 0 ? 0 : -1;
+                        
+                        document.getElementById('recentIssues').style.display = 'none';
+                        
+                        if (searchResults.length > 0) {
+                            document.getElementById('searchResultsSection').style.display = 'block';
+                            document.getElementById('noResults').style.display = 'none';
+                            document.getElementById('searchResultsLabel').textContent = 
+                                data.total + ' {{ "Ergebnis" if lang == "de" else "result" }}' + (data.total !== 1 ? '{{ "se" if lang == "de" else "s" }}' : '');
+                            
+                            const list = document.getElementById('searchResultsList');
+                            list.innerHTML = searchResults.map((issue, i) => createSearchResultItem(issue, i === 0)).join('');
+                        } else {
+                            document.getElementById('searchResultsSection').style.display = 'none';
+                            document.getElementById('noResults').style.display = 'block';
+                        }
+                    })
+                    .catch(err => console.error('Search error:', err));
+            }
+            
+            function createResultItem(issue) {
+                return `
+                    <a href="${issue.url}" class="search-result-item">
+                        <div class="result-icon" style="background-color: ${issue.type_color}20;">
+                            <i class="bi ${issue.type_icon}" style="color: ${issue.type_color};"></i>
+                        </div>
+                        <div class="result-content">
+                            <span class="result-key">${issue.key}</span>
+                            <span class="result-summary ms-2">${escapeHtml(issue.summary)}</span>
+                            <div class="result-meta">${issue.project_key}</div>
+                        </div>
+                    </a>
+                `;
+            }
+            
+            function createSearchResultItem(issue, isActive) {
+                return `
+                    <a href="${issue.url}" class="search-result-item${isActive ? ' active' : ''}">
+                        <div class="result-icon" style="background-color: ${issue.type.color}20;">
+                            <i class="bi ${issue.type.icon}" style="color: ${issue.type.color};"></i>
+                        </div>
+                        <div class="result-content">
+                            <span class="result-key">${issue.key}</span>
+                            <span class="result-summary ms-2">${escapeHtml(issue.summary)}</span>
+                            <div class="result-meta">
+                                ${issue.project_name}
+                                ${issue.assignee.name ? ' • ' + escapeHtml(issue.assignee.name) : ''}
+                            </div>
+                        </div>
+                        <span class="result-status" style="background-color: ${issue.status.color}20; color: ${issue.status.color};">
+                            ${escapeHtml(issue.status.name)}
+                        </span>
+                    </a>
+                `;
+            }
+            
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        })();
+    </script>
+    {% endif %}
+    
+    <!-- CSRF Token for AJAX requests (same-origin only) -->
+    <script nonce="{{ csp_nonce }}">
+        (function() {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            if (csrfToken) {
+                // Store for manual use in fetch() calls
+                window.csrfToken = csrfToken;
+                
+                // Auto-inject for jQuery AJAX (if jQuery is loaded)
+                if (window.$) {
+                    $.ajaxSetup({
+                        beforeSend: function(xhr, settings) {
+                            // Only send token for same-origin requests
+                            if (!/^https?:\/\//i.test(settings.url) || 
+                                settings.url.startsWith(window.location.origin)) {
+                                xhr.setRequestHeader('X-CSRFToken', csrfToken);
+                            }
+                        }
+                    });
+                }
+            }
+        })();
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

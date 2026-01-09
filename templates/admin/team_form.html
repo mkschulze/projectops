@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('edit_team') if team else t('new_team') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people me-2"></i>
+                        {{ t('edit_team') if team else t('new_team') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="name_de" class="form-label">
+                                            🇩🇪 {{ t('team_name') }} ({{ t('german') }}) <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="name_de" name="name_de" 
+                                               value="{{ team.name_de if team else '' }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="name_en" class="form-label">
+                                            🇬🇧 {{ t('team_name') }} ({{ t('english') }}) <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="name_en" name="name_en" 
+                                               value="{{ team.name_en if team else '' }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="color" class="form-label">{{ t('color') }}</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" id="color" name="color" 
+                                               value="{{ team.color if team else '#4A90D9' }}" title="{{ t('choose_color') }}">
+                                        <input type="text" class="form-control" id="color_text" 
+                                               value="{{ team.color if team else '#4A90D9' }}" 
+                                               pattern="^#[0-9A-Fa-f]{6}$" maxlength="7">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="description_de" class="form-label">
+                                    🇩🇪 {{ t('description') }} ({{ t('german') }})
+                                </label>
+                                <textarea class="form-control" id="description_de" name="description_de" rows="3">{{ team.description_de if team else '' }}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="description_en" class="form-label">
+                                    🇬🇧 {{ t('description') }} ({{ t('english') }})
+                                </label>
+                                <textarea class="form-control" id="description_en" name="description_en" rows="3">{{ team.description_en if team else '' }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="manager_id" class="form-label">{{ t('team_manager') }}</label>
+                            <select class="form-select" id="manager_id" name="manager_id">
+                                <option value="">-- {{ t('no_manager') }} --</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}" 
+                                    {{ 'selected' if team and team.manager_id == user.id }}>
+                                    {{ user.name }} ({{ user.email }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">{{ t('team_manager_hint') }}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="members" class="form-label">{{ t('team_members') }}</label>
+                            <select class="form-select" id="members" name="members" multiple size="8">
+                                {% set current_member_ids = team.members.all()|map(attribute='id')|list if team else [] %}
+                                {% for user in users %}
+                                <option value="{{ user.id }}" 
+                                    {{ 'selected' if user.id in current_member_ids }}>
+                                    {{ user.name }} ({{ user.email }}) - {{ user.role|title }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                {{ t('team_members_hint') }}
+                                <br><kbd>Ctrl</kbd> + Klick für Mehrfachauswahl
+                            </div>
+                        </div>
+                        
+                        {% if team %}
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                       {{ 'checked' if team.is_active }}>
+                                <label class="form-check-label" for="is_active">{{ t('active') }}</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.teams') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>{{ t('back') }}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>{{ t('save') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {% if team and team.members.count() > 0 %}
+            <div class="card shadow-sm mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person-lines-fill me-2"></i>{{ t('current_members') }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for member in team.members.all() %}
+                        <div class="col-md-4 mb-2">
+                            <div class="d-flex align-items-center p-2 bg-light rounded">
+                                <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white me-2" 
+                                      style="width: 32px; height: 32px; font-size: 0.875rem;">
+                                    {{ member.name[:2]|upper }}
+                                </span>
+                                <div>
+                                    <div class="fw-medium">{{ member.name }}</div>
+                                    <small class="text-muted">{{ member.role|title }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+// Sync color picker with text input
+document.getElementById('color').addEventListener('input', function() {
+    document.getElementById('color_text').value = this.value;
+});
+document.getElementById('color_text').addEventListener('input', function() {
+    if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+        document.getElementById('color').value = this.value;
+    }
+});
+// Update hidden field with text value on submit
+document.querySelector('form').addEventListener('submit', function() {
+    document.getElementById('color').value = document.getElementById('color_text').value;
+});
+</script>
+{% endblock %}

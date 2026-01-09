@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Mandantenverwaltung' if lang == 'de' else 'Tenant Management' }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #0076A8 0%, #004B6E 100%);">
+                <div class="card-body py-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-white">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 48px; height: 48px; background: rgba(255,255,255,0.2);">
+                                    <i class="bi bi-shield-lock fs-4"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0 fw-bold">{{ 'Mandantenverwaltung' if lang == 'de' else 'Tenant Management' }}</h3>
+                                    <p class="mb-0 opacity-75">{{ 'Super-Admin Bereich' if lang == 'de' else 'Super-Admin Area' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('admin_tenants.tenant_create') }}" class="btn btn-light btn-lg shadow-sm">
+                            <i class="bi bi-plus-lg me-2"></i>{{ 'Neuer Mandant' if lang == 'de' else 'New Tenant' }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center me-3" 
+                             style="width: 56px; height: 56px; background: linear-gradient(135deg, #4A90D9 0%, #6B9B1E 100%);">
+                            <i class="bi bi-building-check text-white fs-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="mb-0 fw-bold" style="color: #4A90D9;">{{ tenant_stats|selectattr('tenant.is_active')|selectattr('tenant.is_archived', 'equalto', false)|list|length }}</h2>
+                            <span class="text-muted">{{ 'Aktive Mandanten' if lang == 'de' else 'Active Tenants' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center me-3" 
+                             style="width: 56px; height: 56px; background: linear-gradient(135deg, #0076A8 0%, #005580 100%);">
+                            <i class="bi bi-people-fill text-white fs-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="mb-0 fw-bold" style="color: #0076A8;">{{ tenant_stats|sum(attribute='user_count') }}</h2>
+                            <span class="text-muted">{{ 'Gesamte Benutzer' if lang == 'de' else 'Total Users' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center me-3" 
+                             style="width: 56px; height: 56px; background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">
+                            <i class="bi bi-archive text-white fs-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="mb-0 fw-bold text-secondary">{{ tenant_stats|selectattr('tenant.is_archived')|list|length }}</h2>
+                            <span class="text-muted">{{ 'Archiviert' if lang == 'de' else 'Archived' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body py-3">
+            <form method="GET" class="d-flex align-items-center justify-content-between">
+                <div class="form-check form-switch">
+                    <input type="checkbox" class="form-check-input" id="showArchived" 
+                           name="show_archived" value="true" 
+                           {% if show_archived %}checked{% endif %}
+                           onchange="this.form.submit()"
+                           style="width: 3em; height: 1.5em;">
+                    <label class="form-check-label ms-2" for="showArchived">
+                        <i class="bi bi-archive me-1"></i>{{ 'Archivierte Mandanten anzeigen' if lang == 'de' else 'Show archived tenants' }}
+                    </label>
+                </div>
+                <span class="badge bg-light text-dark">
+                    {{ tenant_stats|length }} {{ 'Mandanten' if lang == 'de' else 'Tenants' }}
+                </span>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Tenant List -->
+    <div class="row">
+        {% for item in tenant_stats %}
+        {% set tenant = item.tenant %}
+        <div class="col-md-6 col-xl-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm tenant-card {% if tenant.is_archived %}opacity-75{% endif %}"
+                 style="{% if tenant.is_archived %}border-left: 4px solid #6c757d !important;{% elif not tenant.is_active %}border-left: 4px solid #ffc107 !important;{% else %}border-left: 4px solid #4A90D9 !important;{% endif %} border-left-style: solid !important;">
+                <div class="card-body">
+                    <div class="d-flex align-items-start mb-3">
+                        <!-- Logo -->
+                        <div class="me-3 flex-shrink-0">
+                            {% if tenant.logo_data %}
+                            <img src="data:{{ tenant.logo_mime_type or 'image/png' }};base64,{{ tenant.logo_data }}" 
+                                 alt="{{ tenant.name }}" 
+                                 class="rounded-3" 
+                                 style="width: 64px; height: 64px; object-fit: contain; background: #f8f9fa; padding: 6px;">
+                            {% else %}
+                            <div class="rounded-3 d-flex align-items-center justify-content-center" 
+                                 style="width: 64px; height: 64px; background: linear-gradient(135deg, #0076A8 0%, #62B5E5 100%);">
+                                <i class="bi bi-building text-white fs-3"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Name & Status -->
+                        <div class="flex-grow-1 min-width-0">
+                            <div class="d-flex align-items-start justify-content-between">
+                                <div>
+                                    <h5 class="mb-1 fw-semibold">
+                                        <a href="{{ url_for('admin_tenants.tenant_detail', tenant_id=tenant.id) }}" 
+                                           class="text-decoration-none text-dark stretched-link-disabled">
+                                            {{ tenant.name }}
+                                        </a>
+                                    </h5>
+                                    <code class="small text-muted">{{ tenant.slug }}</code>
+                                </div>
+                                {% if tenant.is_archived %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-archive me-1"></i>{{ 'Archiviert' if lang == 'de' else 'Archived' }}
+                                </span>
+                                {% elif not tenant.is_active %}
+                                <span class="badge" style="background-color: #ffc107; color: #000;">
+                                    <i class="bi bi-pause-circle me-1"></i>{{ 'Inaktiv' if lang == 'de' else 'Inactive' }}
+                                </span>
+                                {% else %}
+                                <span class="badge" style="background-color: #4A90D9;">
+                                    <i class="bi bi-check-circle me-1"></i>{{ 'Aktiv' if lang == 'de' else 'Active' }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats Row -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="rounded-3 p-2 text-center" style="background-color: #f8f9fa;">
+                                <div class="fs-4 fw-bold" style="color: #0076A8;">{{ item.user_count }}</div>
+                                <small class="text-muted">
+                                    <i class="bi bi-people me-1"></i>{{ 'Benutzer' if lang == 'de' else 'Users' }}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="rounded-3 p-2 text-center" style="background-color: #f8f9fa;">
+                                <div class="fs-4 fw-bold" style="color: #4A90D9;">{{ item.admin_count }}</div>
+                                <small class="text-muted">
+                                    <i class="bi bi-person-gear me-1"></i>{{ 'Admins' if lang == 'de' else 'Admins' }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('admin_tenants.tenant_detail', tenant_id=tenant.id) }}" 
+                           class="btn btn-sm flex-fill" style="background-color: #0076A8; color: white;">
+                            <i class="bi bi-eye me-1"></i>{{ 'Details' if lang == 'de' else 'Details' }}
+                        </a>
+                        <a href="{{ url_for('admin_tenants.tenant_members', tenant_id=tenant.id) }}" 
+                           class="btn btn-outline-secondary btn-sm flex-fill">
+                            <i class="bi bi-people me-1"></i>{{ 'Mitglieder' if lang == 'de' else 'Members' }}
+                        </a>
+                        {% if not tenant.is_archived %}
+                        <form action="{{ url_for('admin_tenants.enter_tenant', tenant_id=tenant.id) }}" 
+                              method="POST" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm" 
+                                    style="background-color: #4A90D9; color: white;"
+                                    title="{{ 'Als Mandant einloggen' if lang == 'de' else 'Enter tenant' }}">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" 
+                         style="width: 100px; height: 100px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                        <i class="bi bi-building-add" style="font-size: 3rem; color: #6c757d;"></i>
+                    </div>
+                    <h4 class="mb-2">{{ 'Keine Mandanten vorhanden' if lang == 'de' else 'No tenants found' }}</h4>
+                    <p class="text-muted mb-4">{{ 'Erstellen Sie Ihren ersten Mandanten, um loszulegen.' if lang == 'de' else 'Create your first tenant to get started.' }}</p>
+                    <a href="{{ url_for('admin_tenants.tenant_create') }}" class="btn btn-lg" style="background-color: #4A90D9; color: white;">
+                        <i class="bi bi-plus-lg me-2"></i>{{ 'Ersten Mandanten erstellen' if lang == 'de' else 'Create First Tenant' }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style nonce="{{ csp_nonce }}">
+.tenant-card {
+    transition: all 0.2s ease;
+}
+.tenant-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12) !important;
+}
+.min-width-0 {
+    min-width: 0;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,1049 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Workflow Settings' if lang == 'en' else 'Workflow-Einstellungen' }} - {{ project.key }}{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    /* ============================================
+       SETTINGS: WORKFLOW STATUS - PROJECTOPS DESIGN
+       Color: Purple #62378a (Settings accent)
+       ============================================ */
+    
+    /* Tab Navigation */
+    .workflow-tabs {
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 1.5rem;
+    }
+    
+    .workflow-tabs .nav-link {
+        color: #666;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        position: relative;
+    }
+    
+    .workflow-tabs .nav-link:hover {
+        color: #62378a;
+    }
+    
+    .workflow-tabs .nav-link.active {
+        color: #62378a;
+        background: transparent;
+        border: none;
+    }
+    
+    .workflow-tabs .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(135deg, #62378a 0%, #4a2a6a 100%);
+        border-radius: 2px 2px 0 0;
+    }
+    
+    /* Compact Header Bar */
+    .settings-header-bar {
+        background: white;
+        border-bottom: 3px solid #62378a;
+        padding: 1rem 0;
+        margin: -1rem -1rem 1.5rem -1rem;
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .settings-header-bar .breadcrumb {
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .settings-header-bar .breadcrumb a {
+        color: #666;
+        text-decoration: none;
+    }
+    
+    .settings-header-bar .breadcrumb a:hover {
+        color: #62378a;
+    }
+    
+    .settings-header-bar h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    
+    .settings-header-bar .subtitle {
+        color: #666;
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Content Card */
+    .settings-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .settings-card-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .settings-card-header h5 {
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+    }
+    
+    .count-badge {
+        background: linear-gradient(135deg, #62378a 0%, #4a2a6a 100%);
+        color: white;
+        padding: 0.3rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    /* Workflow Visualization */
+    .workflow-visual {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+    }
+    
+    .workflow-flow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .workflow-status {
+        text-align: center;
+    }
+    
+    .workflow-status-badge {
+        padding: 0.6rem 1.25rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    .workflow-status-category {
+        font-size: 0.75rem;
+        color: #666;
+        margin-top: 0.4rem;
+    }
+    
+    .workflow-arrow {
+        color: #ccc;
+        font-size: 1.5rem;
+    }
+    
+    /* Table Styling */
+    .settings-table {
+        margin: 0;
+    }
+    
+    .settings-table thead th {
+        background: #f8f9fa;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #666;
+        border: none;
+        padding: 1rem 1.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .settings-table tbody td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        border-color: #f0f0f0;
+    }
+    
+    .settings-table tbody tr:hover {
+        background: #fafbfc;
+    }
+    
+    .status-color-box {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-block;
+    }
+    
+    .status-name {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .category-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .category-badge.todo {
+        background: rgba(108, 117, 125, 0.15);
+        color: #6c757d;
+    }
+    
+    .category-badge.in_progress {
+        background: rgba(0, 163, 224, 0.15);
+        color: #0076A8;
+    }
+    
+    .category-badge.done {
+        background: rgba(134, 188, 37, 0.15);
+        color: #6a9c1f;
+    }
+    
+    .property-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-right: 0.25rem;
+    }
+    
+    .property-badge.initial {
+        background: linear-gradient(135deg, #00A3E0 0%, #0076A8 100%);
+        color: white;
+    }
+    
+    .property-badge.final {
+        background: linear-gradient(135deg, #333 0%, #555 100%);
+        color: white;
+    }
+    
+    /* Sidebar Form Card */
+    .form-sidebar-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .form-sidebar-header {
+        background: linear-gradient(135deg, #62378a 0%, #4a2a6a 100%);
+        color: white;
+        padding: 1rem 1.25rem;
+    }
+    
+    .form-sidebar-header h5 {
+        font-weight: 600;
+        margin: 0;
+        font-size: 1rem;
+    }
+    
+    .form-sidebar-body {
+        padding: 1.5rem 1.25rem;
+    }
+    
+    .form-sidebar-body .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.4rem;
+    }
+    
+    .form-sidebar-body .form-control,
+    .form-sidebar-body .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.6rem 0.9rem;
+    }
+    
+    .form-sidebar-body .form-control:focus,
+    .form-sidebar-body .form-select:focus {
+        border-color: #62378a;
+        box-shadow: 0 0 0 3px rgba(98, 55, 138, 0.15);
+    }
+    
+    .form-sidebar-body .form-check-input:checked {
+        background-color: #62378a;
+        border-color: #62378a;
+    }
+    
+    .btn-add-status {
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        width: 100%;
+        transition: all 0.2s;
+    }
+    
+    .btn-add-status:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(134, 188, 37, 0.3);
+        color: white;
+    }
+    
+    /* Info Card */
+    .info-card {
+        background: linear-gradient(135deg, #e8f4fd 0%, #d4ecfd 100%);
+        border-radius: 12px;
+        padding: 1.25rem;
+        border-left: 4px solid #00A3E0;
+    }
+    
+    .info-card h6 {
+        color: #0076A8;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+    
+    .info-card ul {
+        margin: 0;
+        padding-left: 1.25rem;
+    }
+    
+    .info-card li {
+        color: #495057;
+        font-size: 0.85rem;
+        margin-bottom: 0.35rem;
+    }
+    
+    .info-card li strong {
+        color: #333;
+    }
+    
+    /* Transition Matrix Styles */
+    .workflow-info-alert {
+        background: linear-gradient(135deg, #e8f4fd 0%, #d4ecfd 100%);
+        border: none;
+        border-radius: 12px;
+        border-left: 4px solid #00A3E0;
+        color: #333;
+    }
+    
+    .transition-matrix-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .transition-matrix-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .transition-matrix-header h5 {
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+    }
+    
+    .btn-save-transitions {
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%);
+        border: none;
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-save-transitions:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(134, 188, 37, 0.3);
+    }
+    
+    .btn-save-transitions.btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+    }
+    
+    .btn-save-transitions.btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    .transition-matrix {
+        padding: 1.5rem;
+        overflow-x: auto;
+    }
+    
+    .transition-matrix table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 4px;
+    }
+    
+    .transition-matrix th {
+        padding: 0.75rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+    
+    .transition-matrix th.row-header {
+        text-align: left;
+        min-width: 120px;
+    }
+    
+    .transition-matrix td {
+        padding: 0.25rem;
+        text-align: center;
+    }
+    
+    .transition-cell {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #f0f0f0;
+        color: #999;
+        margin: 0 auto;
+    }
+    
+    .transition-cell:hover:not(.same-status) {
+        transform: scale(1.1);
+    }
+    
+    .transition-cell.allowed {
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%);
+        color: white;
+    }
+    
+    .transition-cell.same-status {
+        background: #e9ecef;
+        color: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .matrix-legend {
+        display: flex;
+        gap: 1.5rem;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #eee;
+        background: #f8f9fa;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    .legend-box {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        background: #f0f0f0;
+    }
+    
+    .legend-box.allowed {
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%);
+    }
+    
+    .legend-box.not-allowed {
+        background: #f0f0f0;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: none;
+    }
+    
+    .action-btn-outline {
+        background: white;
+        color: #666;
+        border: 1px solid #dee2e6;
+    }
+    
+    .action-btn-outline:hover {
+        background: #f8f9fa;
+        color: #333;
+        border-color: #62378a;
+    }
+    
+    /* Color Preview */
+    .color-preview {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        margin: 0 auto 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    /* Transition Matrix */
+    .transition-matrix-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .transition-matrix-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .transition-matrix-header h5 {
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+    }
+    
+    .transition-matrix {
+        overflow-x: auto;
+        padding: 1rem;
+    }
+    
+    .transition-matrix table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 4px;
+    }
+    
+    .transition-matrix th {
+        text-align: center;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #333;
+        min-width: 80px;
+    }
+    
+    .transition-matrix th.row-header {
+        text-align: right;
+        padding-right: 1rem;
+        min-width: 120px;
+    }
+    
+    .transition-matrix td {
+        text-align: center;
+        padding: 0.5rem;
+    }
+    
+    .transition-cell {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        background: #f8f9fa;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        transition: all 0.2s;
+    }
+    
+    .transition-cell:hover {
+        border-color: #62378a;
+        transform: scale(1.1);
+    }
+    
+    .transition-cell.allowed {
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%);
+        border-color: #6a9c1f;
+        color: white;
+    }
+    
+    .transition-cell.same-status {
+        background: #e9ecef;
+        border-color: #dee2e6;
+        cursor: not-allowed;
+        color: #adb5bd;
+    }
+    
+    .transition-cell i {
+        font-size: 1rem;
+    }
+    
+    .matrix-legend {
+        display: flex;
+        gap: 1.5rem;
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #eee;
+        font-size: 0.85rem;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .legend-box {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+    }
+    
+    .legend-box.allowed {
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%);
+    }
+    
+    .legend-box.not-allowed {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+    }
+    
+    .btn-save-transitions {
+        background: linear-gradient(135deg, #62378a 0%, #4a2a6a 100%);
+        border: none;
+        color: white;
+        padding: 0.6rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    
+    .btn-save-transitions:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(98, 55, 138, 0.3);
+        color: white;
+    }
+    
+    .workflow-info-alert {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        border: none;
+        border-left: 4px solid #fb8c00;
+        color: #e65100;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Compact Header Bar -->
+<div class="settings-header-bar">
+    <div class="container-fluid px-0">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}">{{ 'Projects' if lang == 'en' else 'Projekte' }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.key }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'Workflow' if lang == 'en' else 'Workflow' }}</li>
+                    </ol>
+                </nav>
+                <h1>
+                    <i class="bi bi-arrow-left-right me-2" style="color: #62378a;"></i>
+                    {{ 'Workflow Settings' if lang == 'en' else 'Workflow-Einstellungen' }}
+                </h1>
+                <p class="subtitle mb-0">{{ 'Configure statuses and allowed transitions' if lang == 'en' else 'Status und erlaubte Übergänge konfigurieren' }}</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('projects.project_detail', project_id=project.id) }}" class="action-btn action-btn-outline">
+                    <i class="bi bi-arrow-left"></i>
+                    {{ 'Back' if lang == 'en' else 'Zurück' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Tab Navigation -->
+    <ul class="nav workflow-tabs" id="workflowTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="statuses-tab" data-bs-toggle="tab" data-bs-target="#statuses-pane" type="button" role="tab">
+                <i class="bi bi-collection me-2"></i>{{ 'Statuses' if lang == 'en' else 'Status' }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="transitions-tab" data-bs-toggle="tab" data-bs-target="#transitions-pane" type="button" role="tab">
+                <i class="bi bi-shuffle me-2"></i>{{ 'Transitions' if lang == 'en' else 'Übergänge' }}
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="workflowTabContent">
+        <!-- Statuses Tab -->
+        <div class="tab-pane fade show active" id="statuses-pane" role="tabpanel" tabindex="0">
+            <div class="row g-4">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Workflow Visualization -->
+            <div class="settings-card mb-4">
+                <div class="settings-card-header">
+                    <h5><i class="bi bi-diagram-3 me-2"></i>{{ 'Workflow Overview' if lang == 'en' else 'Workflow-Übersicht' }}</h5>
+                </div>
+                <div class="workflow-visual">
+                    <div class="workflow-flow">
+                        {% for s in issue_statuses %}
+                        <div class="workflow-status">
+                            <span class="workflow-status-badge" style="background-color: {{ s.color }};">
+                                {% if s.is_initial %}<i class="bi bi-play-circle"></i>{% endif %}
+                                {{ s.get_name(lang) }}
+                                {% if s.is_final %}<i class="bi bi-check-circle"></i>{% endif %}
+                            </span>
+                            <div class="workflow-status-category">
+                                {% if s.category == 'todo' %}
+                                    {{ 'To Do' if lang == 'en' else 'Zu erledigen' }}
+                                {% elif s.category == 'in_progress' %}
+                                    {{ 'In Progress' if lang == 'en' else 'In Bearbeitung' }}
+                                {% else %}
+                                    {{ 'Done' if lang == 'en' else 'Erledigt' }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if not loop.last %}
+                        <i class="bi bi-arrow-right workflow-arrow"></i>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status List -->
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <h5>{{ 'Configured Statuses' if lang == 'en' else 'Konfigurierte Status' }}</h5>
+                    <span class="count-badge">{{ issue_statuses|length }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table settings-table mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;"></th>
+                                <th>Name</th>
+                                <th>Name (EN)</th>
+                                <th>{{ 'Category' if lang == 'en' else 'Kategorie' }}</th>
+                                <th style="width: 150px;">{{ 'Properties' if lang == 'en' else 'Eigenschaften' }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in issue_statuses %}
+                            <tr>
+                                <td>
+                                    <span class="status-color-box" style="background-color: {{ s.color }};"></span>
+                                </td>
+                                <td>
+                                    <span class="status-name">{{ s.name }}</span>
+                                </td>
+                                <td class="text-muted">{{ s.name_en or '—' }}</td>
+                                <td>
+                                    <span class="category-badge {{ s.category }}">
+                                        {% if s.category == 'todo' %}
+                                            {{ 'To Do' if lang == 'en' else 'Zu erledigen' }}
+                                        {% elif s.category == 'in_progress' %}
+                                            {{ 'In Progress' if lang == 'en' else 'In Bearbeitung' }}
+                                        {% else %}
+                                            {{ 'Done' if lang == 'en' else 'Erledigt' }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if s.is_initial %}
+                                        <span class="property-badge initial">{{ 'Initial' if lang == 'en' else 'Start' }}</span>
+                                    {% endif %}
+                                    {% if s.is_final %}
+                                        <span class="property-badge final">{{ 'Final' if lang == 'en' else 'Ende' }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Add New Status Form -->
+            <div class="form-sidebar-card">
+                <div class="form-sidebar-header">
+                    <h5><i class="bi bi-plus-circle me-2"></i>{{ 'Add Status' if lang == 'en' else 'Status hinzufügen' }}</h5>
+                </div>
+                <div class="form-sidebar-body">
+                    <form method="post" action="{{ url_for('projects.project_issue_status_add', project_id=project.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- Color Preview -->
+                        <div class="text-center">
+                            <div class="color-preview" id="colorPreview" style="background-color: #0076A8;"></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="name" required placeholder="z.B. In Test, Wartend">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Name (EN)</label>
+                            <input type="text" class="form-control" name="name_en" placeholder="e.g. In Testing, Waiting">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ 'Category' if lang == 'en' else 'Kategorie' }}</label>
+                            <select name="category" class="form-select">
+                                <option value="todo">{{ 'To Do' if lang == 'en' else 'Zu erledigen' }}</option>
+                                <option value="in_progress" selected>{{ 'In Progress' if lang == 'en' else 'In Bearbeitung' }}</option>
+                                <option value="done">{{ 'Done' if lang == 'en' else 'Erledigt' }}</option>
+                            </select>
+                            <div class="form-text">{{ 'Used for reporting and metrics' if lang == 'en' else 'Wird für Berichte und Metriken verwendet' }}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ 'Color' if lang == 'en' else 'Farbe' }}</label>
+                            <input type="color" class="form-control form-control-color w-100" name="color" value="#0076A8" id="colorInput">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="is_initial" id="is_initial">
+                                <label class="form-check-label" for="is_initial">
+                                    {{ 'Initial status (for new issues)' if lang == 'en' else 'Startstatus (für neue Issues)' }}
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_final" id="is_final">
+                                <label class="form-check-label" for="is_final">
+                                    {{ 'Final status (issue resolved)' if lang == 'en' else 'Endstatus (Issue abgeschlossen)' }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-add-status">
+                            <i class="bi bi-plus-lg me-1"></i>
+                            {{ 'Add Status' if lang == 'en' else 'Status hinzufügen' }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="info-card mt-4">
+                <h6><i class="bi bi-info-circle me-1"></i>{{ 'About Categories' if lang == 'en' else 'Über Kategorien' }}</h6>
+                <ul>
+                    <li><strong>{{ 'To Do' if lang == 'en' else 'Zu erledigen' }}</strong>: {{ 'Work not yet started' if lang == 'en' else 'Arbeit noch nicht begonnen' }}</li>
+                    <li><strong>{{ 'In Progress' if lang == 'en' else 'In Bearbeitung' }}</strong>: {{ 'Work in progress' if lang == 'en' else 'Arbeit läuft' }}</li>
+                    <li><strong>{{ 'Done' if lang == 'en' else 'Erledigt' }}</strong>: {{ 'Work completed' if lang == 'en' else 'Arbeit abgeschlossen' }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div><!-- End Statuses Tab Row -->
+        </div><!-- End Statuses Tab Pane -->
+        
+        <!-- Transitions Tab -->
+        <div class="tab-pane fade" id="transitions-pane" role="tabpanel" tabindex="0">
+            <div class="alert workflow-info-alert mb-4">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>{{ 'Workflow Transitions' if lang == 'en' else 'Workflow-Übergänge' }}:</strong>
+                {{ 'Click cells to toggle which status transitions are allowed. Empty means all transitions are permitted.' if lang == 'en' else 'Klicken Sie auf Zellen, um erlaubte Status-Übergänge zu aktivieren. Leer = alle Übergänge erlaubt.' }}
+            </div>
+            
+            <div class="transition-matrix-card">
+                <div class="transition-matrix-header">
+                    <h5><i class="bi bi-shuffle me-2"></i>{{ 'Transition Matrix' if lang == 'en' else 'Übergangs-Matrix' }}</h5>
+                    <button type="button" class="btn-save-transitions" id="saveTransitionsBtn">
+                        <i class="bi bi-check2 me-1"></i>{{ 'Save' if lang == 'en' else 'Speichern' }}
+                    </button>
+                </div>
+                <div class="transition-matrix">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="row-header">{{ 'From \\ To' if lang == 'en' else 'Von \\ Nach' }}</th>
+                                {% for to_status in issue_statuses %}
+                                <th>
+                                    <span style="color: {{ to_status.color }};">
+                                        {{ to_status.get_name(lang) }}
+                                    </span>
+                                </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for from_status in issue_statuses %}
+                            <tr>
+                                <th class="row-header">
+                                    <span style="color: {{ from_status.color }};">
+                                        {{ from_status.get_name(lang) }}
+                                    </span>
+                                </th>
+                                {% for to_status in issue_statuses %}
+                                <td>
+                                    {% if from_status.id == to_status.id %}
+                                    <div class="transition-cell same-status" title="{{ 'Same status' if lang == 'en' else 'Gleicher Status' }}">
+                                        <i class="bi bi-dash"></i>
+                                    </div>
+                                    {% else %}
+                                    {% set is_allowed = not from_status.allowed_transitions or to_status.id in from_status.allowed_transitions %}
+                                    <div class="transition-cell{% if is_allowed %} allowed{% endif %}" 
+                                         data-from="{{ from_status.id }}" 
+                                         data-to="{{ to_status.id }}"
+                                         title="{{ from_status.get_name(lang) }} → {{ to_status.get_name(lang) }}">
+                                        <i class="bi {% if is_allowed %}bi-check2{% else %}bi-x{% endif %}"></i>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="matrix-legend">
+                    <div class="legend-item">
+                        <div class="legend-box allowed"></div>
+                        <span>{{ 'Allowed' if lang == 'en' else 'Erlaubt' }}</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box not-allowed"></div>
+                        <span>{{ 'Not allowed' if lang == 'en' else 'Nicht erlaubt' }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Transition Help -->
+            <div class="info-card mt-4">
+                <h6><i class="bi bi-lightbulb me-1"></i>{{ 'Tip' if lang == 'en' else 'Tipp' }}</h6>
+                <p class="mb-0" style="font-size: 0.85rem;">
+                    {{ 'Define which status transitions are valid in your workflow. For example, an issue in "Open" might only be allowed to move to "In Progress", not directly to "Done".' if lang == 'en' else 'Definieren Sie, welche Status-Übergänge in Ihrem Workflow gültig sind. Z.B. darf ein Issue in "Offen" nur nach "In Bearbeitung" wechseln, nicht direkt nach "Erledigt".' }}
+                </p>
+            </div>
+        </div><!-- End Transitions Tab Pane -->
+    </div><!-- End Tab Content -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    // Color preview for add status form
+    const colorInput = document.getElementById('colorInput');
+    const colorPreview = document.getElementById('colorPreview');
+    
+    if (colorInput && colorPreview) {
+        colorInput.addEventListener('input', function() {
+            colorPreview.style.backgroundColor = this.value;
+        });
+    }
+    
+    // Transition matrix toggle
+    const transitionCells = document.querySelectorAll('.transition-cell:not(.same-status)');
+    
+    transitionCells.forEach(cell => {
+        cell.addEventListener('click', function() {
+            this.classList.toggle('allowed');
+            const icon = this.querySelector('i');
+            if (this.classList.contains('allowed')) {
+                icon.className = 'bi bi-check2';
+            } else {
+                icon.className = 'bi bi-x';
+            }
+        });
+    });
+    
+    // Save transitions
+    const saveBtn = document.getElementById('saveTransitionsBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async function() {
+            const transitions = {};
+            
+            // Build transitions object: {fromStatusId: [toStatusId1, toStatusId2, ...]}
+            transitionCells.forEach(cell => {
+                const fromId = cell.dataset.from;
+                const toId = parseInt(cell.dataset.to);
+                
+                if (!transitions[fromId]) {
+                    transitions[fromId] = [];
+                }
+                
+                if (cell.classList.contains('allowed')) {
+                    transitions[fromId].push(toId);
+                }
+            });
+            
+            // Send to server
+            try {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>{{ 'Saving...' if lang == 'en' else 'Speichern...' }}';
+                
+                const transitionHeaders = {
+                    'Content-Type': 'application/json'
+                };
+                if (window.csrfToken) {
+                    transitionHeaders['X-CSRFToken'] = window.csrfToken;
+                }
+
+                const response = await fetch('{{ url_for("projects.save_workflow_transitions", project_id=project.id) }}', {
+                    method: 'POST',
+                    headers: transitionHeaders,
+                    body: JSON.stringify({ transitions: transitions })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    saveBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i>{{ 'Saved!' if lang == 'en' else 'Gespeichert!' }}';
+                    saveBtn.classList.add('btn-success');
+                    setTimeout(() => {
+                        saveBtn.innerHTML = '<i class="bi bi-check2 me-1"></i>{{ 'Save' if lang == 'en' else 'Speichern' }}';
+                        saveBtn.classList.remove('btn-success');
+                        saveBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error saving transitions:', error);
+                saveBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>{{ 'Error' if lang == 'en' else 'Fehler' }}';
+                saveBtn.classList.add('btn-danger');
+                setTimeout(() => {
+                    saveBtn.innerHTML = '<i class="bi bi-check2 me-1"></i>{{ 'Save' if lang == 'en' else 'Speichern' }}';
+                    saveBtn.classList.remove('btn-danger');
+                    saveBtn.disabled = false;
+                }, 2000);
+            }
+        });
+    }
+    
+    // Handle tab from URL hash
+    const hash = window.location.hash;
+    if (hash === '#transitions') {
+        const transitionsTab = document.getElementById('transitions-tab');
+        if (transitionsTab) {
+            const tab = new bootstrap.Tab(transitionsTab);
+            tab.show();
+        }
+    }
+});
+</script>
+{% endblock %}

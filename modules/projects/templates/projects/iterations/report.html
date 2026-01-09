@@ -1,0 +1,635 @@
+{% extends "base.html" %}
+{% block title %}{{ (project.get_term('sprint', lang) + ' Report') if lang == 'en' else (project.get_term('sprint', lang) + '-Bericht') }} - {{ sprint.name }} - {{ project.key }}{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    /* ============================================
+       SPRINT REPORT - PROJECTOPS DESIGN
+       Color: Teal #00A3E0 (Sprint accent)
+       ============================================ */
+    
+    /* Compact Header Bar */
+    .report-header-bar {
+        background: white;
+        border-bottom: 3px solid #00A3E0;
+        padding: 1rem 0;
+        margin: -1rem -1rem 1.5rem -1rem;
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .report-header-bar .breadcrumb {
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .report-header-bar .breadcrumb a {
+        color: #666;
+        text-decoration: none;
+    }
+    
+    .report-header-bar .breadcrumb a:hover {
+        color: #00A3E0;
+    }
+    
+    .report-header-bar h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    
+    .report-header-bar .subtitle {
+        color: #666;
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+    }
+    
+    .sprint-badge {
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-left: 0.75rem;
+    }
+    
+    .sprint-badge.active { background: #4A90D9; color: white; }
+    .sprint-badge.future { background: #e3f2fd; color: #1565c0; }
+    .sprint-badge.closed { background: #6c757d; color: white; }
+    
+    /* Stat Cards */
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        text-align: center;
+        height: 100%;
+    }
+    
+    .stat-card .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .stat-card .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #333;
+        line-height: 1;
+    }
+    
+    .stat-card .stat-label {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 0.5rem;
+    }
+    
+    .stat-card .stat-detail {
+        font-size: 0.8rem;
+        color: #999;
+        margin-top: 0.25rem;
+    }
+    
+    /* Chart Cards */
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .chart-card-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .chart-card-header h5 {
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+    }
+    
+    .chart-card-body {
+        padding: 1.5rem;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 250px;
+        width: 100%;
+    }
+    
+    /* Progress Bars */
+    .progress-section {
+        margin-bottom: 1rem;
+    }
+    
+    .progress-section .progress-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .progress-section .progress {
+        height: 10px;
+        border-radius: 5px;
+    }
+    
+    /* Breakdown Lists */
+    .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .breakdown-item:last-child {
+        border-bottom: none;
+    }
+    
+    .breakdown-item .item-name {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .breakdown-item .item-stats {
+        text-align: right;
+    }
+    
+    .breakdown-item .item-stats .primary {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .breakdown-item .item-stats .secondary {
+        font-size: 0.8rem;
+        color: #999;
+    }
+    
+    .type-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        display: inline-block;
+    }
+    
+    /* Completed Issues Table */
+    .completed-table {
+        font-size: 0.9rem;
+    }
+    
+    .completed-table th {
+        font-weight: 600;
+        color: #666;
+        border-bottom: 2px solid #eee;
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .completed-table td {
+        padding: 0.75rem 0.5rem;
+        border-bottom: 1px solid #f5f5f5;
+        vertical-align: middle;
+    }
+    
+    .completed-table .issue-key {
+        font-weight: 600;
+        color: #0076A8;
+    }
+    
+    /* Velocity Chart Colors */
+    .velocity-legend {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        margin-top: 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .velocity-legend span {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .velocity-legend .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: none;
+    }
+    
+    .action-btn-outline {
+        background: white;
+        color: #666;
+        border: 1px solid #dee2e6;
+    }
+    
+    .action-btn-outline:hover {
+        background: #f8f9fa;
+        color: #333;
+        border-color: #00A3E0;
+    }
+    
+    .action-btn-primary {
+        background: linear-gradient(135deg, #00A3E0 0%, #0076A8 100%);
+        color: white;
+    }
+    
+    .action-btn-primary:hover {
+        box-shadow: 0 4px 12px rgba(0, 163, 224, 0.3);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Compact Header Bar -->
+<div class="report-header-bar">
+    <div class="container-fluid px-0">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}">{{ 'Projects' if lang == 'en' else 'Projekte' }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.key }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.iteration_list', project_id=project.id) }}">{{ project.get_term('sprint_plural', lang) }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'Report' if lang == 'en' else 'Bericht' }}</li>
+                    </ol>
+                </nav>
+                <h1>
+                    <i class="bi bi-graph-up me-2" style="color: #00A3E0;"></i>
+                    {{ sprint.name }}
+                    <span class="sprint-badge {{ sprint.state }}">
+                        {{ {'future': 'Geplant' if lang == 'de' else 'Planned', 'active': 'Aktiv' if lang == 'de' else 'Active', 'closed': 'Abgeschlossen' if lang == 'de' else 'Closed'}[sprint.state] }}
+                    </span>
+                </h1>
+                {% if sprint.goal %}
+                <p class="subtitle mb-0"><i class="bi bi-flag me-1"></i>{{ sprint.goal }}</p>
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('projects.iteration_board', project_id=project.id, sprint_id=sprint.id) }}" class="action-btn action-btn-primary">
+                    <i class="bi bi-kanban"></i>
+                    {{ 'Board' if lang == 'en' else 'Board' }}
+                </a>
+                <a href="{{ url_for('projects.iteration_list', project_id=project.id) }}" class="action-btn action-btn-outline">
+                    <i class="bi bi-arrow-left"></i>
+                    {{ 'Back' if lang == 'en' else 'Zurück' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Sprint Dates -->
+    {% if sprint.start_date and sprint.end_date %}
+    <div class="mb-4 text-muted">
+        <i class="bi bi-calendar-range me-1"></i>
+        {{ sprint.start_date.strftime('%d.%m.%Y') }} – {{ sprint.end_date.strftime('%d.%m.%Y') }}
+        {% set days_total = (sprint.end_date - sprint.start_date).days + 1 %}
+        <span class="ms-2">({{ days_total }} {{ 'days' if lang == 'en' else 'Tage' }})</span>
+    </div>
+    {% endif %}
+    
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #00A3E0 0%, #0076A8 100%);">
+                    <i class="bi bi-list-task"></i>
+                </div>
+                <div class="stat-value">{{ completed_issues }}/{{ total_issues }}</div>
+                <div class="stat-label">{{ (project.get_term('issue_plural', lang) + ' erledigt') if lang == 'de' else (project.get_term('issue_plural', lang) + ' Completed') }}</div>
+                {% set issue_pct = (completed_issues / total_issues * 100) if total_issues > 0 else 0 %}
+                <div class="stat-detail">{{ issue_pct|int }}%</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%);">
+                    <i class="bi bi-lightning-charge"></i>
+                </div>
+                <div class="stat-value">{{ completed_points }}/{{ total_points }}</div>
+                <div class="stat-label">{{ project.get_term('story_points', lang) }}</div>
+                {% set points_pct = (completed_points / total_points * 100) if total_points > 0 else 0 %}
+                <div class="stat-detail">{{ points_pct|int }}%</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
+                    <i class="bi bi-arrow-repeat"></i>
+                </div>
+                <div class="stat-value">{{ in_progress_issues }}</div>
+                <div class="stat-label">{{ 'In Progress' if lang == 'en' else 'In Bearbeitung' }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">
+                    <i class="bi bi-hourglass"></i>
+                </div>
+                <div class="stat-value">{{ todo_issues }}</div>
+                <div class="stat-label">{{ 'To Do' if lang == 'en' else 'Zu erledigen' }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <!-- Burndown Chart -->
+        <div class="col-lg-8">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <h5><i class="bi bi-graph-down me-2"></i>{{ project.get_term('burndown', lang) + ('-Diagramm' if lang == 'de' else ' Chart') }}</h5>
+                </div>
+                <div class="chart-card-body">
+                    {% if burndown_data.labels %}
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="burndownChart"></canvas>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-calendar-x d-block mb-2" style="font-size: 2rem; opacity: 0.5;"></i>
+                        {{ ('No date range defined for this ' + project.get_term('sprint', lang)|lower) if lang == 'en' else ('Kein Zeitraum für diese ' + project.get_term('sprint', lang) + ' definiert') }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Velocity Chart -->
+        <div class="col-lg-4">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <h5><i class="bi bi-speedometer2 me-2"></i>{{ project.get_term('velocity', lang) }}</h5>
+                </div>
+                <div class="chart-card-body">
+                    {% if velocity_data.labels %}
+                    <div class="chart-container" style="height: 200px;">
+                        <canvas id="velocityChart"></canvas>
+                    </div>
+                    <div class="velocity-legend">
+                        <span><span class="dot" style="background: #00A3E0;"></span>{{ 'Committed' if lang == 'en' else 'Geplant' }}</span>
+                        <span><span class="dot" style="background: #4A90D9;"></span>{{ 'Completed' if lang == 'en' else 'Erledigt' }}</span>
+                    </div>
+                    <div class="text-center mt-3">
+                        <strong>{{ ('Durchschnittliche ' + project.get_term('velocity', lang)) if lang == 'de' else ('Average ' + project.get_term('velocity', lang)) }}:</strong>
+                        <span class="text-success fs-5">{{ velocity_data.average }} SP</span>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-bar-chart d-block mb-2" style="font-size: 2rem; opacity: 0.5;"></i>
+                        {{ ('No completed ' + project.get_term('sprint_plural', lang)|lower + ' yet') if lang == 'en' else ('Noch keine abgeschlossenen ' + project.get_term('sprint_plural', lang)) }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Breakdown Row -->
+    <div class="row g-4 mb-4">
+        <!-- By Type -->
+        <div class="col-md-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <h5><i class="bi bi-collection me-2"></i>{{ 'By Type' if lang == 'en' else 'Nach Typ' }}</h5>
+                </div>
+                <div class="chart-card-body">
+                    {% for type_name, stats in issues_by_type.items() %}
+                    <div class="breakdown-item">
+                        <div class="item-name">
+                            <span class="type-dot" style="background: {{ stats.color }};"></span>
+                            {{ type_name }}
+                        </div>
+                        <div class="item-stats">
+                            <span class="primary">{{ stats.completed }}/{{ stats.total }}</span>
+                            <span class="secondary ms-2">{{ ((stats.completed / stats.total) * 100)|int if stats.total > 0 else 0 }}%</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        {{ ('Keine ' + project.get_term('issue_plural', lang) + ' in dieser ' + project.get_term('sprint', lang)) if lang == 'de' else ('No ' + project.get_term('issue_plural', lang)|lower + ' in this ' + project.get_term('sprint', lang)|lower) }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- By Assignee -->
+        <div class="col-md-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <h5><i class="bi bi-people me-2"></i>{{ 'By Assignee' if lang == 'en' else 'Nach Bearbeiter' }}</h5>
+                </div>
+                <div class="chart-card-body">
+                    {% for assignee_name, stats in issues_by_assignee.items() %}
+                    <div class="breakdown-item">
+                        <div class="item-name">
+                            <span class="badge bg-light text-dark rounded-circle" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">
+                                {{ assignee_name[:1].upper() }}
+                            </span>
+                            {{ assignee_name }}
+                        </div>
+                        <div class="item-stats">
+                            <span class="primary">{{ stats.completed }}/{{ stats.total }}</span>
+                            <span class="secondary ms-2">({{ stats.points }} SP)</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        {{ ('Keine ' + project.get_term('issue_plural', lang) + ' in dieser ' + project.get_term('sprint', lang)) if lang == 'de' else ('No ' + project.get_term('issue_plural', lang)|lower + ' in this ' + project.get_term('sprint', lang)|lower) }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Completed Issues -->
+    {% if completed_issue_list %}
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <h5><i class="bi bi-check-circle me-2"></i>{{ ('Erledigte ' + project.get_term('issue_plural', lang)) if lang == 'de' else ('Completed ' + project.get_term('issue_plural', lang)) }} ({{ completed_issue_list|length }})</h5>
+        </div>
+        <div class="chart-card-body p-0">
+            <div class="table-responsive">
+                <table class="table completed-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>{{ 'Summary' if lang == 'en' else 'Zusammenfassung' }}</th>
+                            <th>{{ 'Type' if lang == 'en' else 'Typ' }}</th>
+                            <th>{{ 'Assignee' if lang == 'en' else 'Bearbeiter' }}</th>
+                            <th class="text-end">SP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for issue in completed_issue_list %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('projects.item_detail', project_id=project.id, issue_key=issue.key) }}" class="issue-key">
+                                    {{ issue.key }}
+                                </a>
+                            </td>
+                            <td>{{ issue.summary[:60] }}{% if issue.summary|length > 60 %}...{% endif %}</td>
+                            <td>
+                                <i class="{{ issue.issue_type.icon }}" style="color: {{ issue.issue_type.color }};"></i>
+                                {{ issue.issue_type.get_name(lang) if issue.issue_type else '-' }}
+                            </td>
+                            <td>{{ issue.assignee.name if issue.assignee else '-' }}</td>
+                            <td class="text-end">{{ issue.story_points or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js with SRI -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-B1hFY8t8nG2vEoiKJm8xR3p8fQS1hj0Qi4Lq5VR7O8tBJQKIFgGt8+2fKKFMuOBu" crossorigin="anonymous"></script>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    // Burndown Chart
+    {% if burndown_data.labels %}
+    const burndownCtx = document.getElementById('burndownChart');
+    if (burndownCtx) {
+        new Chart(burndownCtx, {
+            type: 'line',
+            data: {
+                labels: {{ burndown_data.labels | tojson }},
+                datasets: [
+                    {
+                        label: '{{ "Ideal" if lang == "en" else "Ideal" }}',
+                        data: {{ burndown_data.ideal | tojson }},
+                        borderColor: '#ccc',
+                        borderDash: [5, 5],
+                        backgroundColor: 'transparent',
+                        tension: 0,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '{{ "Actual" if lang == "en" else "Tatsächlich" }}',
+                        data: {{ burndown_data.actual | tojson }},
+                        borderColor: '#00A3E0',
+                        backgroundColor: 'rgba(0, 163, 224, 0.1)',
+                        fill: true,
+                        tension: 0.2,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#00A3E0'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '{{ project.get_term("story_points", lang) }}'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: '{{ "Date" if lang == "en" else "Datum" }}'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+    
+    // Velocity Chart
+    {% if velocity_data.labels %}
+    const velocityCtx = document.getElementById('velocityChart');
+    if (velocityCtx) {
+        new Chart(velocityCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ velocity_data.labels | tojson }},
+                datasets: [
+                    {
+                        label: '{{ "Committed" if lang == "en" else "Geplant" }}',
+                        data: {{ velocity_data.committed | tojson }},
+                        backgroundColor: 'rgba(0, 163, 224, 0.7)',
+                        borderColor: '#00A3E0',
+                        borderWidth: 1
+                    },
+                    {
+                        label: '{{ "Completed" if lang == "en" else "Erledigt" }}',
+                        data: {{ velocity_data.completed | tojson }},
+                        backgroundColor: 'rgba(134, 188, 37, 0.7)',
+                        borderColor: '#4A90D9',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'SP'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

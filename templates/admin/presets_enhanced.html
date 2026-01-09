@@ -1,0 +1,921 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Task Presets' if lang == 'en' else 'Aufgabenvorlagen' }} - {{ app_name }}{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, var(--dtt-green-dark) 0%, var(--dtt-green-deep) 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    .page-header h1 {
+        margin: 0;
+        font-weight: 600;
+    }
+    .page-header small {
+        color: rgba(255,255,255,0.8) !important;
+    }
+    
+    /* View Toggle */
+    .view-toggle .btn {
+        color: var(--dtt-cool-gray-7);
+        border-color: var(--dtt-cool-gray-4);
+        background: white;
+    }
+    .view-toggle .btn:hover {
+        background: var(--dtt-green-pale);
+        border-color: var(--dtt-green);
+        color: var(--dtt-green-deep);
+    }
+    .view-toggle .btn.active {
+        background-color: var(--dtt-green);
+        border-color: var(--dtt-green);
+        color: white !important;
+    }
+    .view-toggle .btn.active i {
+        color: white !important;
+    }
+    
+    /* Action Buttons */
+    .btn-brand {
+        background: var(--brand-primary);
+        border-color: var(--brand-primary);
+        color: white;
+    }
+    .btn-brand:hover {
+        background: #3a7bc8;
+        border-color: #3a7bc8;
+        color: white;
+    }
+    
+    /* Filter Card */
+    .filter-card {
+        background: var(--dtt-green-pale);
+        border: 1px solid var(--dtt-sec-green-1);
+        border-radius: 8px;
+    }
+    
+    /* Tree View */
+    .tree-container {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .tree-category {
+        margin-bottom: 1rem;
+    }
+    .tree-category-header {
+        background: linear-gradient(90deg, var(--dtt-sec-teal-1) 0%, var(--dtt-green-pale) 100%);
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s;
+        border-left: 4px solid var(--dtt-sec-teal-5);
+    }
+    .tree-category-header:hover {
+        background: linear-gradient(90deg, var(--dtt-sec-teal-2) 0%, var(--dtt-sec-green-1) 100%);
+    }
+    .tree-category-header .badge {
+        font-size: 0.75rem;
+        background: var(--dtt-sec-teal-6) !important;
+    }
+    .tree-category-items {
+        padding-left: 1.5rem;
+        margin-top: 0.5rem;
+        border-left: 2px solid var(--dtt-cool-gray-2);
+        margin-left: 0.5rem;
+    }
+    .tree-item {
+        background: white;
+        border: 1px solid var(--dtt-cool-gray-2);
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: grab;
+        transition: all 0.2s;
+    }
+    .tree-item:hover {
+        border-color: var(--dtt-green);
+        box-shadow: 0 2px 8px rgba(134, 188, 37, 0.2);
+        background: var(--dtt-green-pale);
+    }
+    .tree-item.dragging {
+        opacity: 0.5;
+        border-style: dashed;
+    }
+    .tree-item.drag-over {
+        border-color: var(--dtt-green-mid);
+        border-width: 2px;
+    }
+    .tree-item .drag-handle {
+        color: var(--dtt-cool-gray-6);
+        margin-right: 0.75rem;
+        cursor: grab;
+    }
+    .tree-item.inactive {
+        opacity: 0.5;
+        background: var(--dtt-cool-gray-2);
+    }
+    
+    /* Bulk Selection Bar */
+    .bulk-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(90deg, var(--dtt-green-deep) 0%, var(--dtt-sec-teal-6) 100%);
+        color: white;
+        padding: 1rem;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+    }
+    .bulk-bar.show {
+        display: block;
+    }
+    .bulk-bar .btn-light {
+        background: white;
+        color: var(--dtt-green-deep);
+        border: none;
+        font-weight: 500;
+    }
+    .bulk-bar .btn-light:hover {
+        background: var(--dtt-green-pale);
+    }
+    
+    /* Quick Edit Panel */
+    .quick-edit-panel {
+        position: fixed;
+        top: 0;
+        right: -400px;
+        width: 400px;
+        height: 100vh;
+        background: white;
+        box-shadow: -4px 0 20px rgba(0,0,0,0.2);
+        z-index: 1050;
+        transition: right 0.3s ease;
+        overflow-y: auto;
+    }
+    .quick-edit-panel.show {
+        right: 0;
+    }
+    .quick-edit-panel .panel-header {
+        background: linear-gradient(135deg, var(--dtt-green-dark) 0%, var(--dtt-green-deep) 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+    }
+    .quick-edit-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 1040;
+        display: none;
+    }
+    .quick-edit-overlay.show {
+        display: block;
+    }
+    
+    /* Card View */
+    .preset-card {
+        border: 1px solid var(--dtt-cool-gray-2);
+        border-radius: 12px;
+        padding: 1.25rem;
+        height: 100%;
+        transition: all 0.2s;
+        cursor: pointer;
+        background: white;
+    }
+    .preset-card:hover {
+        border-color: var(--dtt-green);
+        box-shadow: 0 6px 20px rgba(134, 188, 37, 0.15);
+        transform: translateY(-2px);
+    }
+    .preset-card.selected {
+        border-color: var(--dtt-green-mid);
+        border-width: 2px;
+        background: var(--dtt-green-pale);
+    }
+    .preset-card.inactive {
+        opacity: 0.6;
+    }
+    .preset-card .card-title {
+        color: var(--dtt-green-dark);
+        font-weight: 600;
+    }
+    .preset-card .badge-recurring {
+        background: var(--dtt-sec-teal-5) !important;
+    }
+    .preset-card .badge-tax-type {
+        background: var(--dtt-sec-blue-4) !important;
+    }
+    
+    /* Table View */
+    .table-presets thead {
+        background: var(--dtt-green-dark);
+        color: white;
+    }
+    .table-presets thead th {
+        border: none;
+        font-weight: 500;
+        padding: 0.875rem 1rem;
+    }
+    .table-presets tbody tr:hover {
+        background: var(--dtt-green-pale);
+    }
+    .table-presets .badge-active {
+        background: var(--dtt-sec-green-4) !important;
+    }
+    .table-presets .badge-inactive {
+        background: var(--dtt-cool-gray-6) !important;
+    }
+    
+    /* Status Badges */
+    .badge-recurring {
+        background: var(--dtt-sec-teal-5) !important;
+    }
+    .badge-category {
+        background: var(--dtt-sec-blue-5) !important;
+    }
+    .preset-card .card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    .preset-card .card-icon.aufgabe {
+        background: linear-gradient(135deg, var(--dtt-green) 0%, var(--dtt-green-mid) 100%);
+    }
+    .preset-card .card-icon.antrag {
+        background: linear-gradient(135deg, var(--dtt-sec-blue-3) 0%, var(--dtt-sec-blue-5) 100%);
+    }
+    
+    /* Form Controls with brand styling */
+    .form-select:focus, .form-control:focus {
+        border-color: var(--brand-primary);
+        box-shadow: 0 0 0 0.2rem rgba(74, 144, 217, 0.25);
+    }
+    
+    /* Search input proper width */
+    .search-input-group {
+        min-width: 200px;
+    }
+    
+    /* Card checkbox styling */
+    .preset-card .form-check-input {
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--dtt-cool-gray-4);
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    .preset-card .form-check-input:checked {
+        background-color: var(--dtt-green);
+        border-color: var(--dtt-green);
+    }
+    
+    /* Card text overflow fix */
+    .preset-card .min-width-0 {
+        min-width: 0;
+        overflow: hidden;
+    }
+    .preset-card h6.card-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+    
+    /* Action buttons in filter bar */
+    .action-btn-group .btn {
+        border-width: 2px;
+        font-weight: 500;
+    }
+    .action-btn-group .btn:hover {
+        color: white !important;
+    }
+    .action-btn-group .btn-template:hover {
+        background: var(--dtt-sec-blue-4);
+        border-color: var(--dtt-sec-blue-4);
+    }
+    .action-btn-group .btn-import:hover {
+        background: var(--dtt-green-mid);
+        border-color: var(--dtt-green-mid);
+    }
+    .action-btn-group .btn-export:hover {
+        background: var(--dtt-sec-teal-6);
+        border-color: var(--dtt-sec-teal-6);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header with brand gradient -->
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-0"><i class="bi bi-bookmark-star me-2"></i>{{ 'Task Presets' if lang == 'en' else 'Aufgabenvorlagen' }}</h1>
+            <small>{{ presets|length }} {{ 'templates' if lang == 'en' else 'Vorlagen' }}</small>
+        </div>
+        <div class="d-flex gap-2">
+            <!-- View Toggle -->
+            <div class="btn-group view-toggle" role="group">
+                <button type="button" class="btn btn-outline-secondary active" id="btnTreeView" onclick="setView('tree')">
+                    <i class="bi bi-diagram-3"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="btnCardView" onclick="setView('card')">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="btnTableView" onclick="setView('table')">
+                    <i class="bi bi-list"></i>
+                </button>
+            </div>
+            <a href="{{ url_for('presets.preset_new') }}" class="btn btn-brand">
+                <i class="bi bi-plus-lg me-1"></i> {{ t('create') }}
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filters & Actions -->
+    <div class="card filter-card shadow-sm mb-4">
+        <div class="card-body py-2">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <form method="GET" class="d-flex gap-2 flex-wrap">
+                        <select name="category" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                            <option value="">{{ 'All Categories' if lang == 'en' else 'Alle Kategorien' }}</option>
+                            <option value="aufgabe" {{ 'selected' if category_filter == 'aufgabe' }}>{{ 'Tasks' if lang == 'en' else 'Aufgaben' }}</option>
+                            <option value="antrag" {{ 'selected' if category_filter == 'antrag' }}>{{ 'Applications' if lang == 'en' else 'Anträge' }}</option>
+                        </select>
+                        <select name="tax_type" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                            <option value="">{{ 'All Tax Types' if lang == 'en' else 'Alle Steuerarten' }}</option>
+                            {% for tt in tax_types_used %}
+                            <option value="{{ tt }}" {{ 'selected' if tax_type_filter == tt }}>{{ tt }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="input-group input-group-sm search-input-group">
+                            <input type="text" name="search" class="form-control" placeholder="{{ t('search') }}..." value="{{ search }}" style="min-width: 150px;">
+                            <button type="submit" class="btn btn-outline-secondary" style="border-color: var(--dtt-cool-gray-4);">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-5 text-end">
+                    <div class="btn-group btn-group-sm action-btn-group">
+                        <a href="{{ url_for('presets.preset_template') }}" class="btn btn-outline-primary btn-template" title="{{ 'Download template' if lang == 'en' else 'Vorlage herunterladen' }}" style="border-color: var(--dtt-sec-blue-4); color: var(--dtt-sec-blue-4);">
+                            <i class="bi bi-download me-1"></i>{{ 'Template' if lang == 'en' else 'Vorlage' }}
+                        </a>
+                        <button type="button" class="btn btn-outline-success btn-import" data-bs-toggle="modal" data-bs-target="#importModal" style="border-color: var(--dtt-green-mid); color: var(--dtt-green-mid);">
+                            <i class="bi bi-upload me-1"></i>Import
+                        </button>
+                        <a href="{{ url_for('presets.preset_export') }}" class="btn btn-outline-secondary btn-export" title="{{ 'Export all' if lang == 'en' else 'Alle exportieren' }}" style="border-color: var(--dtt-sec-teal-6); color: var(--dtt-sec-teal-6);">
+                            <i class="bi bi-file-earmark-arrow-down me-1"></i>Export
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tree View -->
+    <div id="treeView" class="view-content">
+        <div class="tree-container shadow-sm">
+            {% set grouped = {} %}
+            {% for preset in presets %}
+                {% set tax = preset.tax_type or 'Sonstige' %}
+                {% if tax not in grouped %}
+                    {% set _ = grouped.update({tax: []}) %}
+                {% endif %}
+                {% set _ = grouped[tax].append(preset) %}
+            {% endfor %}
+            
+            {% for tax_type, items in grouped.items() %}
+            <div class="tree-category" data-tax-type="{{ tax_type }}">
+                <div class="tree-category-header" onclick="toggleCategory(this)">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-chevron-down me-2 category-chevron"></i>
+                        <strong>{{ tax_type }}</strong>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge" style="background: var(--dtt-sec-teal-6);">{{ items|length }}</span>
+                        <span class="badge" style="background: var(--dtt-green-mid);">{{ items|selectattr('category', 'equalto', 'aufgabe')|list|length }} {{ 'Tasks' if lang == 'en' else 'Aufgaben' }}</span>
+                        <span class="badge" style="background: var(--dtt-sec-blue-4);">{{ items|selectattr('category', 'equalto', 'antrag')|list|length }} {{ 'Applications' if lang == 'en' else 'Anträge' }}</span>
+                    </div>
+                </div>
+                <div class="tree-category-items">
+                    {% for preset in items %}
+                    <div class="tree-item {{ 'inactive' if not preset.is_active }}" 
+                         data-id="{{ preset.id }}"
+                         draggable="true"
+                         ondragstart="onDragStart(event)"
+                         ondragend="onDragEnd(event)"
+                         ondragover="onDragOver(event)"
+                         ondrop="onDrop(event)">
+                        <div class="d-flex align-items-center flex-grow-1">
+                            <i class="bi bi-grip-vertical drag-handle"></i>
+                            <input type="checkbox" class="form-check-input me-2 preset-checkbox" value="{{ preset.id }}">
+                            {% if preset.category == 'antrag' %}
+                            <span class="badge bg-info me-2"><i class="bi bi-file-earmark-text"></i></span>
+                            {% else %}
+                            <span class="badge bg-primary me-2"><i class="bi bi-check2-square"></i></span>
+                            {% endif %}
+                            <div>
+                                <a href="{{ url_for('presets.preset_edit', preset_id=preset.id) }}" class="text-decoration-none fw-medium">
+                                    {{ preset.get_title(lang) }}
+                                </a>
+                                {% if preset.law_reference %}
+                                <small class="text-muted ms-2"><code>{{ preset.law_reference }}</code></small>
+                                {% endif %}
+                                {% if preset.is_recurring %}
+                                <span class="badge bg-success ms-1"><i class="bi bi-arrow-repeat"></i></span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-secondary" onclick="quickEdit({{ preset.id }})" title="Quick Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <a href="{{ url_for('presets.preset_edit', preset_id=preset.id) }}" class="btn btn-outline-primary" title="{{ t('edit') }}" style="border-color: var(--dtt-sec-blue-4); color: var(--dtt-sec-blue-4);">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Card View -->
+    <div id="cardView" class="view-content" style="display: none;">
+        <div class="row g-3">
+            {% for preset in presets %}
+            <div class="col-md-4 col-lg-3">
+                <div class="preset-card {{ 'inactive' if not preset.is_active }}" data-id="{{ preset.id }}" onclick="toggleCardSelect(this)">
+                    <div class="d-flex align-items-start mb-2" style="overflow: hidden;">
+                        <div class="card-icon {{ preset.category }} me-2">
+                            <i class="bi bi-{% if preset.category == 'antrag' %}file-earmark-text{% else %}check2-square{% endif %}"></i>
+                        </div>
+                        <div class="flex-grow-1" style="min-width: 0; overflow: hidden;">
+                            <h6 class="card-title mb-1" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ preset.get_title(lang) }}</h6>
+                            <div class="d-flex gap-1 flex-wrap">
+                                {% if preset.tax_type %}
+                                <span class="badge badge-tax-type" style="font-size: 0.7rem;">{{ preset.tax_type }}</span>
+                                {% endif %}
+                                {% if preset.is_recurring %}
+                                <span class="badge badge-recurring" style="font-size: 0.7rem;"><i class="bi bi-arrow-repeat"></i></span>
+                                {% endif %}
+                                {% if not preset.is_active %}
+                                <span class="badge" style="background: var(--dtt-warning-orange); font-size: 0.7rem;">{{ t('inactive') }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <input type="checkbox" class="form-check-input preset-checkbox ms-2" value="{{ preset.id }}" onclick="event.stopPropagation()">
+                    </div>
+                    {% if preset.law_reference %}
+                    <p class="small text-muted mb-2" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="bi bi-book me-1"></i>{{ preset.law_reference }}</p>
+                    {% endif %}
+                    {% if preset.get_description(lang) %}
+                    <p class="small text-muted mb-0" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ preset.get_description(lang)[:80] }}</p>
+                    {% endif %}
+                    <div class="mt-2 pt-2 border-top">
+                        <a href="{{ url_for('presets.preset_edit', preset_id=preset.id) }}" class="btn btn-sm btn-brand w-100">
+                            <i class="bi bi-pencil me-1"></i>{{ t('edit') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Table View -->
+    <div id="tableView" class="view-content" style="display: none;">
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-presets mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" class="form-check-input" id="selectAllTable" onchange="toggleSelectAll()">
+                                </th>
+                                <th style="width: 100px;">{{ 'Category' if lang == 'en' else 'Kategorie' }}</th>
+                                <th>{{ 'Title' if lang == 'en' else 'Titel' }}</th>
+                                <th>{{ 'Tax Type' if lang == 'en' else 'Steuerart' }}</th>
+                                <th>{{ '§ Reference' if lang == 'en' else '§ Referenz' }}</th>
+                                <th style="width: 80px;">{{ t('status') }}</th>
+                                <th style="width: 100px;">{{ t('actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for preset in presets %}
+                            <tr class="{{ 'table-secondary' if not preset.is_active }}">
+                                <td>
+                                    <input type="checkbox" class="form-check-input preset-checkbox" value="{{ preset.id }}">
+                                </td>
+                                <td>
+                                    {% if preset.category == 'antrag' %}
+                                    <span class="badge" style="background: var(--dtt-sec-blue-4);"><i class="bi bi-file-earmark-text me-1"></i>Antrag</span>
+                                    {% else %}
+                                    <span class="badge" style="background: var(--dtt-green-mid);"><i class="bi bi-check2-square me-1"></i>Aufgabe</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('presets.preset_edit', preset_id=preset.id) }}" class="text-decoration-none" style="color: var(--dtt-green-dark); font-weight: 500;">
+                                        {{ preset.get_title(lang) }}
+                                    </a>
+                                    {% if preset.is_recurring %}
+                                    <span class="badge ms-1" style="background: var(--dtt-sec-teal-5);"><i class="bi bi-arrow-repeat"></i></span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if preset.tax_type %}
+                                    <span class="badge" style="background: var(--dtt-sec-teal-6);">{{ preset.tax_type }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if preset.law_reference %}
+                                    <code>{{ preset.law_reference }}</code>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if preset.is_active %}
+                                    <span class="badge bg-success">{{ t('active') }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ t('inactive') }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('presets.preset_edit', preset_id=preset.id) }}" class="btn btn-outline-primary" title="{{ t('edit') }}">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('presets.preset_delete', preset_id=preset.id) }}" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-outline-danger" title="{{ t('delete') }}" onclick="return confirm('{{ t('confirm_delete') }}')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div class="bulk-bar" id="bulkBar">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-light text-dark fs-6" id="selectedCount">0</span>
+                <span>{{ 'selected' if lang == 'en' else 'ausgewählt' }}</span>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-light btn-sm" onclick="bulkToggleActive(true)">
+                    <i class="bi bi-check-circle me-1"></i>{{ 'Activate' if lang == 'en' else 'Aktivieren' }}
+                </button>
+                <button type="button" class="btn btn-light btn-sm" onclick="bulkToggleActive(false)">
+                    <i class="bi bi-x-circle me-1"></i>{{ 'Deactivate' if lang == 'en' else 'Deaktivieren' }}
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="bulkDelete()">
+                    <i class="bi bi-trash me-1"></i>{{ t('delete') }}
+                </button>
+                <button type="button" class="btn btn-outline-light btn-sm" onclick="clearSelection()">
+                    <i class="bi bi-x-lg me-1"></i>{{ t('cancel') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Edit Panel -->
+<div class="quick-edit-overlay" id="quickEditOverlay" onclick="closeQuickEdit()"></div>
+<div class="quick-edit-panel" id="quickEditPanel">
+    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>{{ 'Quick Edit' if lang == 'en' else 'Schnellbearbeitung' }}</h5>
+        <button type="button" class="btn-close" onclick="closeQuickEdit()"></button>
+    </div>
+    <div class="p-3" id="quickEditContent">
+        <!-- Filled by JavaScript -->
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-upload me-2"></i>{{ 'Import Presets' if lang == 'en' else 'Vorlagen importieren' }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('presets.preset_import') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">{{ 'File' if lang == 'en' else 'Datei' }}</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".json,.xlsx,.xls" required>
+                        <div class="form-text">{{ 'Supported: .json, .xlsx, .xls' if lang == 'en' else 'Unterstützt: .json, .xlsx, .xls' }}</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel') }}</button>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-upload me-1"></i>Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+    const lang = '{{ lang }}';
+    let currentView = localStorage.getItem('presetView') || 'tree';
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        setView(currentView);
+        updateBulkBar();
+        
+        // Listen for checkbox changes
+        document.querySelectorAll('.preset-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateBulkBar);
+        });
+    });
+    
+    // View Toggle
+    function setView(view) {
+        currentView = view;
+        localStorage.setItem('presetView', view);
+        
+        document.querySelectorAll('.view-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.view-toggle .btn').forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(view + 'View').style.display = 'block';
+        document.getElementById('btn' + view.charAt(0).toUpperCase() + view.slice(1) + 'View').classList.add('active');
+    }
+    
+    // Category Toggle
+    function toggleCategory(header) {
+        const items = header.nextElementSibling;
+        const chevron = header.querySelector('.category-chevron');
+        
+        if (items.style.display === 'none') {
+            items.style.display = 'block';
+            chevron.classList.remove('bi-chevron-right');
+            chevron.classList.add('bi-chevron-down');
+        } else {
+            items.style.display = 'none';
+            chevron.classList.remove('bi-chevron-down');
+            chevron.classList.add('bi-chevron-right');
+        }
+    }
+    
+    // Drag and Drop
+    let draggedItem = null;
+    
+    function onDragStart(e) {
+        draggedItem = e.target;
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+    
+    function onDragEnd(e) {
+        e.target.classList.remove('dragging');
+        document.querySelectorAll('.tree-item').forEach(item => {
+            item.classList.remove('drag-over');
+        });
+    }
+    
+    function onDragOver(e) {
+        e.preventDefault();
+        e.target.closest('.tree-item')?.classList.add('drag-over');
+    }
+    
+    function onDrop(e) {
+        e.preventDefault();
+        const target = e.target.closest('.tree-item');
+        if (target && draggedItem && target !== draggedItem) {
+            const parent = target.parentNode;
+            const draggedIndex = Array.from(parent.children).indexOf(draggedItem);
+            const targetIndex = Array.from(parent.children).indexOf(target);
+            
+            if (draggedIndex < targetIndex) {
+                parent.insertBefore(draggedItem, target.nextSibling);
+            } else {
+                parent.insertBefore(draggedItem, target);
+            }
+        }
+        target?.classList.remove('drag-over');
+    }
+    
+    // Card Select
+    function toggleCardSelect(card) {
+        const checkbox = card.querySelector('.preset-checkbox');
+        checkbox.checked = !checkbox.checked;
+        card.classList.toggle('selected', checkbox.checked);
+        updateBulkBar();
+    }
+    
+    // Bulk Selection
+    function updateBulkBar() {
+        const checked = document.querySelectorAll('.preset-checkbox:checked');
+        const bar = document.getElementById('bulkBar');
+        const count = document.getElementById('selectedCount');
+        
+        if (checked.length > 0) {
+            bar.classList.add('show');
+            count.textContent = checked.length;
+        } else {
+            bar.classList.remove('show');
+        }
+    }
+    
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAllTable');
+        document.querySelectorAll('#tableView .preset-checkbox').forEach(cb => {
+            cb.checked = selectAll.checked;
+        });
+        updateBulkBar();
+    }
+    
+    function clearSelection() {
+        document.querySelectorAll('.preset-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+        document.querySelectorAll('.preset-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        updateBulkBar();
+    }
+    
+    function getSelectedIds() {
+        return Array.from(document.querySelectorAll('.preset-checkbox:checked')).map(cb => cb.value);
+    }
+    
+    // Bulk Actions
+    async function bulkToggleActive(active) {
+        const ids = getSelectedIds();
+        if (!ids.length) return;
+        
+        const action = active ? (lang === 'de' ? 'aktivieren' : 'activate') : (lang === 'de' ? 'deaktivieren' : 'deactivate');
+        if (!confirm(`${ids.length} ${lang === 'de' ? 'Vorlagen' : 'presets'} ${action}?`)) return;
+        
+        try {
+            const response = await fetch('/api/presets/bulk-toggle-active', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids, active: active })
+            });
+            
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error: ' + await response.text());
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+    
+    async function bulkDelete() {
+        const ids = getSelectedIds();
+        if (!ids.length) return;
+        
+        if (!confirm(`${ids.length} ${lang === 'de' ? 'Vorlagen endgültig löschen?' : 'presets permanently delete?'}`)) return;
+        
+        try {
+            const response = await fetch('/api/presets/bulk-delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids })
+            });
+            
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error: ' + await response.text());
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+    
+    // Quick Edit Panel
+    function quickEdit(id) {
+        const panel = document.getElementById('quickEditPanel');
+        const overlay = document.getElementById('quickEditOverlay');
+        const content = document.getElementById('quickEditContent');
+        
+        content.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>`;
+        panel.classList.add('show');
+        overlay.classList.add('show');
+        
+        fetch(`/api/presets/${id}`)
+            .then(res => res.json())
+            .then(preset => {
+                content.innerHTML = `
+                    <form id="quickEditForm" onsubmit="saveQuickEdit(event, ${preset.id})">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">🇩🇪 ${lang === 'de' ? 'Titel' : 'Title'} (DE)</label>
+                            <input type="text" class="form-control" name="title_de" value="${preset.title_de || ''}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">🇬🇧 ${lang === 'de' ? 'Titel' : 'Title'} (EN)</label>
+                            <input type="text" class="form-control" name="title_en" value="${preset.title_en || ''}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">${lang === 'de' ? 'Steuerart' : 'Tax Type'}</label>
+                            <input type="text" class="form-control" name="tax_type" value="${preset.tax_type || ''}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">§ ${lang === 'de' ? 'Referenz' : 'Reference'}</label>
+                            <input type="text" class="form-control" name="law_reference" value="${preset.law_reference || ''}">
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="qeActive" ${preset.is_active ? 'checked' : ''}>
+                            <label class="form-check-label" for="qeActive">${lang === 'de' ? 'Aktiv' : 'Active'}</label>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success flex-grow-1">
+                                <i class="bi bi-check-lg me-1"></i>${lang === 'de' ? 'Speichern' : 'Save'}
+                            </button>
+                            <a href="/admin/presets/${preset.id}" class="btn btn-outline-primary">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </div>
+                    </form>
+                `;
+            })
+            .catch(err => {
+                content.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+            });
+    }
+    
+    function closeQuickEdit() {
+        document.getElementById('quickEditPanel').classList.remove('show');
+        document.getElementById('quickEditOverlay').classList.remove('show');
+    }
+    
+    async function saveQuickEdit(e, id) {
+        e.preventDefault();
+        const form = e.target;
+        const data = {
+            title_de: form.title_de.value,
+            title_en: form.title_en.value,
+            tax_type: form.tax_type.value,
+            law_reference: form.law_reference.value,
+            is_active: form.is_active.checked
+        };
+        
+        try {
+            const response = await fetch(`/api/presets/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                closeQuickEdit();
+                location.reload();
+            } else {
+                alert('Error: ' + await response.text());
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+</script>
+{% endblock %}

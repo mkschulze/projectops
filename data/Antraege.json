@@ -1,0 +1,511 @@
+{
+  "source_file": "Anträge.xlsx",
+  "sheets": {
+    "Tabelle1": [
+      {
+        "Gesetz": "EStG",
+        "§ Paragraph": "§1 (3) EStG, §1a (1) Nr. 2 EStG",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Unbeschränkte Einkommensteuerpflicht",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ermöglicht, dass ausländische Mitarbeiter mit überwiegend deutschen Einkünften wie Inländer behandelt werden und dadurch steuerliche Vergünstigungen (z. B. Grundfreibetrag, Ehegattensplitting) nutzen können, was die Nettovergütung erhöht und die Konzernattraktivität steigert."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§3 Nr. 66 EStG ",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Steuerfreie Einnahme",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag macht die Übertragung von Versorgungsverpflichtungen auf einen Pensionsfonds steuerfrei und erlaubt die Verteilung der Kosten über zehn Jahre, wodurch Liquidität und Steuerbelastung für den Konzern optimiert werden"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§4 (1) EStG",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Gewinnbegriff im Allgemeinen",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist für einen Konzern interessant, weil er bei der Beschränkung oder dem Wegfall des deutschen Besteuerungsrechts auf stille Reserven eine sofortige Gewinnrealisierung vermeidet und stattdessen eine steuerliche Entlastung oder Stundung ermöglicht, was Liquidität und Steuerplanung verbessert."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 4d (3) EStG",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Zuwendungen an Unterstützungskassen",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er die hohen Zuwendungen an eine Unterstützungskasse steuerlich auf zehn Jahre verteilt und so die Liquiditätsbelastung des Konzerns deutlich reduziert."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§4e (3) EStG",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Beiträge an Pensionsfonds",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er die hohen Leistungen an einen Pensionsfonds steuerlich auf zehn Jahre verteilt und so die Liquiditäts- und Steuerbelastung des Konzerns deutlich reduziert."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§4g (1) EStG",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Bildung eines Ausgleichspostens bei Entnahme",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er die sofortige Gewinnrealisierung bei Wegfall des deutschen Besteuerungsrechts vermeidet, indem ein Ausgleichsposten gebildet wird, was die Steuerlast zeitlich streckt und Liquidität sichert."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§5a (1) EStG",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Gewinnermittlung bei Handelsschiffen im internationalen Verkehr",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er die Gewinnermittlung für den Betrieb von Handelsschiffen auf die Tonnage umstellt und dadurch die Steuerlast kalkulierbar und oft deutlich geringer macht."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§5a (3) EStG",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Gewinnermittlung bei Handelsschiffen im internationalen Verkehr",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er die Gewinnermittlung für internationale Handelsschiffe auf die Tonnage umstellt, wodurch die Steuerlast planbar und oft deutlich geringer wird."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§5b (1) EStG",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Elektronische Übermittlung von Bilanzen sowie Gewinn- und Verlustrechnungen",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er Unternehmen erlaubt, bei unbilligen Härten auf die Pflicht zur elektronischen Übermittlung zu verzichten und dadurch Verwaltungsaufwand und technische Probleme zu vermeiden."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§6b (2a)",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Übertragung stiller Reserven bei der Veräußerung bestimmter Anlagegüter",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er die auf den Veräußerungsgewinn entfallende Steuer in fünf (bzw. sechs) Jahresraten zahlbar macht und so die Liquiditätsbelastung des Konzerns deutlich reduziert"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§7g (2) Nr. 2 EStG",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Investitionsabzugsbeträge und Sonderabschreibungen zur Förderung kleiner und mittlerer Betriebe",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er Unternehmen erlaubt, bis zu 50 % der geplanten Anschaffungs- oder Herstellungskosten vorab gewinnmindernd abzuziehen und so die Steuerlast vor der Investition zu senken und Liquidität zu verbessern."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§10",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Sonderausgaben",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er bestimmte Altersvorsorgebeiträge als Sonderausgaben anerkennen lässt und dadurch die Steuerlast des Steuerpflichtigen senkt."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§10",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Sonderausgaben",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er Unterhaltsleistungen an den geschiedenen oder getrennt lebenden Ehegatten als Sonderausgaben anerkennen lässt und dadurch die Steuerlast des Zahlenden senkt."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§10",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Sonderausgaben",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er höhere Vorsorgeaufwendungen bis zum Höchstbetrag steuerlich berücksichtigt und so die Steuerlast des Steuerpflichtigen senkt."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§10a",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Zusätzliche Altersvorsorge",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er Eltern mit Kinderzulage für unter Vierjährige die Förderberechtigung für Altersvorsorge sichert, auch wenn Kindererziehungszeiten noch nicht anerkannt sind, und so steuerliche Vorteile ermöglicht."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§10b",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Steuerbegünstigte Zwecke",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er Spenden in den Vermögensstock einer Stiftung bis zu 1 Mio. € (bzw. 2 Mio. € bei Ehegatten) zusätzlich zum normalen Höchstbetrag über zehn Jahre steuerlich abziehbar macht und so erhebliche Steuervorteile ermöglicht."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§10d",
+        "Name der Norm": null,
+        "Zweck des Antrags": "Verlustabzug",
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ist interessant, weil er den Verlustrücktrag ausschließt und so verhindert, dass Verluste automatisch mit Vorjahresgewinnen verrechnet werden, was für Steuerplanung und Liquiditätssteuerung des Konzerns vorteilhaft sein kann."
+      },
+      {
+        "Gesetz": "KStG",
+        "§ Paragraph": "§ 1a KStG",
+        "Name der Norm": "Option zur Körperschaftsbesteuerung",
+        "Zweck des Antrags": "Option zur KSt",
+        "Fundstelle im Gesetz": "§ 1a Abs. 1 KStG",
+        "Erläuterung": "Personenhandelsgesellschaften und Partnerschaftsgesellschaften können auf unwiderruflichen Antrag zur Körperschaftsbesteuerung optieren."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": null,
+        "Name der Norm": null,
+        "Zweck des Antrags": "Rückoption zur KSt",
+        "Fundstelle im Gesetz": "§ 1a Abs. 4 S. 1-3 KStG",
+        "Erläuterung": "Die Rückkehr zur Besteuerung nach den Grundsätzen für Personengesellschaften (sog. „Rückoption“) ist ebenfalls auf Antrag möglich."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 8d KStG",
+        "Name der Norm": "Fortführungsgebundener Verlustvortrag",
+        "Zweck des Antrags": "Antrag auf Nichtanwendung des § 8c bei schädlichem Beteiligungserwerb",
+        "Fundstelle im Gesetz": "§ 8d Abs. 1 S. 1+5 KStG",
+        "Erläuterung": "Dient dazu: Den Verlustuntergang nach § 8c trotz Anteilsübertragung zu vermeiden, wenn der Geschäftsbetrieb unverändert fortgeführt wurde.\nNutzen für Unternehmen: Erhält steuerliche Verlustvorträge und schützt Liquidität bei Umstrukturierungen oder Beteiligungserwerben."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 12 KStG",
+        "Name der Norm": "Entstrickungs- und Wegzugsbesteuerung",
+        "Zweck des Antrags": "Antrag auf Bewertung nach gemeinem Wert bei Wegfall des Besteuerungsrechts",
+        "Fundstelle im Gesetz": "§ 12 Abs. 1 S. 3 KStG",
+        "Erläuterung": "Der Antrag ermöglicht eine steuerliche Neubewertung wie Veräußerung und Anschaffung bei Wegfall des deutschen Besteuerungsrechts, wodurch Unternehmen Doppelbesteuerung vermeiden und ihre Steuerlast bei internationalen Betriebsstättenverlagerungen optimieren können"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 27 KStG",
+        "Name der Norm": "Nicht in das Nennkapital geleistete Einlagen",
+        "Zweck des Antrags": "Antrag auf Feststellung der Einlagenrückgewähr bei ausländischen Körperschaften",
+        "Fundstelle im Gesetz": "§ 27 Abs. 8 KStG",
+        "Erläuterung": "Der Antrag ermöglicht die Feststellung einer Einlagenrückgewähr bei ausländischen Körperschaften, wodurch Unternehmen Ausschüttungen steuerlich korrekt behandeln und zusätzliche Steuerbelastungen vermeiden können."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 31 KStG",
+        "Name der Norm": "Steuererklärungspflicht, Veranlagung und Erhebung von Körperschaftsteuer",
+        "Zweck des Antrags": null,
+        "Fundstelle im Gesetz": "§ 31 Abs. 1a S. 2 KStG",
+        "Erläuterung": "Der Antrag erlaubt den Verzicht auf die elektronische Übermittlung der Körperschaftsteuererklärung bei unbilligen Härten, wodurch Unternehmen Kosten und Aufwand für technische Anforderungen vermeiden können."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 32 KStG",
+        "Name der Norm": "Sondervorschriften für den Steuerabzug",
+        "Zweck des Antrags": null,
+        "Fundstelle im Gesetz": "§ 32 Abs. 2 Nr. 2 KStG",
+        "Erläuterung": "Dies dient dazu, dass Unternehmen bei bestimmten Vergütungen, die dem Steuerabzug nach § 50a EStG unterliegen, durch eine Körperschaftsteuerveranlagung eine mögliche Erstattung oder Anrechnung der einbehaltenen Steuer erhalten können, was ihre Steuerlast reduziert und Liquidität verbessert."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": null,
+        "Name der Norm": null,
+        "Zweck des Antrags": null,
+        "Fundstelle im Gesetz": "§ 32 Abs. 5 KStG",
+        "Erläuterung": "Wenn die Körperschaftsteuer des Gläubigers für Kapitalerträge nach § 20 Abs. 1 Nr. 1 EStG bereits als abgegolten gilt, kann der Gläubiger auf Antrag die einbehaltene und abgeführte Kapitalertragsteuer gemäß § 36 Abs. 2 Nr. 2 EStG erstattet bekommen.\nZweck: Vermeidung einer Doppelbelastung bei Kapitalerträgen.\nVorteil für Unternehmen: Rückerstattung der Kapitalertragsteuer senkt die Steuerlast und verbessert die Liquidität."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 33 KSTG",
+        "Name der Norm": "Ermächtigung",
+        "Zweck des Antrags": null,
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag dient dazu, Unternehmen bei Investitionen in abnutzbare Wirtschaftsgüter eine steuerliche Entlastung durch Abzug von bis zu 7,5 % der Anschaffungs- oder Herstellungskosten von der Körperschaftsteuer zu ermöglichen, wodurch die Steuerlast sinkt und Investitionen gefördert werden."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 34 KStG",
+        "Name der Norm": "Schlussvorschriften",
+        "Zweck des Antrags": null,
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag dient dazu, Unternehmen und Konzernen die Anwendung neuer oder geänderter steuerlicher Regelungen ab einem bestimmten Veranlagungszeitraum zu ermöglichen, um Rechtssicherheit zu schaffen und steuerliche Vorteile frühzeitig zu nutzen"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 36",
+        "Name der Norm": "Endbestände",
+        "Zweck des Antrags": null,
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen, die Anwendung älterer steuerlicher Vorschriften fortzuführen, um bestehende steuerliche Vorteile und Planungs­sicherheit bei Umwandlungen oder Liquidationen zu erhalten"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 38 KStG",
+        "Name der Norm": "Körperschaftsteuererhöhung",
+        "Zweck des Antrags": null,
+        "Fundstelle im Gesetz": null,
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen, den Körperschaftsteuererhöhungsbetrag in einer Summe vorzeitig zu begleichen, um die Zahlungspflicht zu vereinfachen und mögliche Zinsvorteile durch Abzinsung zu nutzen."
+      },
+      {
+        "Gesetz": "AO",
+        "§ Paragraph": "§ 163 AO",
+        "Name der Norm": "Abweichende Steuerfestsetzung aus Billigkeitsgründen",
+        "Zweck des Antrags": "Steuerfestsetzung aus Billigkeitsgründen abweichend gestalten",
+        "Fundstelle im Gesetz": "§ 163 Abs. 1 AO",
+        "Erläuterung": "Die Steuer kann auf Antrag niedriger festgesetzt oder erlassen werden, wenn die reguläre Festsetzung unbillig wäre."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 164 AO",
+        "Name der Norm": "Aufhebung oder Änderung einer Steuerfestsetzung unter Vorbehalt der Nachprüfung",
+        "Zweck des Antrags": "Vorbehalt aufheben oder ändern",
+        "Fundstelle im Gesetz": "§ 164 Abs. 2 AO",
+        "Erläuterung": "Der Steuerpflichtige kann beantragen, dass der Vorbehalt der Nachprüfung aufgehoben wird."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 165 AO",
+        "Name der Norm": "Vorläufige Steuerfestsetzung",
+        "Zweck des Antrags": "Vorläufige Festsetzung beantragen",
+        "Fundstelle im Gesetz": "§ 165 Abs. 1 AO",
+        "Erläuterung": "Bei unklaren Tatsachen kann eine vorläufige Steuerfestsetzung beantragt werden, bis die Unsicherheit geklärt ist."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 172 AO",
+        "Name der Norm": "Änderung von Steuerbescheiden",
+        "Zweck des Antrags": "Änderung zugunsten des Steuerpflichtigen",
+        "Fundstelle im Gesetz": "§ 172 Abs. 1 Nr. 2a AO",
+        "Erläuterung": "Ein Steuerbescheid kann auf Antrag geändert werden, wenn die Voraussetzungen für eine Korrektur zugunsten des Steuerpflichtigen vorliegen."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 173 AO",
+        "Name der Norm": "Änderung wegen neuer Tatsachen oder Beweismittel",
+        "Zweck des Antrags": "Änderung des Bescheids bei neuen Tatsachen",
+        "Fundstelle im Gesetz": "§ 173 Abs. 1 AO",
+        "Erläuterung": "Der Steuerpflichtige kann eine Änderung beantragen, wenn neue Tatsachen oder Beweismittel bekannt werden."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 174 AO",
+        "Name der Norm": "Widerstreitende Steuerfestsetzungen",
+        "Zweck des Antrags": "Beseitigung von Doppelbesteuerung",
+        "Fundstelle im Gesetz": "§ 174 Abs. 1 AO",
+        "Erläuterung": "Ein Antrag ist möglich, wenn ein Sachverhalt in mehreren Bescheiden unterschiedlich berücksichtigt wurde."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 175 AO",
+        "Name der Norm": "Änderung wegen rückwirkender Ereignisse",
+        "Zweck des Antrags": "Anpassung an rückwirkende Ereignisse",
+        "Fundstelle im Gesetz": "§ 175 Abs. 1 AO",
+        "Erläuterung": "Der Steuerpflichtige kann eine Änderung beantragen, wenn ein Ereignis rückwirkend steuerlich relevant wird."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 222 AO",
+        "Name der Norm": "Stundung",
+        "Zweck des Antrags": "Zahlungsaufschub beantragen",
+        "Fundstelle im Gesetz": "§ 222 AO",
+        "Erläuterung": "Auf Antrag kann die Fälligkeit einer Steuerzahlung hinausgeschoben werden, wenn sofortige Zahlung eine erhebliche Härte darstellt."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 227 AO",
+        "Name der Norm": "Erlass",
+        "Zweck des Antrags": "Erlass von Steuern aus Billigkeitsgründen",
+        "Fundstelle im Gesetz": "§ 227 AO",
+        "Erläuterung": "Die Steuer kann auf Antrag ganz oder teilweise erlassen werden, wenn ihre Einziehung unbillig wäre."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 361 AO",
+        "Name der Norm": "Aussetzung der Vollziehung",
+        "Zweck des Antrags": "Vollziehung eines Bescheids aussetzen",
+        "Fundstelle im Gesetz": "§ 361 Abs. 2 AO",
+        "Erläuterung": "Der Steuerpflichtige kann beantragen, dass die Vollziehung eines angefochtenen Bescheids bis zur Entscheidung ausgesetzt wird."
+      },
+      {
+        "Gesetz": "UStG",
+        "§ Paragraph": "§ 4 UStG",
+        "Name der Norm": "Steuerbefreiungen bei Lieferungen und sonstigen Leistungen",
+        "Zweck des Antrags": "Bewilligung oder Nachweis der Steuerbefreiung für bestimmte Umsätze",
+        "Fundstelle im Gesetz": "§ 4 Abs. 1 Nr.4a",
+        "Erläuterung": "Der Antrag ermöglicht die Bewilligung eines Umsatzsteuerlagers, sodass bestimmte Lieferungen und Lagerleistungen steuerfrei erfolgen können. Dies erleichtert den Handel mit in Anlage 1 genannten Gegenständen, verschiebt die Umsatzsteuerbelastung bis zur endgültigen Auslagerung und fördert die Liquidität sowie Wettbewerbsfähigkeit der Unternehmen"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 4a UStG",
+        "Name der Norm": "Steuervergütung für Leistungsbezüge zur Verwendung zu humanitären, karitativen oder erzieherischen Zwecken im Drittlandsgebiet",
+        "Zweck des Antrags": "Erstattung der Umsatzsteuer für Ausfuhren zu gemeinnützigen Zwecken ins Drittlandsgebiet.",
+        "Fundstelle im Gesetz": "§ 4a UStG",
+        "Erläuterung": "Der Antrag dient der Rückerstattung der Umsatzsteuer, um Ausfuhren für gemeinnützige Zwecke ins Drittlandsgebiet steuerlich zu entlasten und Projekte kostengünstiger zu machen"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 4c UStG",
+        "Name der Norm": "Steuervergütung für Leistungsbezüge europäischer Einrichtungen",
+        "Zweck des Antrags": "Vergütung der gezahlten Umsatzsteuer für europäische Einrichtungen, wenn Leistungen nicht steuerfrei erbracht werden können",
+        "Fundstelle im Gesetz": "§ 4c UStG",
+        "Erläuterung": "Der Antrag stellt sicher, dass EU-Institutionen und bestimmte Agenturen die entrichtete Umsatzsteuer zurückerhalten, um ihre Aufgaben (z. B. im Rahmen von EU-Rechten oder zur Bekämpfng der COVID-19-Pandemie) ohne zusätzliche Steuerbelastung erfüllen zu können"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 14c UStG",
+        "Name der Norm": " Unrichtiger oder unberechtigter Steuerausweis",
+        "Zweck des Antrags": "Berichtigung einer zu hoch oder unberechtigt ausgewiesenen Umsatzsteuer, um die Gefährdung des Steueraufkommens zu beseitigen",
+        "Fundstelle im Gesetz": "§ 14c UStG",
+        "Erläuterung": "Der Antrag dient dazu, die zu Unrecht geschuldete Steuer zurückzufordern, nachdem sichergestellt ist, dass kein Vorsteuerabzug beim Rechnungsempfänger erfolgt oder dieser zurückgezahlt wurde"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 18 UStG",
+        "Name der Norm": "Besteuerungsverfahren",
+        "Zweck des Antrags": "Verzicht auf die Pflicht zur elektronischen Übermittlung der Umsatzsteuer-Voranmeldung, um unbillige Härten zu vermeiden",
+        "Fundstelle im Gesetz": "§ 18 (1) UStG",
+        "Erläuterung": "Der Antrag erlaubt die Abgabe der Voranmeldung in Papierform (amtlicher Vordruck), wenn die elektronische Übermittlung für den Unternehmer unzumutbar ist"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 18a UStG",
+        "Name der Norm": "Zusammenfassende Meldung",
+        "Zweck des Antrags": "Verzicht auf die Pflicht zur elektronischen Übermittlung der Zusammenfassenden Meldung, um unbillige Härten zu vermeiden",
+        "Fundstelle im Gesetz": "§ 18a (5) UStG",
+        "Erläuterung": "Das Finanzamt kann auf Antrag erlauben, die Meldung in Papierform (amtlicher Vordruck) statt elektronisch einzureichen, wenn die elektronische Übermittlung für den Unternehmer unzumutbar ist"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 18g UStG",
+        "Name der Norm": "Abgabe des Antrags auf Vergütung von Vorsteuerbeträgen in einem anderen Mitgliedstaat",
+        "Zweck des Antrags": "Vergütung von Vorsteuerbeträgen in einem anderen EU-Mitgliedstaat gemäß Richtlinie 2008/9/EG",
+        "Fundstelle im Gesetz": "§ 18g UStG",
+        "Erläuterung": "Der Antrag ermöglicht die Erstattung von Vorsteuer, die in einem anderen EU-Staat angefallen ist, um Doppelbelastungen zu vermeiden und Liquidität zu sichern"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 19a UStG",
+        "Name der Norm": "Besonderes Meldeverfahren für die Anwendung der Steuerbefreiung in einem anderen Mitgliedstaat",
+        "Zweck des Antrags": "Ermöglicht inländischen Unternehmern die Anwendung der Kleinunternehmer-Steuerbefreiung in anderen EU-Mitgliedstaaten durch ein spezielles Meldeverfahren",
+        "Fundstelle im Gesetz": "§ 19a UStG",
+        "Erläuterung": "Der Antrag dient dazu, Unternehmern die Nutzung der Kleinunternehmerregelung in anderen EU-Staaten zu ermöglichen, indem sie sich beim BZSt registrieren und Umsätze melden, wodurch die Steuerbefreiung grenzüberschreitend angewendet werden kann"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 20 UStG",
+        "Name der Norm": "Berechnung der Steuer nach vereinnahmten Entgelten",
+        "Zweck des Antrags": "Gestattung der Berechnung der Umsatzsteuer nach vereinnahmten statt vereinbarten Entgelten",
+        "Fundstelle im Gesetz": "§ 20 UStG",
+        "Erläuterung": "Der Antrag dient dazu, Unternehmern mit bestimmten Voraussetzungen (z. B. Umsatz ≤ 800.000 €, Freiberufler, juristische Personen des öffentlichen Rechts) die Liquidität zu verbessern, indem die Steuer erst bei Zahlungseingang entsteht"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 21a UStG",
+        "Name der Norm": "Sonderregelungen bei der Einfuhr von Sendungen mit einem Sachwert von höchstens 150 Euro",
+        "Zweck des Antrags": "Sonderregelung zur vereinfachten Abwicklung und Zahlungsaufschub der Einfuhrumsatzsteuer bei Sendungen bis 150 €",
+        "Fundstelle im Gesetz": "§ 21 (1) UStG",
+        "Erläuterung": "Antrag zusammen mit der Zollanmeldung; Voraussetzungen u. a. Zahlungsaufschub nach Art. 110 b UZK, Inlandszustellung, keine Verbrauchsteuerwaren; EUSt wird dem Aufschubkonto der gestellenden Person belastet und vom Empfänger bei Auslieferung erstattet"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 27 UStG",
+        "Name der Norm": "Allgemeine Übergangsvorschriften",
+        "Zweck des Antrags": "Zulassung der Abtretung des Umsatzsteueranspruchs an das Finanzamt bei fehlerhafter Anwendung ",
+        "Fundstelle im Gesetz": "§ 27 (19) UStG",
+        "Erläuterung": "Der Antrag dient dazu, eine Abtretung an Zahlungs statt zu ermöglichen, wenn die frühere Steuerschuld-Annahme auf einer Verwaltungsanweisung beruhte und der Unternehmer bei der Durchsetzung mitwirkt"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 27a UStG",
+        "Name der Norm": "Umsatzsteuer-Identifikationsnummer",
+        "Zweck des Antrags": "Erteilung einer Umsatzsteuer-Identifikationsnummer für Unternehmer und bestimmte juristische Personen",
+        "Fundstelle im Gesetz": "§ 27a (1) UStG",
+        "Erläuterung": "Der Antrag dient dazu, eine USt-IdNr. für innergemeinschaftliche Umsätze oder Erwerbe zu erhalten; schriftlich beim BZSt mit Angaben zu Name, Anschrift und Steuernummer"
+      },
+      {
+        "Gesetz": "UmwStG",
+        "§ Paragraph": "§ 3 UmwStG",
+        "Name der Norm": "Wertansätze in der steuerlichen Schlussbilanz der übertragenden Körperschaft",
+        "Zweck des Antrags": "Sicherstellung der rechtlichen Wirksamkeit einer Verschmelzung durch Aufnahme und Schutz der beteiligten Gesellschaften",
+        "Fundstelle im Gesetz": "§ 3 Abs. 2 UmwStG",
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen bei einer Verschmelzung auf eine Personengesellschaft oder natürliche Person die Bewertung der übergehenden Wirtschaftsgüter mit Buchwerten statt gemeinem Wert, um steuerliche Belastungen zu vermeiden und Liquidität zu schonen"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 11 UmwStG",
+        "Name der Norm": "Wertansätze in der steuerlichen Schlussbilanz der übertragenden Körperschaft",
+        "Zweck des Antrags": "Transparenz für Gesellschafter und Gläubiger durch umfassende Information über die geplante Verschmelzung",
+        "Fundstelle im Gesetz": "§ 11 Abs. 2 UmwStG",
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen bei einer Verschmelzung oder Vermögensübertragung die Bewertung der übergehenden Wirtschaftsgüter mit Buchwerten statt gemeinem Wert, um steuerliche Belastungen zu vermeiden und die Liquidität zu sichern"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 13 UmwStG",
+        "Name der Norm": "Besteuerung der Anteilseigner der übertragenden Körperschaft",
+        "Zweck des Antrags": "Sicherstellung der Richtigkeit und Angemessenheit der Verschmelzungsbedingungen durch unabhängige Prüfung",
+        "Fundstelle im Gesetz": "§ 13 Abs. 2 UmwStG",
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen, bei einer Verschmelzung die Anteile an der übernehmenden Körperschaft mit Buchwerten statt gemeinem Wert anzusetzen, um steuerliche Belastungen zu vermeiden und die Liquidität zu sichern"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 20 UmwStG",
+        "Name der Norm": "Einnbringung von Unternehmensteilen in eine Kapitalgesellschaft oder Genossenschaft",
+        "Zweck des Antrags": "Steuerneutrale Übertragung von Wirtschaftsgütern bei Umwandlungen zur Vermeidung sofortiger Steuerbelastungen",
+        "Fundstelle im Gesetz": "§ 20 Abs. 2 UmwStG",
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen bei der Einbringung von Betrieben oder Mitunternehmeranteilen in eine Kapitalgesellschaft die Bewertung des eingebrachten Betriebsvermögens mit Buchwerten statt gemeinem Wert, um steuerliche Belastungen zu vermeiden und die Liquidität zu sichern"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": null,
+        "Name der Norm": null,
+        "Zweck des Antrags": null,
+        "Fundstelle im Gesetz": "§ 20 Abs. 5 UmwStG",
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen, Einkommen und Vermögen so zu ermitteln, als ob die Übertragung des Betriebsvermögens bereits zum steuerlichen Übertragungsstichtag erfolgt wäre, um steuerliche Kontinuität und Planungssicherheit zu gewährleisten."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 21 UmwStG",
+        "Name der Norm": "Bewertung der Anteile beim Anteilstausch",
+        "Zweck des Antrags": "Vermeidung steuerlicher Nachteile bei Spaltungen durch steuerneutrale Übertragung",
+        "Fundstelle im Gesetz": "§ 21 Abs. 1 UmwStG",
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen beim Anteilstausch die Bewertung der eingebrachten Anteile mit Buchwerten statt gemeinem Wert, um steuerliche Belastungen zu vermeiden und die Liquidität zu sichern."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": null,
+        "Name der Norm": null,
+        "Zweck des Antrags": null,
+        "Fundstelle im Gesetz": "§ 21 Abs. 2 UmwStG",
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen beim Anteilstausch die Bewertung der eingebrachten Anteile mit Buchwerten statt gemeinem Wert, um steuerliche Belastungen zu vermeiden und die Liquidität zu sichern."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 22 UmwStG",
+        "Name der Norm": "Besteuerung des Anteilseigners",
+        "Zweck des Antrags": "Nutzung steuerlicher Vergünstigungen bei Einbringung zur Sicherung der Unternehmensnachfolge",
+        "Fundstelle im Gesetz": "§ 22 Abs. 5 UmwStG",
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen die Bescheinigung des versteuerten Einbringungsgewinns und der darauf entrichteten Steuer, um Transparenz gegenüber der übernehmenden Gesellschaft und steuerliche Nachweispflichten zu erfüllen."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 23 UmwStG",
+        "Name der Norm": "Auswirkungen bei der übernehmenden Gesellschaft",
+        "Zweck des Antrags": "Steuerneutrale Einbringung von Kapitalanteilen zur Vermeidung von Steuerbelastungen bei Umstrukturierungen",
+        "Fundstelle im Gesetz": "§ 23 Abs. 2 UmwStG",
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen, den versteuerten Einbringungsgewinn als Erhöhungsbetrag (ohne Gewinnauswirkung) anzusetzen und – bei Anteilseinbringung – die Anschaffungskosten entsprechend zu erhöhen, was steuerliche Kontinuität schafft und spätere Veräußerungsgewinne reduziert."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 24 UmwStG",
+        "Name der Norm": "Einbringung von Betriebsvermögen in eine Personengesellschaft",
+        "Zweck des Antrags": "Sicherstellung der Buchwertfortführung zur Vermeidung der Aufdeckung stiller Reserven",
+        "Fundstelle im Gesetz": "§ 24 Abs. 2 UmwStG",
+        "Erläuterung": "Der Antrag ermöglicht Unternehmen bei der Einbringung von Betriebsvermögen in eine Personengesellschaft die Bewertung mit Buchwerten statt gemeinem Wert, um steuerliche Belastungen zu vermeiden und die Liquidität zu sichern."
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": "§ 27 UmwStG",
+        "Name der Norm": "Anwendungsvorschriften",
+        "Zweck des Antrags": "Vermeidung steuerlicher Nachteile bei späterer Veräußerung der eingebrachten Anteile",
+        "Fundstelle im Gesetz": "§ 27 Abs. 3b",
+        "Erläuterung": "regelt die Nachversteuerung, wenn eingebrachten Anteile innerhalb einer bestimmten Frist veräußert werden. Dies dient dazu, Missbrauch zu verhindern und sicherzustellen, dass die Steuerneutralität nicht zu einer dauerhaften Steuervermeidung führt. Die Norm stellt klar, dass bei einer Veräußerung innerhalb der Sperrfrist die stillen Reserven nachträglich besteuert werden"
+      },
+      {
+        "Gesetz": null,
+        "§ Paragraph": null,
+        "Name der Norm": null,
+        "Zweck des Antrags": null,
+        "Fundstelle im Gesetz": "§ 27 Abs. 6 UmwStG",
+        "Erläuterung": "enthält die Sperrfristregelung für eingebrachtes Vermögen. Wird das Vermögen innerhalb dieser Frist veräußert oder entnommen, entfällt die Steuerneutralität rückwirkend, und die stillen Reserven werden besteuert. Dies dient der Sicherung des Steueraufkommens und der Vermeidung missbräuchlicher Gestaltungen"
+      }
+    ]
+  }
+}

@@ -1,0 +1,1568 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('edit') if preset else t('create') }} - {{ 'Task Preset' if lang == 'en' else 'Aufgabenvorlage' }} - {{ app_name }}{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    /* Preview Card */
+    .preview-card {
+        border: 2px dashed var(--dtt-green-3);
+        transition: all 0.3s ease;
+    }
+    .preview-card.has-content {
+        border-style: solid;
+        border-color: var(--dtt-green-4);
+    }
+    
+    /* Recurrence Calendar Preview */
+    .recurrence-preview {
+        background: linear-gradient(135deg, var(--dtt-green-1) 0%, #fff 100%);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    .recurrence-date {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 40px;
+        background: var(--dtt-green-4);
+        color: white;
+        border-radius: 4px;
+        margin: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .recurrence-date.past {
+        opacity: 0.5;
+        background: var(--dtt-cool-gray-5);
+    }
+    .recurrence-date.next {
+        background: var(--dtt-green-6);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    /* Wizard Cards */
+    .wizard-card, .wizard-tax-card, .wizard-freq-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .wizard-card:hover, .wizard-tax-card:hover, .wizard-freq-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
+    /* Category Selector */
+    .category-selector .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px !important;
+        margin: 0 4px;
+    }
+    .category-selector .btn-check:checked + .btn {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* Wizard Steps */
+    .wizard-step {
+        display: none;
+    }
+    .wizard-step.active {
+        display: block;
+    }
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+    .step-indicator .step {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--dtt-cool-gray-3);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin: 0 8px;
+        position: relative;
+    }
+    .step-indicator .step.active {
+        background: var(--dtt-green-4);
+    }
+    .step-indicator .step.completed {
+        background: var(--dtt-green-6);
+    }
+    .step-indicator .step::after {
+        content: '';
+        position: absolute;
+        width: 50px;
+        height: 3px;
+        background: var(--dtt-cool-gray-3);
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    .step-indicator .step:last-child::after {
+        display: none;
+    }
+    .step-indicator .step.completed::after {
+        background: var(--dtt-green-4);
+    }
+    
+    /* Due Date Calculator */
+    .due-calc-result {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--dtt-green-6);
+    }
+    
+    /* Search Select */
+    .search-select-wrapper {
+        position: relative;
+    }
+    .search-select-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid var(--dtt-cool-gray-3);
+        border-radius: 0 0 8px 8px;
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .search-select-dropdown.show {
+        display: block;
+    }
+    .search-select-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid var(--dtt-cool-gray-1);
+    }
+    .search-select-item:hover {
+        background: var(--dtt-green-1);
+    }
+    .search-select-item .badge {
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Main Form Column -->
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-{% if preset %}pencil{% else %}plus-circle{% endif %} me-2"></i>
+                        {{ t('edit') if preset else t('create') }} {{ 'Task Preset' if lang == 'en' else 'Aufgabenvorlage' }}
+                    </h4>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-light" onclick="toggleWizardMode()" id="wizardToggle">
+                            <i class="bi bi-magic me-1"></i>{{ 'Wizard' if lang == 'en' else 'Assistent' }}
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="presetForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <!-- Standard Form (no wizard) -->
+                        <div id="standardForm">
+                            <!-- Category -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">{{ 'Category' if lang == 'en' else 'Kategorie' }} <span class="text-danger">*</span></label>
+                                <div class="category-selector d-flex justify-content-center gap-2">
+                                    <input type="radio" class="btn-check" name="category" id="cat_aufgabe" 
+                                           value="aufgabe" {{ 'checked' if not preset or preset.category == 'aufgabe' }}>
+                                    <label class="btn btn-outline-primary btn-lg" for="cat_aufgabe">
+                                        <i class="bi bi-check2-square me-2"></i>
+                                        <span class="d-block fw-bold">{{ 'Task' if lang == 'en' else 'Aufgabe' }}</span>
+                                        <small class="opacity-75">{{ 'Recurring duty' if lang == 'en' else 'Wiederkehrend' }}</small>
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="category" id="cat_antrag" 
+                                           value="antrag" {{ 'checked' if preset and preset.category == 'antrag' }}>
+                                    <label class="btn btn-outline-info btn-lg" for="cat_antrag">
+                                        <i class="bi bi-file-earmark-text me-2"></i>
+                                        <span class="d-block fw-bold">{{ 'Application' if lang == 'en' else 'Antrag' }}</span>
+                                        <small class="opacity-75">{{ 'One-time filing' if lang == 'en' else 'Einmalig' }}</small>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Title -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="title_de" class="form-label">
+                                        🇩🇪 {{ 'Title' if lang == 'en' else 'Titel' }} ({{ t('german') }}) <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg" id="title_de" name="title_de" 
+                                           value="{{ preset.title_de if preset else '' }}" required
+                                           placeholder="z.B. USt-Voranmeldung einreichen"
+                                           oninput="updatePreview()">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="title_en" class="form-label">
+                                        🇬🇧 {{ 'Title' if lang == 'en' else 'Titel' }} ({{ t('english') }}) <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg" id="title_en" name="title_en" 
+                                           value="{{ preset.title_en if preset else '' }}" required
+                                           placeholder="e.g. Monthly VAT return"
+                                           oninput="updatePreview()">
+                                </div>
+                            </div>
+                            
+                            <!-- Tax Type with Search -->
+                            <div class="mb-3">
+                                <label for="tax_type" class="form-label fw-bold">{{ 'Tax Type' if lang == 'en' else 'Steuerart' }}</label>
+                                <div class="search-select-wrapper">
+                                    <input type="text" class="form-control" id="tax_type" name="tax_type" 
+                                           value="{{ preset.tax_type if preset else '' }}"
+                                           placeholder="{{ 'Search or type...' if lang == 'en' else 'Suchen oder eingeben...' }}"
+                                           autocomplete="off"
+                                           onfocus="showTaxTypeDropdown()"
+                                           oninput="filterTaxTypes(); updatePreview()">
+                                    <div class="search-select-dropdown" id="taxTypeDropdown">
+                                        {% for tt in tax_types %}
+                                        <div class="search-select-item" onclick="selectTaxType('{{ tt.code }}', '{{ tt.get_name(lang) }}')">
+                                            <span class="badge bg-primary me-2">{{ tt.code }}</span>
+                                            {{ tt.get_name(lang) }}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Law Reference -->
+                            <div class="mb-3" id="law_reference_group">
+                                <label for="law_reference" class="form-label">{{ '§ Law Reference' if lang == 'en' else '§ Gesetzesreferenz' }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                    <input type="text" class="form-control" id="law_reference" name="law_reference" 
+                                           value="{{ preset.law_reference if preset else '' }}"
+                                           placeholder="{{ 'e.g. §1 (3) EStG' if lang == 'en' else 'z.B. §1 (3) EStG' }}"
+                                           oninput="updatePreview()">
+                                </div>
+                            </div>
+                            
+                            <!-- Description -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="description_de" class="form-label">
+                                        🇩🇪 {{ t('description') }} ({{ t('german') }})
+                                    </label>
+                                    <textarea class="form-control" id="description_de" name="description_de" rows="3"
+                                              placeholder="{{ 'Optional description...' if lang == 'en' else 'Optionale Beschreibung...' }}"
+                                              oninput="updatePreview()">{{ preset.description_de if preset else '' }}</textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="description_en" class="form-label">
+                                        🇬🇧 {{ t('description') }} ({{ t('english') }})
+                                    </label>
+                                    <textarea class="form-control" id="description_en" name="description_en" rows="3"
+                                              placeholder="Optional description..."
+                                              oninput="updatePreview()">{{ preset.description_en if preset else '' }}</textarea>
+                                </div>
+                            </div>
+                            
+                            {% if preset %}
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                           {{ 'checked' if preset.is_active }}>
+                                    <label class="form-check-label" for="is_active">{{ t('active') }}</label>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Recurrence Settings Card -->
+                            <div class="card mb-3 border-primary">
+                                <div class="card-header bg-primary bg-opacity-10">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="is_recurring" name="is_recurring"
+                                               {{ 'checked' if preset and preset.is_recurring }}
+                                               onchange="toggleRecurrence()">
+                                        <label class="form-check-label fw-bold" for="is_recurring">
+                                            <i class="bi bi-arrow-repeat me-1"></i>
+                                            {{ 'Enable Recurring Generation' if lang == 'en' else 'Wiederkehrende Generierung aktivieren' }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="recurrence_settings" style="{{ 'display: none;' if not preset or not preset.is_recurring }}">
+                                    
+                                    <!-- Frequency Selection -->
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <label class="form-label fw-bold">{{ 'Frequency' if lang == 'en' else 'Häufigkeit' }}</label>
+                                            <div class="btn-group w-100" role="group">
+                                                {% for value, label_de, label_en, icon in [
+                                                    ('monthly', 'Monatlich', 'Monthly', 'calendar3'),
+                                                    ('quarterly', 'Quartalsweise', 'Quarterly', 'calendar3-range'),
+                                                    ('semi_annual', 'Halbjährlich', 'Semi-Annual', 'calendar3-week'),
+                                                    ('annual', 'Jährlich', 'Annual', 'calendar3-event'),
+                                                    ('custom', 'RRULE', 'Custom', 'code-slash')
+                                                ] %}
+                                                <input type="radio" class="btn-check" name="recurrence_frequency" 
+                                                       id="freq_{{ value }}" value="{{ value }}"
+                                                       {{ 'checked' if (preset and preset.recurrence_frequency == value) or (not preset and value == 'monthly') }}
+                                                       onchange="updateRecurrencePreview()">
+                                                <label class="btn btn-outline-primary" for="freq_{{ value }}">
+                                                    <i class="bi bi-{{ icon }} d-block mb-1"></i>
+                                                    <small>{{ label_en if lang == 'en' else label_de }}</small>
+                                                </label>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Due Date Calculator -->
+                                    <div class="row mb-4">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">
+                                                <i class="bi bi-calculator me-1"></i>
+                                                {{ 'Due Date Calculation' if lang == 'en' else 'Fälligkeitsberechnung' }}
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">{{ 'Period end +' if lang == 'en' else 'Periodenende +' }}</span>
+                                                <input type="number" class="form-control" id="recurrence_day_offset" name="recurrence_day_offset" 
+                                                       min="1" max="90" value="{{ preset.recurrence_day_offset if preset and preset.recurrence_day_offset else 10 }}"
+                                                       onchange="updateDueDateExample()">
+                                                <span class="input-group-text">{{ 'days' if lang == 'en' else 'Tage' }}</span>
+                                            </div>
+                                            <div class="form-text">
+                                                {{ 'Example:' if lang == 'en' else 'Beispiel:' }} 
+                                                <span id="dueDateExample" class="due-calc-result"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="recurrence_end_date" class="form-label fw-bold">
+                                                {{ 'End Date (optional)' if lang == 'en' else 'Enddatum (optional)' }}
+                                            </label>
+                                            <input type="date" class="form-control" id="recurrence_end_date" name="recurrence_end_date" 
+                                                   value="{{ preset.recurrence_end_date.strftime('%Y-%m-%d') if preset and preset.recurrence_end_date else '' }}"
+                                                   onchange="updateRecurrencePreview()">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Custom RRULE (only visible when custom selected) -->
+                                    <div class="mb-4" id="rrule_group" style="display: none;">
+                                        <label for="recurrence_rrule" class="form-label fw-bold">
+                                            {{ 'Custom RRULE' if lang == 'en' else 'Benutzerdefinierte RRULE' }}
+                                        </label>
+                                        <input type="text" class="form-control font-monospace" id="recurrence_rrule" name="recurrence_rrule" 
+                                               value="{{ preset.recurrence_rrule if preset else '' }}"
+                                               placeholder="FREQ=MONTHLY;BYMONTHDAY=15"
+                                               oninput="updateRecurrencePreview()">
+                                        <div class="form-text">
+                                            <a href="https://icalendar.org/iCalendar-RFC-5545/3-8-5-3-recurrence-rule.html" target="_blank">
+                                                <i class="bi bi-info-circle me-1"></i>RRULE {{ 'Documentation' if lang == 'en' else 'Dokumentation' }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Recurrence Calendar Preview -->
+                                    <div class="recurrence-preview mb-4">
+                                        <h6 class="mb-3">
+                                            <i class="bi bi-calendar-check me-2"></i>
+                                            {{ 'Upcoming Due Dates' if lang == 'en' else 'Kommende Fälligkeiten' }}
+                                            <span class="badge bg-secondary ms-2" id="previewYear">2025</span>
+                                        </h6>
+                                        <div id="recurrenceDates" class="d-flex flex-wrap">
+                                            <!-- Filled by JavaScript -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Default Entity & Owner -->
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="default_entity_id" class="form-label">
+                                                {{ 'Default Entity' if lang == 'en' else 'Standard-Entity' }}
+                                            </label>
+                                            <select class="form-select" id="default_entity_id" name="default_entity_id">
+                                                <option value="">{{ 'All Entities' if lang == 'en' else 'Alle Entities' }}</option>
+                                                {% for entity in entities %}
+                                                <option value="{{ entity.id }}" {{ 'selected' if preset and preset.default_entity_id == entity.id }}>
+                                                    {{ entity.name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="default_owner_id" class="form-label">
+                                                {{ 'Default Owner' if lang == 'en' else 'Standard-Bearbeiter' }}
+                                            </label>
+                                            <select class="form-select" id="default_owner_id" name="default_owner_id">
+                                                <option value="">{{ 'Unassigned' if lang == 'en' else 'Nicht zugewiesen' }}</option>
+                                                {% for user in users %}
+                                                <option value="{{ user.id }}" {{ 'selected' if preset and preset.default_owner_id == user.id }}>
+                                                    {{ user.display_name or user.username }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if preset and preset.last_generated_date %}
+                                    <div class="alert alert-info py-2 mb-0">
+                                        <small>
+                                            <i class="bi bi-clock-history me-1"></i>
+                                            {{ 'Last generated:' if lang == 'en' else 'Zuletzt generiert:' }} 
+                                            {{ preset.last_generated_date.strftime('%d.%m.%Y') }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Custom Fields Section -->
+                            {% if preset %}
+                            <div class="card mb-3 border-warning">
+                                <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">
+                                        <i class="bi bi-input-cursor-text me-1"></i>
+                                        {{ 'Custom Fields' if lang == 'en' else 'Benutzerdefinierte Felder' }}
+                                    </span>
+                                    <button type="button" class="btn btn-warning btn-sm" onclick="openCustomFieldModal()">
+                                        <i class="bi bi-plus-lg me-1"></i>{{ 'Add Field' if lang == 'en' else 'Feld hinzufügen' }}
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div id="customFieldsList">
+                                        {% if preset.custom_fields.count() > 0 %}
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>{{ 'Label' if lang == 'en' else 'Bezeichnung' }}</th>
+                                                        <th>{{ 'Type' if lang == 'en' else 'Typ' }}</th>
+                                                        <th>{{ 'Required' if lang == 'en' else 'Pflicht' }}</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="customFieldsBody">
+                                                    {% for field in preset.custom_fields.all() %}
+                                                    <tr data-field-id="{{ field.id }}">
+                                                        <td>
+                                                            <i class="bi bi-grip-vertical text-muted me-1 drag-handle" style="cursor: grab;"></i>
+                                                            {{ field.get_label(lang) }}
+                                                            <small class="text-muted">({{ field.name }})</small>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-secondary">{{ field.field_type }}</span>
+                                                        </td>
+                                                        <td>
+                                                            {% if field.is_required %}
+                                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                                            {% else %}
+                                                            <i class="bi bi-circle text-muted"></i>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="editCustomField({{ field.id }})">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteCustomField({{ field.id }})">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {% else %}
+                                        <p class="text-muted text-center mb-0">
+                                            <i class="bi bi-input-cursor d-block mb-2" style="font-size: 1.5rem;"></i>
+                                            {{ 'No custom fields defined. Add fields to collect additional data when creating tasks.' if lang == 'en' else 'Keine benutzerdefinierten Felder. Felder hinzufügen, um zusätzliche Daten bei der Aufgabenerstellung zu erfassen.' }}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mt-3 small text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        {{ 'Template variables: {{year}}, {{entity}}, {{due_date}}, {{field_name}}' if lang == 'en' else 'Vorlagen-Variablen: {{year}}, {{entity}}, {{due_date}}, {{feldname}}' }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Buttons -->
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{{ url_for('presets.preset_list') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-1"></i> {{ t('cancel') }}
+                                </a>
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="bi bi-check-lg me-1"></i> {{ t('save') }}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- ========================================= -->
+                        <!-- WIZARD MODE -->
+                        <!-- ========================================= -->
+                        <div id="wizardMode" style="display: none;">
+                            <!-- Step Indicator -->
+                            <div class="step-indicator mb-4">
+                                <div class="step active" id="step1Indicator">1</div>
+                                <div class="step" id="step2Indicator">2</div>
+                                <div class="step" id="step3Indicator">3</div>
+                                <div class="step" id="step4Indicator">4</div>
+                            </div>
+                            
+                            <!-- Step 1: Basic Info -->
+                            <div class="wizard-step active" id="wizardStep1">
+                                <div class="text-center mb-4">
+                                    <h4 class="text-primary">
+                                        <i class="bi bi-1-circle-fill me-2"></i>
+                                        {{ 'Basic Information' if lang == 'en' else 'Grundinformationen' }}
+                                    </h4>
+                                    <p class="text-muted">{{ 'Define the title and category of your preset' if lang == 'en' else 'Definiere Titel und Kategorie der Vorlage' }}</p>
+                                </div>
+                                
+                                <!-- Category Selection -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold mb-3">{{ 'What type of preset?' if lang == 'en' else 'Welche Art von Vorlage?' }}</label>
+                                    <div class="row g-3 justify-content-center">
+                                        <div class="col-sm-5">
+                                            <div class="card h-100 wizard-card cursor-pointer" onclick="selectWizardCategory('aufgabe')">
+                                                <div class="card-body text-center p-4" id="wizardCatAufgabe">
+                                                    <i class="bi bi-check2-square text-primary" style="font-size: 3rem;"></i>
+                                                    <h5 class="mt-3">{{ 'Recurring Task' if lang == 'en' else 'Wiederkehrende Aufgabe' }}</h5>
+                                                    <p class="text-muted small mb-0">{{ 'Monthly, quarterly, or annual duties' if lang == 'en' else 'Monatliche, quartalsweise oder jährliche Pflichten' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-5">
+                                            <div class="card h-100 wizard-card cursor-pointer" onclick="selectWizardCategory('antrag')">
+                                                <div class="card-body text-center p-4" id="wizardCatAntrag">
+                                                    <i class="bi bi-file-earmark-text text-info" style="font-size: 3rem;"></i>
+                                                    <h5 class="mt-3">{{ 'Application' if lang == 'en' else 'Antrag' }}</h5>
+                                                    <p class="text-muted small mb-0">{{ 'One-time filings and requests' if lang == 'en' else 'Einmalige Anträge und Anfragen' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Title Input -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">🇩🇪 {{ 'German Title' if lang == 'en' else 'Deutscher Titel' }} *</label>
+                                        <input type="text" class="form-control form-control-lg" id="wizardTitleDe"
+                                               placeholder="{{ 'e.g. USt-Voranmeldung' if lang == 'en' else 'z.B. USt-Voranmeldung' }}"
+                                               oninput="syncWizardField('title_de', this.value)">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">🇬🇧 {{ 'English Title' if lang == 'en' else 'Englischer Titel' }} *</label>
+                                        <input type="text" class="form-control form-control-lg" id="wizardTitleEn"
+                                               placeholder="{{ 'e.g. VAT Return' if lang == 'en' else 'z.B. VAT Return' }}"
+                                               oninput="syncWizardField('title_en', this.value)">
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="toggleWizardMode()">
+                                        <i class="bi bi-x me-1"></i>{{ 'Exit Wizard' if lang == 'en' else 'Assistent beenden' }}
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-lg" onclick="goToWizardStep(2)">
+                                        {{ 'Next' if lang == 'en' else 'Weiter' }} <i class="bi bi-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 2: Tax Type & Law Reference -->
+                            <div class="wizard-step" id="wizardStep2">
+                                <div class="text-center mb-4">
+                                    <h4 class="text-primary">
+                                        <i class="bi bi-2-circle-fill me-2"></i>
+                                        {{ 'Tax Classification' if lang == 'en' else 'Steuerliche Einordnung' }}
+                                    </h4>
+                                    <p class="text-muted">{{ 'Select the tax type and legal basis' if lang == 'en' else 'Wähle Steuerart und Rechtsgrundlage' }}</p>
+                                </div>
+                                
+                                <!-- Tax Type Selection (visual cards) -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold mb-3">{{ 'Tax Type' if lang == 'en' else 'Steuerart' }}</label>
+                                    <div class="row g-2" id="wizardTaxTypeCards">
+                                        {% for tt in tax_types[:8] %}
+                                        <div class="col-6 col-md-3">
+                                            <div class="card wizard-tax-card cursor-pointer" onclick="selectWizardTaxType('{{ tt.code }}')">
+                                                <div class="card-body text-center py-3" id="wizardTax_{{ tt.code }}">
+                                                    <span class="badge bg-primary d-block mb-1">{{ tt.code }}</span>
+                                                    <small>{{ tt.get_name(lang)[:20] }}{% if tt.get_name(lang)|length > 20 %}...{% endif %}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="mt-2">
+                                        <input type="text" class="form-control" id="wizardTaxTypeOther"
+                                               placeholder="{{ 'Or type a custom tax type...' if lang == 'en' else 'Oder benutzerdefinierte Steuerart eingeben...' }}"
+                                               oninput="syncWizardField('tax_type', this.value)">
+                                    </div>
+                                </div>
+                                
+                                <!-- Law Reference -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">
+                                        <i class="bi bi-book me-1"></i>
+                                        {{ 'Law Reference' if lang == 'en' else 'Gesetzesreferenz' }}
+                                    </label>
+                                    <input type="text" class="form-control" id="wizardLawRef"
+                                           placeholder="{{ 'e.g. §1 (3) EStG' if lang == 'en' else 'z.B. §1 (3) EStG' }}"
+                                           oninput="syncWizardField('law_reference', this.value)">
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="goToWizardStep(1)">
+                                        <i class="bi bi-arrow-left me-1"></i>{{ 'Back' if lang == 'en' else 'Zurück' }}
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-lg" onclick="goToWizardStep(3)">
+                                        {{ 'Next' if lang == 'en' else 'Weiter' }} <i class="bi bi-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 3: Recurrence Configuration -->
+                            <div class="wizard-step" id="wizardStep3">
+                                <div class="text-center mb-4">
+                                    <h4 class="text-primary">
+                                        <i class="bi bi-3-circle-fill me-2"></i>
+                                        {{ 'Recurrence Settings' if lang == 'en' else 'Wiederholungseinstellungen' }}
+                                    </h4>
+                                    <p class="text-muted">{{ 'Configure how often tasks should be generated' if lang == 'en' else 'Konfiguriere, wie oft Aufgaben generiert werden sollen' }}</p>
+                                </div>
+                                
+                                <!-- Enable Recurrence Toggle -->
+                                <div class="text-center mb-4">
+                                    <div class="form-check form-switch d-inline-block">
+                                        <input class="form-check-input" type="checkbox" id="wizardRecurring" style="width: 3rem; height: 1.5rem;"
+                                               onchange="toggleWizardRecurrence()">
+                                        <label class="form-check-label fs-5 ms-2" for="wizardRecurring">
+                                            {{ 'Enable Recurring Generation' if lang == 'en' else 'Wiederkehrende Generierung aktivieren' }}
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Recurrence Options (hidden by default) -->
+                                <div id="wizardRecurrenceOptions" style="display: none;">
+                                    <!-- Frequency Cards -->
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold mb-3">{{ 'How often?' if lang == 'en' else 'Wie oft?' }}</label>
+                                        <div class="row g-2 justify-content-center">
+                                            {% for freq, icon, label_de, label_en in [
+                                                ('monthly', 'calendar3', 'Monatlich', 'Monthly'),
+                                                ('quarterly', 'calendar3-range', 'Quartalsweise', 'Quarterly'),
+                                                ('semi_annual', 'calendar3-week', 'Halbjährlich', 'Semi-Annual'),
+                                                ('annual', 'calendar3-event', 'Jährlich', 'Annually')
+                                            ] %}
+                                            <div class="col-6 col-md-3">
+                                                <div class="card wizard-freq-card cursor-pointer" onclick="selectWizardFrequency('{{ freq }}')">
+                                                    <div class="card-body text-center py-3" id="wizardFreq_{{ freq }}">
+                                                        <i class="bi bi-{{ icon }} d-block mb-2" style="font-size: 2rem;"></i>
+                                                        <small class="fw-bold">{{ label_en if lang == 'en' else label_de }}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Due Date Offset -->
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">{{ 'Due Date Offset' if lang == 'en' else 'Fälligkeits-Offset' }}</label>
+                                        <div class="row align-items-center justify-content-center">
+                                            <div class="col-auto">
+                                                <span class="text-muted">{{ 'Period ends' if lang == 'en' else 'Periodenende' }}</span>
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="display-6">+</span>
+                                            </div>
+                                            <div class="col-auto">
+                                                <input type="number" class="form-control form-control-lg text-center" 
+                                                       id="wizardDayOffset" value="10" min="1" max="90" style="width: 100px;"
+                                                       oninput="syncWizardField('recurrence_day_offset', this.value); updateWizardPreviewDates()">
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="text-muted">{{ 'days' if lang == 'en' else 'Tage' }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-center mt-2">
+                                            <span class="badge bg-success fs-6" id="wizardDueDateExample">
+                                                {{ 'e.g. January → Due 10th Feb' if lang == 'en' else 'z.B. Januar → Fällig 10. Feb' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Preview Calendar -->
+                                    <div class="card bg-light mb-4">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">
+                                                <i class="bi bi-calendar-check me-2"></i>
+                                                {{ 'Preview: Due Dates in' if lang == 'en' else 'Vorschau: Fälligkeiten in' }} 
+                                                <span id="wizardPreviewYear"></span>
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="wizardRecurrenceDates" class="d-flex flex-wrap justify-content-center gap-2">
+                                                <!-- Filled by JavaScript -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="goToWizardStep(2)">
+                                        <i class="bi bi-arrow-left me-1"></i>{{ 'Back' if lang == 'en' else 'Zurück' }}
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-lg" onclick="goToWizardStep(4)">
+                                        {{ 'Next' if lang == 'en' else 'Weiter' }} <i class="bi bi-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 4: Review & Save -->
+                            <div class="wizard-step" id="wizardStep4">
+                                <div class="text-center mb-4">
+                                    <h4 class="text-success">
+                                        <i class="bi bi-4-circle-fill me-2"></i>
+                                        {{ 'Review & Save' if lang == 'en' else 'Überprüfen & Speichern' }}
+                                    </h4>
+                                    <p class="text-muted">{{ 'Review your preset before saving' if lang == 'en' else 'Überprüfe die Vorlage vor dem Speichern' }}</p>
+                                </div>
+                                
+                                <!-- Summary Card -->
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <dl class="row mb-0">
+                                            <dt class="col-sm-4">{{ 'Category' if lang == 'en' else 'Kategorie' }}</dt>
+                                            <dd class="col-sm-8" id="wizardSummaryCategory">-</dd>
+                                            
+                                            <dt class="col-sm-4">{{ 'Title (DE)' if lang == 'en' else 'Titel (DE)' }}</dt>
+                                            <dd class="col-sm-8" id="wizardSummaryTitleDe">-</dd>
+                                            
+                                            <dt class="col-sm-4">{{ 'Title (EN)' if lang == 'en' else 'Titel (EN)' }}</dt>
+                                            <dd class="col-sm-8" id="wizardSummaryTitleEn">-</dd>
+                                            
+                                            <dt class="col-sm-4">{{ 'Tax Type' if lang == 'en' else 'Steuerart' }}</dt>
+                                            <dd class="col-sm-8" id="wizardSummaryTaxType">-</dd>
+                                            
+                                            <dt class="col-sm-4">{{ 'Law Reference' if lang == 'en' else 'Gesetzesreferenz' }}</dt>
+                                            <dd class="col-sm-8" id="wizardSummaryLawRef">-</dd>
+                                            
+                                            <dt class="col-sm-4">{{ 'Recurring' if lang == 'en' else 'Wiederkehrend' }}</dt>
+                                            <dd class="col-sm-8" id="wizardSummaryRecurring">-</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="goToWizardStep(3)">
+                                        <i class="bi bi-arrow-left me-1"></i>{{ 'Back' if lang == 'en' else 'Zurück' }}
+                                    </button>
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="bi bi-check-lg me-1"></i>{{ 'Save Preset' if lang == 'en' else 'Vorlage speichern' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- END WIZARD MODE -->
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Preview Column -->
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 100px;">
+                <!-- Live Preview Card -->
+                <div class="card shadow preview-card mb-3" id="previewCard">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="bi bi-eye me-2"></i>
+                            {{ 'Live Preview' if lang == 'en' else 'Live-Vorschau' }}
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="previewContent">
+                            <p class="text-muted text-center mb-0">
+                                <i class="bi bi-pencil-square d-block mb-2" style="font-size: 2rem;"></i>
+                                {{ 'Start typing to see preview' if lang == 'en' else 'Beginne zu tippen für Vorschau' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Tips -->
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <h6><i class="bi bi-lightbulb me-2 text-warning"></i>{{ 'Tips' if lang == 'en' else 'Tipps' }}</h6>
+                        <ul class="small mb-0">
+                            <li>{{ 'Use templates like {{year}} or {{entity}} in descriptions' if lang == 'en' else 'Nutze Vorlagen wie {{year}} oder {{entity}} in Beschreibungen' }}</li>
+                            <li>{{ 'Recurring tasks are auto-generated via CLI' if lang == 'en' else 'Wiederkehrende Aufgaben werden via CLI auto-generiert' }}</li>
+                            <li>{{ 'Applications should have a law reference' if lang == 'en' else 'Anträge sollten eine Gesetzesreferenz haben' }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+    const lang = '{{ lang }}';
+    const monthNames = lang === 'de' 
+        ? ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
+        : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', function() {
+        updatePreview();
+        updateRecurrencePreview();
+        updateDueDateExample();
+        updateRruleVisibility();
+    });
+    
+    // Toggle recurrence settings visibility
+    function toggleRecurrence() {
+        const settings = document.getElementById('recurrence_settings');
+        const isRecurring = document.getElementById('is_recurring').checked;
+        settings.style.display = isRecurring ? 'block' : 'none';
+        if (isRecurring) {
+            updateRecurrencePreview();
+        }
+    }
+    
+    // Update RRULE field visibility
+    function updateRruleVisibility() {
+        const frequency = document.querySelector('input[name="recurrence_frequency"]:checked');
+        const rruleGroup = document.getElementById('rrule_group');
+        rruleGroup.style.display = (frequency && frequency.value === 'custom') ? 'block' : 'none';
+    }
+    
+    // Live Preview Update
+    function updatePreview() {
+        const titleDe = document.getElementById('title_de').value;
+        const titleEn = document.getElementById('title_en').value;
+        const descDe = document.getElementById('description_de').value;
+        const descEn = document.getElementById('description_en').value;
+        const taxType = document.getElementById('tax_type').value;
+        const lawRef = document.getElementById('law_reference').value;
+        const isAntrag = document.getElementById('cat_antrag').checked;
+        const isRecurring = document.getElementById('is_recurring').checked;
+        
+        const previewCard = document.getElementById('previewCard');
+        const previewContent = document.getElementById('previewContent');
+        
+        if (!titleDe && !titleEn) {
+            previewCard.classList.remove('has-content');
+            previewContent.innerHTML = `
+                <p class="text-muted text-center mb-0">
+                    <i class="bi bi-pencil-square d-block mb-2" style="font-size: 2rem;"></i>
+                    ${lang === 'de' ? 'Beginne zu tippen für Vorschau' : 'Start typing to see preview'}
+                </p>
+            `;
+            return;
+        }
+        
+        previewCard.classList.add('has-content');
+        
+        const title = lang === 'de' ? (titleDe || titleEn) : (titleEn || titleDe);
+        const desc = lang === 'de' ? (descDe || descEn) : (descEn || descDe);
+        
+        let html = `
+            <div class="d-flex align-items-start mb-2">
+                <span class="badge ${isAntrag ? 'bg-info' : 'bg-primary'} me-2">
+                    ${isAntrag ? (lang === 'de' ? 'Antrag' : 'Application') : (lang === 'de' ? 'Aufgabe' : 'Task')}
+                </span>
+                ${isRecurring ? `<span class="badge bg-success"><i class="bi bi-arrow-repeat me-1"></i>${lang === 'de' ? 'Wiederkehrend' : 'Recurring'}</span>` : ''}
+            </div>
+            <h5 class="mb-2">${escapeHtml(title)}</h5>
+        `;
+        
+        if (taxType) {
+            html += `<p class="mb-1"><span class="badge bg-secondary">${escapeHtml(taxType)}</span></p>`;
+        }
+        
+        if (lawRef) {
+            html += `<p class="mb-1 text-muted small"><i class="bi bi-book me-1"></i>${escapeHtml(lawRef)}</p>`;
+        }
+        
+        if (desc) {
+            html += `<p class="mb-0 small text-muted">${escapeHtml(desc.substring(0, 150))}${desc.length > 150 ? '...' : ''}</p>`;
+        }
+        
+        // Show example generated task
+        if (isRecurring) {
+            const offset = parseInt(document.getElementById('recurrence_day_offset').value) || 10;
+            const exampleDate = new Date();
+            exampleDate.setMonth(exampleDate.getMonth() + 1);
+            exampleDate.setDate(offset);
+            
+            html += `
+                <hr class="my-2">
+                <div class="small">
+                    <strong>${lang === 'de' ? 'Beispiel-Aufgabe:' : 'Example Task:'}</strong><br>
+                    <i class="bi bi-calendar me-1"></i>${lang === 'de' ? 'Fällig:' : 'Due:'} ${exampleDate.toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US')}
+                </div>
+            `;
+        }
+        
+        previewContent.innerHTML = html;
+    }
+    
+    // Recurrence Calendar Preview
+    function updateRecurrencePreview() {
+        updateRruleVisibility();
+        
+        const frequency = document.querySelector('input[name="recurrence_frequency"]:checked');
+        if (!frequency) return;
+        
+        const freq = frequency.value;
+        const offset = parseInt(document.getElementById('recurrence_day_offset').value) || 10;
+        const endDateStr = document.getElementById('recurrence_end_date').value;
+        const endDate = endDateStr ? new Date(endDateStr) : null;
+        
+        const datesContainer = document.getElementById('recurrenceDates');
+        const yearBadge = document.getElementById('previewYear');
+        
+        const today = new Date();
+        const year = today.getFullYear();
+        yearBadge.textContent = year;
+        
+        let dates = [];
+        
+        if (freq === 'monthly') {
+            for (let m = 0; m < 12; m++) {
+                dates.push(new Date(year, m, offset));
+            }
+        } else if (freq === 'quarterly') {
+            [0, 3, 6, 9].forEach(m => dates.push(new Date(year, m, offset)));
+        } else if (freq === 'semi_annual') {
+            [0, 6].forEach(m => dates.push(new Date(year, m, offset)));
+        } else if (freq === 'annual') {
+            dates.push(new Date(year, 0, offset));
+        } else if (freq === 'custom') {
+            // For custom, just show placeholder
+            datesContainer.innerHTML = `<p class="text-muted small">${lang === 'de' ? 'RRULE wird zur Laufzeit ausgewertet' : 'RRULE evaluated at runtime'}</p>`;
+            return;
+        }
+        
+        let html = '';
+        dates.forEach(d => {
+            if (endDate && d > endDate) return;
+            
+            const isPast = d < today;
+            const isNext = !isPast && dates.filter(dd => dd >= today).indexOf(d) === 0;
+            
+            html += `
+                <div class="recurrence-date ${isPast ? 'past' : ''} ${isNext ? 'next' : ''}">
+                    ${d.getDate()}. ${monthNames[d.getMonth()]}
+                </div>
+            `;
+        });
+        
+        datesContainer.innerHTML = html || `<p class="text-muted small">${lang === 'de' ? 'Keine Termine in diesem Jahr' : 'No dates this year'}</p>`;
+        
+        updateDueDateExample();
+    }
+    
+    // Due Date Example Calculation
+    function updateDueDateExample() {
+        const offset = parseInt(document.getElementById('recurrence_day_offset').value) || 10;
+        const frequency = document.querySelector('input[name="recurrence_frequency"]:checked');
+        
+        const exampleEl = document.getElementById('dueDateExample');
+        
+        let periodEnd, dueDate;
+        
+        if (frequency && frequency.value === 'monthly') {
+            periodEnd = new Date();
+            periodEnd.setDate(0); // Last day of previous month
+            dueDate = new Date(periodEnd);
+            dueDate.setDate(dueDate.getDate() + offset);
+            
+            const periodName = lang === 'de' ? monthNames[periodEnd.getMonth()] : monthNames[periodEnd.getMonth()];
+            exampleEl.textContent = `${periodName} → ${dueDate.getDate()}.${dueDate.getMonth() + 1}.`;
+        } else if (frequency && frequency.value === 'quarterly') {
+            const quarter = Math.floor(new Date().getMonth() / 3);
+            periodEnd = new Date(new Date().getFullYear(), (quarter + 1) * 3, 0);
+            dueDate = new Date(periodEnd);
+            dueDate.setDate(dueDate.getDate() + offset);
+            
+            exampleEl.textContent = `Q${quarter + 1} → ${dueDate.toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US')}`;
+        } else {
+            exampleEl.textContent = `+${offset} ${lang === 'de' ? 'Tage nach Periodenende' : 'days after period end'}`;
+        }
+    }
+    
+    // Tax Type Dropdown
+    function showTaxTypeDropdown() {
+        document.getElementById('taxTypeDropdown').classList.add('show');
+    }
+    
+    function filterTaxTypes() {
+        const input = document.getElementById('tax_type').value.toLowerCase();
+        const items = document.querySelectorAll('#taxTypeDropdown .search-select-item');
+        
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(input) ? 'block' : 'none';
+        });
+    }
+    
+    function selectTaxType(code, name) {
+        document.getElementById('tax_type').value = code;
+        document.getElementById('taxTypeDropdown').classList.remove('show');
+        updatePreview();
+    }
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-select-wrapper')) {
+            document.getElementById('taxTypeDropdown').classList.remove('show');
+        }
+    });
+    
+    // Escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // ========================================
+    // WIZARD MODE FUNCTIONS
+    // ========================================
+    
+    let wizardActive = false;
+    let currentWizardStep = 1;
+    let wizardData = {
+        category: 'aufgabe',
+        frequency: 'monthly'
+    };
+    
+    function toggleWizardMode() {
+        wizardActive = !wizardActive;
+        const standardForm = document.getElementById('standardForm');
+        const wizardMode = document.getElementById('wizardMode');
+        const toggleBtn = document.getElementById('wizardToggle');
+        
+        if (wizardActive) {
+            standardForm.style.display = 'none';
+            wizardMode.style.display = 'block';
+            toggleBtn.innerHTML = '<i class="bi bi-list-ul me-1"></i>' + (lang === 'de' ? 'Standard-Formular' : 'Standard Form');
+            toggleBtn.classList.remove('btn-outline-light');
+            toggleBtn.classList.add('btn-warning');
+            
+            // Sync existing form values to wizard
+            syncFormToWizard();
+            goToWizardStep(1);
+        } else {
+            standardForm.style.display = 'block';
+            wizardMode.style.display = 'none';
+            toggleBtn.innerHTML = '<i class="bi bi-magic me-1"></i>' + (lang === 'de' ? 'Assistent' : 'Wizard');
+            toggleBtn.classList.add('btn-outline-light');
+            toggleBtn.classList.remove('btn-warning');
+        }
+    }
+    
+    function syncFormToWizard() {
+        // Sync existing values from standard form to wizard
+        document.getElementById('wizardTitleDe').value = document.getElementById('title_de').value;
+        document.getElementById('wizardTitleEn').value = document.getElementById('title_en').value;
+        document.getElementById('wizardLawRef').value = document.getElementById('law_reference').value;
+        document.getElementById('wizardTaxTypeOther').value = document.getElementById('tax_type').value;
+        
+        // Sync category
+        const category = document.querySelector('input[name="category"]:checked')?.value || 'aufgabe';
+        selectWizardCategory(category, false);
+        
+        // Sync recurrence
+        const isRecurring = document.getElementById('is_recurring')?.checked;
+        document.getElementById('wizardRecurring').checked = isRecurring;
+        if (isRecurring) {
+            document.getElementById('wizardRecurrenceOptions').style.display = 'block';
+            const freq = document.querySelector('input[name="recurrence_frequency"]:checked')?.value || 'monthly';
+            selectWizardFrequency(freq, false);
+            document.getElementById('wizardDayOffset').value = document.getElementById('recurrence_day_offset').value;
+        }
+    }
+    
+    function syncWizardField(fieldId, value) {
+        const el = document.getElementById(fieldId);
+        if (el) {
+            el.value = value;
+            updatePreview();
+        }
+    }
+    
+    function goToWizardStep(step) {
+        // Validate current step before moving forward
+        if (step > currentWizardStep && !validateWizardStep(currentWizardStep)) {
+            return;
+        }
+        
+        currentWizardStep = step;
+        
+        // Update step indicators
+        for (let i = 1; i <= 4; i++) {
+            const indicator = document.getElementById(`step${i}Indicator`);
+            const stepEl = document.getElementById(`wizardStep${i}`);
+            
+            indicator.classList.remove('active', 'completed');
+            stepEl.classList.remove('active');
+            
+            if (i < step) {
+                indicator.classList.add('completed');
+            } else if (i === step) {
+                indicator.classList.add('active');
+                stepEl.classList.add('active');
+            }
+        }
+        
+        // Update summary on final step
+        if (step === 4) {
+            updateWizardSummary();
+        }
+        
+        // Update preview dates on step 3
+        if (step === 3) {
+            updateWizardPreviewDates();
+        }
+    }
+    
+    function validateWizardStep(step) {
+        if (step === 1) {
+            const titleDe = document.getElementById('wizardTitleDe').value.trim();
+            const titleEn = document.getElementById('wizardTitleEn').value.trim();
+            if (!titleDe || !titleEn) {
+                alert(lang === 'de' ? 'Bitte beide Titel ausfüllen.' : 'Please fill in both titles.');
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    function selectWizardCategory(category, sync = true) {
+        wizardData.category = category;
+        
+        // Update visual selection
+        document.querySelectorAll('.wizard-card').forEach(card => {
+            card.classList.remove('border-primary', 'border-3');
+        });
+        
+        const selectedCard = document.getElementById(`wizardCat${category.charAt(0).toUpperCase() + category.slice(1)}`);
+        if (selectedCard) {
+            selectedCard.closest('.card').classList.add('border-primary', 'border-3');
+        }
+        
+        // Sync to actual form
+        if (sync) {
+            const radio = document.getElementById(`cat_${category}`);
+            if (radio) radio.checked = true;
+        }
+    }
+    
+    function selectWizardTaxType(code, sync = true) {
+        // Update visual selection
+        document.querySelectorAll('.wizard-tax-card').forEach(card => {
+            card.classList.remove('border-primary', 'border-2');
+            card.querySelector('.card-body').classList.remove('bg-primary', 'text-white');
+        });
+        
+        const selectedCard = document.getElementById(`wizardTax_${code}`);
+        if (selectedCard) {
+            selectedCard.closest('.card').classList.add('border-primary', 'border-2');
+            selectedCard.classList.add('bg-primary', 'text-white');
+        }
+        
+        // Sync to actual form
+        if (sync) {
+            document.getElementById('tax_type').value = code;
+            document.getElementById('wizardTaxTypeOther').value = code;
+            updatePreview();
+        }
+    }
+    
+    function selectWizardFrequency(freq, sync = true) {
+        wizardData.frequency = freq;
+        
+        // Update visual selection
+        document.querySelectorAll('.wizard-freq-card').forEach(card => {
+            card.classList.remove('border-success', 'border-2');
+            card.querySelector('.card-body').classList.remove('bg-success', 'text-white');
+        });
+        
+        const selectedCard = document.getElementById(`wizardFreq_${freq}`);
+        if (selectedCard) {
+            selectedCard.closest('.card').classList.add('border-success', 'border-2');
+            selectedCard.classList.add('bg-success', 'text-white');
+        }
+        
+        // Sync to actual form
+        if (sync) {
+            const radio = document.getElementById(`freq_${freq}`);
+            if (radio) radio.checked = true;
+            updateRecurrencePreview();
+        }
+        
+        updateWizardPreviewDates();
+    }
+    
+    function toggleWizardRecurrence() {
+        const isRecurring = document.getElementById('wizardRecurring').checked;
+        document.getElementById('wizardRecurrenceOptions').style.display = isRecurring ? 'block' : 'none';
+        
+        // Sync to actual form
+        document.getElementById('is_recurring').checked = isRecurring;
+        toggleRecurrence();
+        
+        if (isRecurring) {
+            updateWizardPreviewDates();
+        }
+    }
+    
+    function updateWizardPreviewDates() {
+        const freq = wizardData.frequency;
+        const offset = parseInt(document.getElementById('wizardDayOffset').value) || 10;
+        const container = document.getElementById('wizardRecurrenceDates');
+        const year = new Date().getFullYear();
+        
+        // Update year display
+        document.getElementById('wizardPreviewYear').textContent = year;
+        
+        let dates = [];
+        
+        if (freq === 'monthly') {
+            for (let m = 0; m < 12; m++) {
+                const periodEnd = new Date(year, m + 1, 0); // Last day of month
+                const dueDate = new Date(periodEnd);
+                dueDate.setDate(dueDate.getDate() + offset);
+                dates.push(dueDate);
+            }
+        } else if (freq === 'quarterly') {
+            for (let q = 0; q < 4; q++) {
+                const periodEnd = new Date(year, (q + 1) * 3, 0);
+                const dueDate = new Date(periodEnd);
+                dueDate.setDate(dueDate.getDate() + offset);
+                dates.push(dueDate);
+            }
+        } else if (freq === 'semi_annual') {
+            for (let h = 0; h < 2; h++) {
+                const periodEnd = new Date(year, (h + 1) * 6, 0);
+                const dueDate = new Date(periodEnd);
+                dueDate.setDate(dueDate.getDate() + offset);
+                dates.push(dueDate);
+            }
+        } else if (freq === 'annual') {
+            const periodEnd = new Date(year, 12, 0);
+            const dueDate = new Date(periodEnd);
+            dueDate.setDate(dueDate.getDate() + offset);
+            dates.push(dueDate);
+        }
+        
+        const today = new Date();
+        let html = '';
+        dates.forEach(d => {
+            const isPast = d < today;
+            const isNext = !isPast && dates.filter(dd => dd >= today).indexOf(d) === 0;
+            html += `
+                <div class="recurrence-date ${isPast ? 'past' : ''} ${isNext ? 'next' : ''}">
+                    ${d.getDate()}. ${monthNames[d.getMonth()]}
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html || '<p class="text-muted">-</p>';
+        
+        // Update due date example
+        if (dates.length > 0) {
+            const firstDate = dates[0];
+            const periodMonth = new Date(firstDate);
+            periodMonth.setDate(periodMonth.getDate() - offset);
+            const example = `${monthNames[periodMonth.getMonth()]} → ${firstDate.getDate()}. ${monthNames[firstDate.getMonth()]}`;
+            document.getElementById('wizardDueDateExample').textContent = example;
+        }
+    }
+    
+    function updateWizardSummary() {
+        const categoryLabels = {
+            'aufgabe': lang === 'de' ? 'Wiederkehrende Aufgabe' : 'Recurring Task',
+            'antrag': lang === 'de' ? 'Antrag' : 'Application'
+        };
+        
+        const frequencyLabels = {
+            'monthly': lang === 'de' ? 'Monatlich' : 'Monthly',
+            'quarterly': lang === 'de' ? 'Quartalsweise' : 'Quarterly',
+            'semi_annual': lang === 'de' ? 'Halbjährlich' : 'Semi-Annual',
+            'annual': lang === 'de' ? 'Jährlich' : 'Annually'
+        };
+        
+        document.getElementById('wizardSummaryCategory').textContent = categoryLabels[wizardData.category] || wizardData.category;
+        document.getElementById('wizardSummaryTitleDe').textContent = document.getElementById('wizardTitleDe').value || '-';
+        document.getElementById('wizardSummaryTitleEn').textContent = document.getElementById('wizardTitleEn').value || '-';
+        document.getElementById('wizardSummaryTaxType').textContent = document.getElementById('tax_type').value || '-';
+        document.getElementById('wizardSummaryLawRef').textContent = document.getElementById('law_reference').value || '-';
+        
+        const isRecurring = document.getElementById('wizardRecurring').checked;
+        if (isRecurring) {
+            const offset = document.getElementById('wizardDayOffset').value;
+            document.getElementById('wizardSummaryRecurring').innerHTML = 
+                `<span class="badge bg-success">${frequencyLabels[wizardData.frequency]}</span> ` +
+                `<small class="text-muted">(+${offset} ${lang === 'de' ? 'Tage' : 'days'})</small>`;
+        } else {
+            document.getElementById('wizardSummaryRecurring').innerHTML = 
+                `<span class="badge bg-secondary">${lang === 'de' ? 'Nein' : 'No'}</span>`;
+        }
+    }
+    
+    // Custom Fields Management
+    function openCustomFieldModal(fieldId = null) {
+        const modal = new bootstrap.Modal(document.getElementById('customFieldModal'));
+        const form = document.getElementById('customFieldForm');
+        const title = document.getElementById('customFieldModalTitle');
+        
+        // Reset form
+        form.reset();
+        document.getElementById('cfFieldId').value = '';
+        document.getElementById('cfOptionsGroup').style.display = 'none';
+        document.getElementById('cfConditionGroup').style.display = 'none';
+        
+        if (fieldId) {
+            title.textContent = lang === 'de' ? 'Feld bearbeiten' : 'Edit Field';
+            fetch(`/api/preset-fields/${fieldId}`)
+                .then(res => res.json())
+                .then(field => {
+                    document.getElementById('cfFieldId').value = field.id;
+                    document.getElementById('cfName').value = field.name;
+                    document.getElementById('cfLabelDe').value = field.label_de;
+                    document.getElementById('cfLabelEn').value = field.label_en || '';
+                    document.getElementById('cfType').value = field.field_type;
+                    document.getElementById('cfRequired').checked = field.is_required;
+                    document.getElementById('cfPlaceholderDe').value = field.placeholder_de || '';
+                    document.getElementById('cfPlaceholderEn').value = field.placeholder_en || '';
+                    document.getElementById('cfDefault').value = field.default_value || '';
+                    document.getElementById('cfOptions').value = field.options || '';
+                    document.getElementById('cfHelpDe').value = field.help_text_de || '';
+                    document.getElementById('cfHelpEn').value = field.help_text_en || '';
+                    document.getElementById('cfConditionField').value = field.condition_field || '';
+                    document.getElementById('cfConditionOperator').value = field.condition_operator || '';
+                    document.getElementById('cfConditionValue').value = field.condition_value || '';
+                    toggleFieldTypeOptions();
+                });
+        } else {
+            title.textContent = lang === 'de' ? 'Neues Feld hinzufügen' : 'Add New Field';
+        }
+        
+        modal.show();
+    }
+    
+    function editCustomField(fieldId) {
+        openCustomFieldModal(fieldId);
+    }
+    
+    function toggleFieldTypeOptions() {
+        const type = document.getElementById('cfType').value;
+        document.getElementById('cfOptionsGroup').style.display = type === 'select' ? 'block' : 'none';
+    }
+    
+    function toggleCondition() {
+        const group = document.getElementById('cfConditionGroup');
+        group.style.display = group.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    async function saveCustomField() {
+        const presetId = {{ preset.id if preset else 'null' }};
+        if (!presetId) return;
+        
+        const fieldId = document.getElementById('cfFieldId').value;
+        const data = {
+            preset_id: presetId,
+            name: document.getElementById('cfName').value,
+            label_de: document.getElementById('cfLabelDe').value,
+            label_en: document.getElementById('cfLabelEn').value,
+            field_type: document.getElementById('cfType').value,
+            is_required: document.getElementById('cfRequired').checked,
+            placeholder_de: document.getElementById('cfPlaceholderDe').value,
+            placeholder_en: document.getElementById('cfPlaceholderEn').value,
+            default_value: document.getElementById('cfDefault').value,
+            options: document.getElementById('cfOptions').value,
+            help_text_de: document.getElementById('cfHelpDe').value,
+            help_text_en: document.getElementById('cfHelpEn').value,
+            condition_field: document.getElementById('cfConditionField').value,
+            condition_operator: document.getElementById('cfConditionOperator').value,
+            condition_value: document.getElementById('cfConditionValue').value
+        };
+        
+        const url = fieldId ? `/api/preset-fields/${fieldId}` : '/api/preset-fields';
+        const method = fieldId ? 'PUT' : 'POST';
+        
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error: ' + await response.text());
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+    
+    async function deleteCustomField(fieldId) {
+        if (!confirm(lang === 'de' ? 'Feld wirklich löschen?' : 'Really delete field?')) return;
+        
+        try {
+            const response = await fetch(`/api/preset-fields/${fieldId}`, { method: 'DELETE' });
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error: ' + await response.text());
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+</script>
+
+<!-- Custom Field Modal -->
+{% if preset %}
+<div class="modal fade" id="customFieldModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customFieldModalTitle">
+                    <i class="bi bi-input-cursor-text me-2"></i>{{ 'Add Field' if lang == 'en' else 'Feld hinzufügen' }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customFieldForm">
+                    <input type="hidden" id="cfFieldId">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="cfName" class="form-label">{{ 'Internal Name' if lang == 'en' else 'Interner Name' }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control font-monospace" id="cfName" required 
+                                   pattern="[a-z_]+" placeholder="z.B. filing_deadline">
+                            <div class="form-text">{{ 'lowercase, underscores only' if lang == 'en' else 'Kleinbuchstaben, Unterstriche' }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="cfLabelDe" class="form-label">🇩🇪 Label (DE) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="cfLabelDe" required placeholder="z.B. Abgabefrist">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="cfLabelEn" class="form-label">🇬🇧 Label (EN)</label>
+                            <input type="text" class="form-control" id="cfLabelEn" placeholder="e.g. Filing Deadline">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="cfType" class="form-label">{{ 'Field Type' if lang == 'en' else 'Feldtyp' }}</label>
+                            <select class="form-select" id="cfType" onchange="toggleFieldTypeOptions()">
+                                <option value="text">{{ 'Text (single line)' if lang == 'en' else 'Text (einzeilig)' }}</option>
+                                <option value="textarea">{{ 'Text Area (multi-line)' if lang == 'en' else 'Textbereich (mehrzeilig)' }}</option>
+                                <option value="number">{{ 'Number' if lang == 'en' else 'Zahl' }}</option>
+                                <option value="date">{{ 'Date' if lang == 'en' else 'Datum' }}</option>
+                                <option value="select">{{ 'Dropdown (select)' if lang == 'en' else 'Dropdown (Auswahl)' }}</option>
+                                <option value="checkbox">{{ 'Checkbox (Yes/No)' if lang == 'en' else 'Checkbox (Ja/Nein)' }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="cfDefault" class="form-label">{{ 'Default Value' if lang == 'en' else 'Standardwert' }}</label>
+                            <input type="text" class="form-control" id="cfDefault">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cfRequired">
+                                <label class="form-check-label" for="cfRequired">{{ 'Required' if lang == 'en' else 'Pflichtfeld' }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="cfOptionsGroup" style="display: none;">
+                        <label for="cfOptions" class="form-label">{{ 'Options (JSON array)' if lang == 'en' else 'Optionen (JSON-Array)' }}</label>
+                        <input type="text" class="form-control font-monospace" id="cfOptions" 
+                               placeholder='["Option 1", "Option 2", "Option 3"]'>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="cfPlaceholderDe" class="form-label">🇩🇪 Placeholder (DE)</label>
+                            <input type="text" class="form-control" id="cfPlaceholderDe">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="cfPlaceholderEn" class="form-label">🇬🇧 Placeholder (EN)</label>
+                            <input type="text" class="form-control" id="cfPlaceholderEn">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="cfHelpDe" class="form-label">🇩🇪 {{ 'Help Text' if lang == 'en' else 'Hilfetext' }} (DE)</label>
+                            <textarea class="form-control" id="cfHelpDe" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="cfHelpEn" class="form-label">🇬🇧 {{ 'Help Text' if lang == 'en' else 'Hilfetext' }} (EN)</label>
+                            <textarea class="form-control" id="cfHelpEn" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="border-top pt-3">
+                        <button type="button" class="btn btn-link text-decoration-none p-0" onclick="toggleCondition()">
+                            <i class="bi bi-sliders me-1"></i>{{ 'Conditional Visibility' if lang == 'en' else 'Bedingte Sichtbarkeit' }}
+                        </button>
+                        <div id="cfConditionGroup" class="mt-2" style="display: none;">
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small">{{ 'If field' if lang == 'en' else 'Wenn Feld' }}</label>
+                                    <input type="text" class="form-control form-control-sm" id="cfConditionField" placeholder="field_name">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">{{ 'Operator' if lang == 'en' else 'Operator' }}</label>
+                                    <select class="form-select form-select-sm" id="cfConditionOperator">
+                                        <option value="">-</option>
+                                        <option value="equals">{{ 'equals' if lang == 'en' else 'gleich' }}</option>
+                                        <option value="not_equals">{{ 'not equals' if lang == 'en' else 'ungleich' }}</option>
+                                        <option value="contains">{{ 'contains' if lang == 'en' else 'enthält' }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">{{ 'Value' if lang == 'en' else 'Wert' }}</label>
+                                    <input type="text" class="form-control form-control-sm" id="cfConditionValue">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel') }}</button>
+                <button type="button" class="btn btn-success" onclick="saveCustomField()">
+                    <i class="bi bi-check-lg me-1"></i>{{ t('save') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

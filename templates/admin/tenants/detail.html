@@ -1,0 +1,477 @@
+{% extends "base.html" %}
+{% block title %}{{ tenant.name }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<style nonce="{{ csp_nonce }}">
+    .tenant-hero {
+        background: linear-gradient(135deg, #0076A8 0%, #005a82 50%, #003d5c 100%);
+        color: white;
+        padding: 2.5rem 0;
+        margin: -1rem -1rem 2rem -1rem;
+        border-radius: 0 0 1.5rem 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 118, 168, 0.3);
+    }
+    .tenant-logo-wrapper {
+        width: 100px;
+        height: 100px;
+        background: white;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .tenant-logo-wrapper img {
+        max-width: 80px;
+        max-height: 80px;
+        object-fit: contain;
+    }
+    .tenant-logo-wrapper .placeholder-icon {
+        font-size: 3rem;
+        color: #0076A8;
+    }
+    .status-pill {
+        padding: 0.5rem 1.25rem;
+        border-radius: 2rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .status-active { background: rgba(134, 188, 37, 0.2); color: #4A90D9; }
+    .status-inactive { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+    .status-archived { background: rgba(108, 117, 125, 0.2); color: #6c757d; }
+    
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .stat-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+    .stat-users { color: #0076A8; }
+    .stat-admins { color: #dc3545; }
+    .stat-managers { color: #ffc107; }
+    .stat-members { color: #4A90D9; }
+    
+    .action-btn {
+        border-radius: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .action-btn-primary {
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9a1d 100%);
+        border: none;
+        color: white;
+    }
+    .action-btn-primary:hover {
+        background: linear-gradient(135deg, #6a9a1d 0%, #4A90D9 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(134, 188, 37, 0.4);
+        color: white;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: none;
+        overflow: hidden;
+    }
+    .info-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem 1.25rem;
+        font-weight: 600;
+        color: #212529;
+    }
+    
+    .member-row {
+        transition: background-color 0.2s;
+    }
+    .member-row:hover {
+        background-color: rgba(0, 118, 168, 0.05);
+    }
+    
+    .role-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .role-admin { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+    .role-manager { background: rgba(255, 193, 7, 0.15); color: #d39e00; }
+    .role-member { background: rgba(0, 118, 168, 0.15); color: #0076A8; }
+    .role-viewer { background: rgba(108, 117, 125, 0.15); color: #6c757d; }
+    
+    .api-key-item {
+        padding: 1rem;
+        border-radius: 0.75rem;
+        background: #f8f9fa;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s;
+    }
+    .api-key-item:hover {
+        background: #e9ecef;
+    }
+    .api-key-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .breadcrumb-modern {
+        background: transparent;
+        padding: 0;
+    }
+    .breadcrumb-modern a {
+        color: #0076A8;
+        text-decoration: none;
+    }
+    .breadcrumb-modern a:hover {
+        text-decoration: underline;
+    }
+    
+    .export-dropdown .dropdown-menu {
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        border: none;
+        padding: 0.5rem;
+    }
+    .export-dropdown .dropdown-item {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+    }
+    .export-dropdown .dropdown-item:hover {
+        background: rgba(0, 118, 168, 0.1);
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3 mt-3">
+        <ol class="breadcrumb breadcrumb-modern mb-0">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('admin_tenants.tenant_list') }}">
+                    <i class="bi bi-building me-1"></i>{{ 'Mandantenverwaltung' if lang == 'de' else 'Tenant Management' }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">{{ tenant.name }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Hero Section -->
+    <div class="tenant-hero">
+        <div class="container-fluid px-4">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="tenant-logo-wrapper">
+                        {% if tenant.logo_data %}
+                        <img src="data:{{ tenant.logo_mime_type or 'image/png' }};base64,{{ tenant.logo_data }}" 
+                             alt="{{ tenant.name }}">
+                        {% else %}
+                        <i class="bi bi-building placeholder-icon"></i>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <h1 class="mb-0 fw-bold">{{ tenant.name }}</h1>
+                        {% if tenant.is_archived %}
+                        <span class="status-pill status-archived">
+                            <i class="bi bi-archive me-1"></i>{{ 'Archiviert' if lang == 'de' else 'Archived' }}
+                        </span>
+                        {% elif not tenant.is_active %}
+                        <span class="status-pill status-inactive">
+                            <i class="bi bi-pause-circle me-1"></i>{{ 'Inaktiv' if lang == 'de' else 'Inactive' }}
+                        </span>
+                        {% else %}
+                        <span class="status-pill status-active">
+                            <i class="bi bi-check-circle me-1"></i>{{ 'Aktiv' if lang == 'de' else 'Active' }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p class="mb-0 opacity-75">
+                        <i class="bi bi-hash me-1"></i>{{ tenant.slug }}
+                        <span class="mx-2">•</span>
+                        <i class="bi bi-calendar me-1"></i>{{ 'Erstellt' if lang == 'de' else 'Created' }}: {{ tenant.created_at.strftime('%d.%m.%Y') if tenant.created_at else '-' }}
+                        {% if tenant.created_by %}
+                        <span class="mx-2">•</span>
+                        <i class="bi bi-person me-1"></i>{{ tenant.created_by.name }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-auto">
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 flex-wrap">
+                        {% if not tenant.is_archived %}
+                        <form action="{{ url_for('admin_tenants.enter_tenant', tenant_id=tenant.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn action-btn action-btn-primary">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>{{ 'Einloggen' if lang == 'de' else 'Enter' }}
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('admin_tenants.tenant_edit', tenant_id=tenant.id) }}" 
+                           class="btn btn-light action-btn">
+                            <i class="bi bi-pencil me-2"></i>{{ 'Bearbeiten' if lang == 'de' else 'Edit' }}
+                        </a>
+                        
+                        <!-- Export Dropdown -->
+                        <div class="dropdown export-dropdown">
+                            <button class="btn btn-light action-btn dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-download me-2"></i>{{ 'Export' if lang == 'de' else 'Export' }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <form action="{{ url_for('admin_tenants.tenant_export', tenant_id=tenant.id) }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="bi bi-filetype-json me-2 text-warning"></i>JSON Export
+                                        </button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('admin_tenants.tenant_export_excel', tenant_id=tenant.id) }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel Export (Compliance)
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-value stat-users">{{ memberships|length }}</div>
+                <div class="stat-label">
+                    <i class="bi bi-people me-1"></i>{{ 'Benutzer gesamt' if lang == 'de' else 'Total Users' }}
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-value stat-admins">{{ memberships|selectattr('role', 'equalto', 'admin')|list|length }}</div>
+                <div class="stat-label">
+                    <i class="bi bi-shield-check me-1"></i>{{ 'Admins' if lang == 'de' else 'Admins' }}
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-value stat-managers">{{ memberships|selectattr('role', 'equalto', 'manager')|list|length }}</div>
+                <div class="stat-label">
+                    <i class="bi bi-person-gear me-1"></i>{{ 'Manager' if lang == 'de' else 'Managers' }}
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-value stat-members">{{ api_keys|length }}</div>
+                <div class="stat-label">
+                    <i class="bi bi-key me-1"></i>{{ 'API-Schlüssel' if lang == 'de' else 'API Keys' }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Members Card -->
+        <div class="col-lg-8">
+            <div class="info-card card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-people me-2 text-primary"></i>
+                        <span>{{ 'Mitglieder' if lang == 'de' else 'Members' }}</span>
+                        <span class="badge bg-primary ms-2">{{ memberships|length }}</span>
+                    </div>
+                    <a href="{{ url_for('admin_tenants.tenant_members', tenant_id=tenant.id) }}" 
+                       class="btn btn-sm btn-outline-primary" style="border-radius: 0.5rem;">
+                        <i class="bi bi-gear me-1"></i>{{ 'Verwalten' if lang == 'de' else 'Manage' }}
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if memberships %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr class="bg-light">
+                                    <th class="border-0 ps-4">{{ 'Benutzer' if lang == 'de' else 'User' }}</th>
+                                    <th class="border-0">{{ 'E-Mail' if lang == 'de' else 'Email' }}</th>
+                                    <th class="border-0">{{ 'Rolle' if lang == 'de' else 'Role' }}</th>
+                                    <th class="border-0 pe-4">{{ 'Beigetreten' if lang == 'de' else 'Joined' }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for m in memberships[:10] %}
+                                <tr class="member-row">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                                                 style="width: 40px; height: 40px; font-weight: 600;">
+                                                {{ m.user.name[0]|upper if m.user.name else '?' }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-medium">{{ m.user.name }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-muted">{{ m.user.email }}</td>
+                                    <td>
+                                        {% if m.role == 'admin' %}
+                                        <span class="role-badge role-admin"><i class="bi bi-shield-check me-1"></i>Admin</span>
+                                        {% elif m.role == 'manager' %}
+                                        <span class="role-badge role-manager"><i class="bi bi-person-gear me-1"></i>Manager</span>
+                                        {% elif m.role == 'member' %}
+                                        <span class="role-badge role-member"><i class="bi bi-person me-1"></i>Member</span>
+                                        {% else %}
+                                        <span class="role-badge role-viewer"><i class="bi bi-eye me-1"></i>Viewer</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-muted pe-4">{{ m.joined_at.strftime('%d.%m.%Y') if m.joined_at else '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if memberships|length > 10 %}
+                    <div class="p-3 text-center border-top">
+                        <a href="{{ url_for('admin_tenants.tenant_members', tenant_id=tenant.id) }}" class="text-decoration-none">
+                            <i class="bi bi-arrow-right me-1"></i>
+                            {{ 'Alle %d Mitglieder anzeigen' % memberships|length if lang == 'de' else 'Show all %d members' % memberships|length }}
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-people display-4 mb-3 d-block opacity-50"></i>
+                        <p class="mb-2">{{ 'Keine Mitglieder vorhanden' if lang == 'de' else 'No members yet' }}</p>
+                        <a href="{{ url_for('admin_tenants.tenant_members', tenant_id=tenant.id) }}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-person-plus me-1"></i>{{ 'Mitglied hinzufügen' if lang == 'de' else 'Add member' }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- API Keys Card -->
+            <div class="info-card card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-key me-2 text-warning"></i>
+                        <span>{{ 'API-Schlüssel' if lang == 'de' else 'API Keys' }}</span>
+                        <span class="badge bg-secondary ms-2">{{ api_keys|length }}</span>
+                    </div>
+                    <a href="{{ url_for('admin_tenants.tenant_api_keys', tenant_id=tenant.id) }}" 
+                       class="btn btn-sm btn-outline-warning" style="border-radius: 0.5rem;">
+                        <i class="bi bi-plus-lg me-1"></i>{{ 'Neu' if lang == 'de' else 'New' }}
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if api_keys %}
+                    {% for key in api_keys %}
+                    <div class="api-key-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-medium">{{ key.name }}</div>
+                            <code class="text-muted small">{{ key.key_prefix }}...</code>
+                        </div>
+                        {% if key.is_active %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>{{ 'Aktiv' if lang == 'de' else 'Active' }}
+                        </span>
+                        {% else %}
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-pause-circle me-1"></i>{{ 'Inaktiv' if lang == 'de' else 'Inactive' }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center py-3 text-muted">
+                        <i class="bi bi-key display-6 mb-2 d-block opacity-50"></i>
+                        <p class="mb-0 small">{{ 'Keine API-Schlüssel konfiguriert' if lang == 'de' else 'No API keys configured' }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Actions Card -->
+            <div class="info-card card">
+                <div class="card-header">
+                    <i class="bi bi-lightning me-2 text-info"></i>
+                    <span>{{ 'Aktionen' if lang == 'de' else 'Actions' }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if not tenant.is_archived %}
+                        <form action="{{ url_for('admin_tenants.tenant_archive', tenant_id=tenant.id) }}" 
+                              method="POST" 
+                              onsubmit="return confirm('{{ 'Mandant wirklich archivieren? Der Mandant wird deaktiviert und Benutzer können nicht mehr darauf zugreifen.' if lang == 'de' else 'Really archive tenant? The tenant will be deactivated and users will no longer have access.' }}');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-warning w-100" style="border-radius: 0.5rem;">
+                                <i class="bi bi-archive me-2"></i>{{ 'Archivieren' if lang == 'de' else 'Archive' }}
+                            </button>
+                        </form>
+                        {% else %}
+                        <form action="{{ url_for('admin_tenants.tenant_restore', tenant_id=tenant.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-success w-100" style="border-radius: 0.5rem;">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>{{ 'Wiederherstellen' if lang == 'de' else 'Restore' }}
+                            </button>
+                        </form>
+                        
+                        <form action="{{ url_for('admin_tenants.tenant_delete', tenant_id=tenant.id) }}" 
+                              method="POST" 
+                              onsubmit="return confirm('{{ 'ACHTUNG: Mandant und alle Daten werden ENDGÜLTIG gelöscht! Diese Aktion kann NICHT rückgängig gemacht werden. Fortfahren?' if lang == 'de' else 'WARNING: Tenant and all data will be PERMANENTLY deleted! This action CANNOT be undone. Continue?' }}');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-danger w-100" style="border-radius: 0.5rem;">
+                                <i class="bi bi-trash me-2"></i>{{ 'Endgültig löschen' if lang == 'de' else 'Delete permanently' }}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    
+                    {% if tenant.is_archived and tenant.archived_at %}
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{ 'Archiviert am' if lang == 'de' else 'Archived on' }}: 
+                            <strong>{{ tenant.archived_at.strftime('%d.%m.%Y %H:%M') }}</strong>
+                            {% if tenant.archived_by %}
+                            <br>{{ 'von' if lang == 'de' else 'by' }} {{ tenant.archived_by.name }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

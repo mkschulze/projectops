@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('entities') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-building me-2"></i>{{ t('entities') }}</h1>
+        <a href="{{ url_for('admin.entity_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>{{ t('new_entity') }}
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{{ t('name') }}</th>
+                            <th>{{ t('short_name') }}</th>
+                            <th>{{ t('country') }}</th>
+                            <th>{{ t('parent_entity') }}</th>
+                            <th>{{ t('status') }}</th>
+                            <th class="text-end">{{ t('actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entity in entities %}
+                        <tr class="{{ 'text-muted' if not entity.is_active }}">
+                            <td>
+                                <strong>{{ entity.get_name(lang) }}</strong>
+                            </td>
+                            <td>{{ entity.short_name or '-' }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ entity.country }}</span>
+                            </td>
+                            <td>{{ entity.parent.get_name(lang) if entity.parent else '-' }}</td>
+                            <td>
+                                {% if entity.is_active %}
+                                <span class="badge bg-success">{{ t('active') }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ t('inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ url_for('admin.entity_users', entity_id=entity.id) }}" 
+                                   class="btn btn-sm btn-outline-secondary me-1"
+                                   title="{{ 'Benutzerberechtigungen' if lang == 'de' else 'User Permissions' }}">
+                                    <i class="bi bi-people"></i>
+                                </a>
+                                <a href="{{ url_for('admin.entity_edit', entity_id=entity.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if entity.is_active %}
+                                <form action="{{ url_for('admin.entity_delete', entity_id=entity.id) }}" 
+                                      method="POST" class="d-inline"
+                                      onsubmit="return confirm('{{ t('confirm_delete') }}');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                {{ t('no_entities') }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

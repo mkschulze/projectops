@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('edit') if preset else t('create') }} - {{ 'Task Preset' if lang == 'en' else 'Aufgabenvorlage' }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-{% if preset %}pencil{% else %}plus-circle{% endif %} me-2"></i>
+                        {{ t('edit') if preset else t('create') }} {{ 'Task Preset' if lang == 'en' else 'Aufgabenvorlage' }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- Category -->
+                        <div class="mb-3">
+                            <label class="form-label">{{ 'Category' if lang == 'en' else 'Kategorie' }} <span class="text-danger">*</span></label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="category" id="cat_aufgabe" 
+                                       value="aufgabe" {{ 'checked' if not preset or preset.category == 'aufgabe' }}>
+                                <label class="btn btn-outline-primary" for="cat_aufgabe">
+                                    <i class="bi bi-check2-square me-1"></i> {{ 'Task' if lang == 'en' else 'Aufgabe' }}
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="category" id="cat_antrag" 
+                                       value="antrag" {{ 'checked' if preset and preset.category == 'antrag' }}>
+                                <label class="btn btn-outline-info" for="cat_antrag">
+                                    <i class="bi bi-file-earmark-text me-1"></i> {{ 'Application' if lang == 'en' else 'Antrag' }}
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                {{ 'Tasks are recurring compliance duties. Applications are one-time filings with legal references.' if lang == 'en' else 'Aufgaben sind wiederkehrende Pflichten. Anträge sind einmalige Einreichungen mit Gesetzesreferenzen.' }}
+                            </div>
+                        </div>
+                        
+                        <!-- Title -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="title_de" class="form-label">
+                                    🇩🇪 {{ 'Title' if lang == 'en' else 'Titel' }} ({{ t('german') }}) <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="title_de" name="title_de" 
+                                       value="{{ preset.title_de if preset else '' }}" required
+                                       placeholder="z.B. USt-Voranmeldung einreichen">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="title_en" class="form-label">
+                                    🇬🇧 {{ 'Title' if lang == 'en' else 'Titel' }} ({{ t('english') }}) <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="title_en" name="title_en" 
+                                       value="{{ preset.title_en if preset else '' }}" required
+                                       placeholder="e.g. Monthly VAT return">
+                            </div>
+                        </div>
+                        
+                        <!-- Tax Type -->
+                        <div class="mb-3">
+                            <label for="tax_type" class="form-label">{{ 'Tax Type' if lang == 'en' else 'Steuerart' }}</label>
+                            <input type="text" class="form-control" id="tax_type" name="tax_type" 
+                                   value="{{ preset.tax_type if preset else '' }}"
+                                   placeholder="{{ 'e.g. VAT, Corporate Tax' if lang == 'en' else 'z.B. Umsatzsteuer, Körperschaftsteuer' }}"
+                                   list="tax_type_suggestions">
+                            <datalist id="tax_type_suggestions">
+                                <option value="Umsatzsteuer">
+                                <option value="Körperschaftsteuer">
+                                <option value="Gewerbesteuer">
+                                <option value="Lohnsteuer">
+                                <option value="Jahresabschluss">
+                                <option value="EStG">
+                                <option value="KStG">
+                                <option value="AO">
+                                <option value="UmwStG">
+                            </datalist>
+                        </div>
+                        
+                        <!-- Law Reference (mainly for Anträge) -->
+                        <div class="mb-3" id="law_reference_group">
+                            <label for="law_reference" class="form-label">{{ '§ Law Reference' if lang == 'en' else '§ Gesetzesreferenz' }}</label>
+                            <input type="text" class="form-control" id="law_reference" name="law_reference" 
+                                   value="{{ preset.law_reference if preset else '' }}"
+                                   placeholder="{{ 'e.g. §1 (3) EStG' if lang == 'en' else 'z.B. §1 (3) EStG' }}">
+                            <div class="form-text">
+                                {{ 'Relevant for applications (Anträge) - the legal basis.' if lang == 'en' else 'Relevant für Anträge - die rechtliche Grundlage.' }}
+                            </div>
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="description_de" class="form-label">
+                                    🇩🇪 {{ t('description') }} ({{ t('german') }})
+                                </label>
+                                <textarea class="form-control" id="description_de" name="description_de" rows="4"
+                                          placeholder="{{ t('description_placeholder') }}">{{ preset.description_de if preset else '' }}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="description_en" class="form-label">
+                                    🇬🇧 {{ t('description') }} ({{ t('english') }})
+                                </label>
+                                <textarea class="form-control" id="description_en" name="description_en" rows="4"
+                                          placeholder="Optional description...">{{ preset.description_en if preset else '' }}</textarea>
+                            </div>
+                        </div>
+                        
+                        {% if preset %}
+                        <!-- Status (only for edit) -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                       {{ 'checked' if preset.is_active }}>
+                                <label class="form-check-label" for="is_active">{{ t('active') }}</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Recurrence Settings -->
+                        <div class="card mb-3 border-primary">
+                            <div class="card-header bg-primary bg-opacity-10">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="is_recurring" name="is_recurring"
+                                           {{ 'checked' if preset and preset.is_recurring }}>
+                                    <label class="form-check-label fw-bold" for="is_recurring">
+                                        <i class="bi bi-arrow-repeat me-1"></i>
+                                        {{ 'Enable Recurring Generation' if lang == 'en' else 'Wiederkehrende Generierung aktivieren' }}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="card-body" id="recurrence_settings" style="{{ 'display: none;' if not preset or not preset.is_recurring }}">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="recurrence_frequency" class="form-label">
+                                            {{ 'Frequency' if lang == 'en' else 'Häufigkeit' }} <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select" id="recurrence_frequency" name="recurrence_frequency">
+                                            {% for value, label_de, label_en in [
+                                                ('monthly', 'Monatlich', 'Monthly'),
+                                                ('quarterly', 'Quartalsweise', 'Quarterly'),
+                                                ('semi_annual', 'Halbjährlich', 'Semi-Annual'),
+                                                ('annual', 'Jährlich', 'Annual'),
+                                                ('custom', 'Benutzerdefiniert (RRULE)', 'Custom (RRULE)')
+                                            ] %}
+                                            <option value="{{ value }}" {{ 'selected' if preset and preset.recurrence_frequency == value }}>
+                                                {{ label_en if lang == 'en' else label_de }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="recurrence_day_offset" class="form-label">
+                                            {{ 'Day of Period' if lang == 'en' else 'Tag im Zeitraum' }}
+                                        </label>
+                                        <input type="number" class="form-control" id="recurrence_day_offset" name="recurrence_day_offset" 
+                                               min="1" max="28" value="{{ preset.recurrence_day_offset if preset and preset.recurrence_day_offset else 10 }}">
+                                        <div class="form-text">
+                                            {{ 'Day of the month when task is due (1-28).' if lang == 'en' else 'Tag des Monats, an dem die Aufgabe fällig ist (1-28).' }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3" id="rrule_group" style="{{ 'display: block;' if preset and preset.recurrence_frequency == 'custom' else 'display: none;' }}">
+                                    <label for="recurrence_rrule" class="form-label">
+                                        {{ 'RRULE String' if lang == 'en' else 'RRULE-Zeichenkette' }}
+                                    </label>
+                                    <input type="text" class="form-control font-monospace" id="recurrence_rrule" name="recurrence_rrule" 
+                                           value="{{ preset.recurrence_rrule if preset else '' }}"
+                                           placeholder="FREQ=MONTHLY;BYMONTHDAY=15">
+                                    <div class="form-text">
+                                        {{ 'iCalendar RRULE format for custom recurrence patterns.' if lang == 'en' else 'iCalendar RRULE-Format für benutzerdefinierte Wiederholungsmuster.' }}
+                                        <a href="https://icalendar.org/iCalendar-RFC-5545/3-8-5-3-recurrence-rule.html" target="_blank" class="text-decoration-none">
+                                            <i class="bi bi-info-circle"></i> {{ 'Documentation' if lang == 'en' else 'Dokumentation' }}
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="default_entity_id" class="form-label">
+                                            {{ 'Default Entity' if lang == 'en' else 'Standard-Entity' }}
+                                        </label>
+                                        <select class="form-select" id="default_entity_id" name="default_entity_id">
+                                            <option value="">{{ 'All Entities' if lang == 'en' else 'Alle Entities' }}</option>
+                                            {% for entity in entities %}
+                                            <option value="{{ entity.id }}" {{ 'selected' if preset and preset.default_entity_id == entity.id }}>
+                                                {{ entity.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">
+                                            {{ 'Leave empty to create tasks for all active entities.' if lang == 'en' else 'Leer lassen, um Aufgaben für alle aktiven Entities zu erstellen.' }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="default_owner_id" class="form-label">
+                                            {{ 'Default Owner' if lang == 'en' else 'Standard-Bearbeiter' }}
+                                        </label>
+                                        <select class="form-select" id="default_owner_id" name="default_owner_id">
+                                            <option value="">{{ 'Unassigned' if lang == 'en' else 'Nicht zugewiesen' }}</option>
+                                            {% for user in users %}
+                                            <option value="{{ user.id }}" {{ 'selected' if preset and preset.default_owner_id == user.id }}>
+                                                {{ user.display_name or user.username }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="recurrence_end_date" class="form-label">
+                                        {{ 'End Date (optional)' if lang == 'en' else 'Enddatum (optional)' }}
+                                    </label>
+                                    <input type="date" class="form-control" id="recurrence_end_date" name="recurrence_end_date" 
+                                           value="{{ preset.recurrence_end_date.strftime('%Y-%m-%d') if preset and preset.recurrence_end_date else '' }}">
+                                    <div class="form-text">
+                                        {{ 'Stop generating tasks after this date.' if lang == 'en' else 'Keine Aufgaben mehr nach diesem Datum generieren.' }}
+                                    </div>
+                                </div>
+                                
+                                {% if preset and preset.last_generated_date %}
+                                <div class="alert alert-info py-2 mb-0">
+                                    <small>
+                                        <i class="bi bi-clock-history me-1"></i>
+                                        {{ 'Last generated:' if lang == 'en' else 'Zuletzt generiert:' }} 
+                                        {{ preset.last_generated_date.strftime('%d.%m.%Y') }}
+                                        {% if preset.generated_tasks.count() > 0 %}
+                                        | {{ preset.generated_tasks.count() }} {{ 'tasks created' if lang == 'en' else 'Aufgaben erstellt' }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if preset %}
+                        <!-- Metadata -->
+                        <div class="alert alert-light">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                {{ 'Created' if lang == 'en' else 'Erstellt' }}: {{ preset.created_at.strftime('%d.%m.%Y %H:%M') }}
+                                {% if preset.source %}
+                                | {{ 'Source' if lang == 'en' else 'Quelle' }}: {{ preset.source }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('presets.preset_list') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> {{ t('cancel') }}
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg me-1"></i> {{ t('save') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+    // Show/hide law reference based on category
+    function updateLawRefVisibility() {
+        const isAntrag = document.getElementById('cat_antrag').checked;
+        const lawRefGroup = document.getElementById('law_reference_group');
+        if (isAntrag) {
+            lawRefGroup.classList.remove('opacity-50');
+        } else {
+            lawRefGroup.classList.add('opacity-50');
+        }
+    }
+    
+    document.getElementById('cat_aufgabe').addEventListener('change', updateLawRefVisibility);
+    document.getElementById('cat_antrag').addEventListener('change', updateLawRefVisibility);
+    updateLawRefVisibility();
+    
+    // Show/hide recurrence settings
+    const isRecurring = document.getElementById('is_recurring');
+    const recurrenceSettings = document.getElementById('recurrence_settings');
+    const frequencySelect = document.getElementById('recurrence_frequency');
+    const rruleGroup = document.getElementById('rrule_group');
+    
+    function updateRecurrenceVisibility() {
+        recurrenceSettings.style.display = isRecurring.checked ? 'block' : 'none';
+    }
+    
+    function updateRruleVisibility() {
+        rruleGroup.style.display = frequencySelect.value === 'custom' ? 'block' : 'none';
+    }
+    
+    isRecurring.addEventListener('change', updateRecurrenceVisibility);
+    frequencySelect.addEventListener('change', updateRruleVisibility);
+    
+    updateRecurrenceVisibility();
+    updateRruleVisibility();
+</script>
+{% endblock %}

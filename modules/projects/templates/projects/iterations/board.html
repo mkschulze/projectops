@@ -1,0 +1,661 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.get_term('sprint', lang) }} Board - {{ sprint.name }} - {{ project.name }}{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    /* ============================================
+       SPRINT BOARD - PROJECTOPS DESIGN
+       Color: Teal #00A3E0
+       ============================================ */
+    
+    /* Compact Header Bar */
+    .board-header-bar {
+        background: white;
+        border-bottom: 3px solid #00A3E0;
+        padding: 1rem 0;
+        margin: -1rem -1rem 1.5rem -1rem;
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .board-header-bar .breadcrumb {
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .board-header-bar .breadcrumb a {
+        color: #666;
+        text-decoration: none;
+    }
+    
+    .board-header-bar .breadcrumb a:hover {
+        color: #00A3E0;
+    }
+    
+    .board-header-bar h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    
+    /* Sprint State Badge */
+    .sprint-state-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-left: 0.75rem;
+    }
+    
+    .sprint-state-badge.active { 
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%); 
+        color: white; 
+    }
+    .sprint-state-badge.future { 
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); 
+        color: #1565c0; 
+    }
+    .sprint-state-badge.closed { 
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); 
+        color: white; 
+    }
+    
+    /* Goal Text */
+    .sprint-goal {
+        color: #666;
+        font-style: italic;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    
+    .sprint-goal i {
+        color: #00A3E0;
+    }
+    
+    /* Stats Bar */
+    .stats-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #666;
+        font-size: 0.875rem;
+    }
+    
+    .stat-item i {
+        color: #00A3E0;
+        font-size: 1rem;
+    }
+    
+    .stat-item strong {
+        color: #333;
+    }
+    
+    /* Progress Section */
+    .progress-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-left: auto;
+    }
+    
+    .progress-bar-container {
+        width: 200px;
+        height: 10px;
+        background: #e9ecef;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4A90D9 0%, #00A3E0 100%);
+        transition: width 0.5s ease;
+        border-radius: 5px;
+    }
+    
+    .progress-text {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.875rem;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: none;
+    }
+    
+    .action-btn-outline {
+        background: white;
+        color: #666;
+        border: 1px solid #dee2e6;
+    }
+    
+    .action-btn-outline:hover {
+        background: #f8f9fa;
+        color: #333;
+        border-color: #00A3E0;
+    }
+    
+    /* Board Container */
+    .board-container {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+        min-height: calc(100vh - 320px);
+    }
+    
+    /* Board Columns */
+    .board-column {
+        min-width: 300px;
+        max-width: 300px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    
+    .board-column-header {
+        padding: 1rem 1.25rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-bottom: 3px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 12px 12px 0 0;
+        background: white;
+    }
+    
+    .board-column-header .column-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .board-column-header .issue-count {
+        background: rgba(0,0,0,0.08);
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    /* Status Colors */
+    .status-todo .board-column-header { border-color: #6c757d; }
+    .status-in_progress .board-column-header { border-color: #00A3E0; }
+    .status-done .board-column-header { border-color: #4A90D9; }
+    
+    .status-todo .issue-count { background: rgba(108, 117, 125, 0.15); color: #6c757d; }
+    .status-in_progress .issue-count { background: rgba(0, 163, 224, 0.15); color: #00A3E0; }
+    .status-done .issue-count { background: rgba(134, 188, 37, 0.15); color: #6a9c1f; }
+    
+    .board-column-body {
+        flex: 1;
+        padding: 0.75rem;
+        overflow-y: auto;
+        min-height: 200px;
+    }
+    
+    /* Issue Cards */
+    .issue-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        cursor: grab;
+        transition: all 0.2s;
+        position: relative;
+        border-left: 4px solid transparent;
+    }
+    
+    .issue-card:hover {
+        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    .issue-card.sortable-ghost { 
+        opacity: 0.4;
+        background: #e3f2fd;
+    }
+    
+    .issue-card.sortable-chosen { 
+        transform: rotate(2deg); 
+        box-shadow: 0 12px 24px rgba(0,0,0,0.2); 
+    }
+    
+    /* Priority Colors */
+    .issue-card.priority-critical { border-left-color: #dc3545; }
+    .issue-card.priority-high { border-left-color: #fd7e14; }
+    .issue-card.priority-medium { border-left-color: #ffc107; }
+    .issue-card.priority-low { border-left-color: #20c997; }
+    
+    .issue-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .issue-type-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        color: white;
+    }
+    
+    .issue-card-key {
+        font-size: 0.8rem;
+        color: #666;
+        font-weight: 500;
+    }
+    
+    .story-points-badge {
+        margin-left: auto;
+        background: linear-gradient(135deg, #00A3E0 0%, #0076A8 100%);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .issue-card-summary {
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
+        font-size: 0.9rem;
+    }
+    
+    .issue-card-summary a {
+        color: #333;
+        text-decoration: none;
+    }
+    
+    .issue-card-summary a:hover {
+        color: #00A3E0;
+    }
+    
+    .issue-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 0.5rem;
+        border-top: 1px solid #f0f0f0;
+    }
+    
+    .assignee-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00A3E0 0%, #0076A8 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        font-weight: 600;
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    
+    .priority-icon {
+        font-size: 0.85rem;
+    }
+    
+    .priority-icon.critical { color: #dc3545; }
+    .priority-icon.high { color: #fd7e14; }
+    .priority-icon.medium { color: #ffc107; }
+    .priority-icon.low { color: #20c997; }
+    
+    /* Empty Placeholder */
+    .empty-column-placeholder {
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        color: #999;
+        border: 2px dashed #dee2e6;
+        border-radius: 10px;
+        margin: 0.5rem;
+        background: white;
+    }
+    
+    .empty-column-placeholder i {
+        font-size: 2rem;
+        color: #dee2e6;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    /* Quick Filters */
+    .quick-filters {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        background: white;
+        color: #666;
+        border: 1px solid #dee2e6;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .filter-btn:hover, .filter-btn.active {
+        background: #00A3E0;
+        color: white;
+        border-color: #00A3E0;
+    }
+    
+    /* Scrollbar Styling */
+    .board-column-body::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .board-column-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .board-column-body::-webkit-scrollbar-thumb {
+        background: #dee2e6;
+        border-radius: 3px;
+    }
+    
+    .board-column-body::-webkit-scrollbar-thumb:hover {
+        background: #adb5bd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set total_points = sprint.total_points %}
+{% set completed_points = sprint.completed_points %}
+{% set progress = (completed_points / total_points * 100) if total_points > 0 else 0 %}
+{% set total_issues = sprint.issues|length %}
+{% set completed_issues = sprint.issues|selectattr('status.is_final')|list|length %}
+
+<!-- Compact Header Bar -->
+<div class="board-header-bar">
+    <div class="container-fluid px-0">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}">{{ 'Projekte' if lang == 'de' else 'Projects' }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.name }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.iteration_list', project_id=project.id) }}">{{ project.get_term('sprint_plural', lang) }}</a></li>
+                        <li class="breadcrumb-item active">Board</li>
+                    </ol>
+                </nav>
+                <h1>
+                    <i class="bi bi-kanban me-2" style="color: #00A3E0;"></i>
+                    {{ sprint.name }}
+                    <span class="sprint-state-badge {{ sprint.state }}">
+                        {% if sprint.state == 'active' %}
+                            <i class="bi bi-play-fill"></i>
+                            {{ 'Aktiv' if lang == 'de' else 'Active' }}
+                        {% elif sprint.state == 'closed' %}
+                            <i class="bi bi-check-lg"></i>
+                            {{ 'Abgeschlossen' if lang == 'de' else 'Closed' }}
+                        {% else %}
+                            <i class="bi bi-clock"></i>
+                            {{ 'Geplant' if lang == 'de' else 'Planned' }}
+                        {% endif %}
+                    </span>
+                </h1>
+                {% if sprint.goal %}
+                <p class="sprint-goal mb-0">
+                    <i class="bi bi-flag-fill me-1"></i>{{ sprint.goal }}
+                </p>
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('projects.iteration_edit', project_id=project.id, sprint_id=sprint.id) }}" class="action-btn action-btn-outline">
+                    <i class="bi bi-pencil"></i>
+                    {{ 'Bearbeiten' if lang == 'de' else 'Edit' }}
+                </a>
+                <a href="{{ url_for('projects.iteration_list', project_id=project.id) }}" class="action-btn action-btn-outline">
+                    <i class="bi bi-arrow-left"></i>
+                    {{ 'Zurück' if lang == 'de' else 'Back' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <i class="bi bi-calendar-event"></i>
+            {% if sprint.start_date %}
+                <span>{{ sprint.start_date.strftime('%d.%m.%Y') }}</span>
+            {% else %}
+                <span class="text-muted">{{ 'Kein Startdatum' if lang == 'de' else 'No start date' }}</span>
+            {% endif %}
+        </div>
+        <div class="stat-item">
+            <i class="bi bi-calendar-check"></i>
+            {% if sprint.end_date %}
+                <span>{{ sprint.end_date.strftime('%d.%m.%Y') }}</span>
+            {% else %}
+                <span class="text-muted">{{ 'Kein Enddatum' if lang == 'de' else 'No end date' }}</span>
+            {% endif %}
+        </div>
+        <div class="stat-item">
+            <i class="bi bi-list-task"></i>
+            <strong>{{ completed_issues }}</strong> / {{ total_issues }} {{ 'Issues' if lang == 'en' else 'Issues' }}
+        </div>
+        <div class="stat-item">
+            <i class="bi bi-lightning-charge"></i>
+            <strong>{{ completed_points }}</strong> / {{ total_points }} {{ 'Story Points' if lang == 'en' else 'Story Points' }}
+        </div>
+        
+        <div class="progress-section">
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: {{ progress }}%;"></div>
+            </div>
+            <span class="progress-text">{{ progress|int }}%</span>
+        </div>
+    </div>
+    
+    <!-- Board -->
+    <div class="board-container">
+        {% for status in statuses %}
+            {% set status_issues = issues_by_status.get(status.id, []) %}
+            {% set status_class = 'status-' + status.category if status.category else '' %}
+            
+            <div class="board-column {{ status_class }}" data-status-id="{{ status.id }}">
+                <div class="board-column-header" style="{% if status.color %}border-bottom-color: {{ status.color }};{% endif %}">
+                    <span class="column-title">
+                        {% if status.icon %}<i class="bi bi-{{ status.icon }}"></i>{% endif %}
+                        {{ status.get_name(lang) }}
+                    </span>
+                    <span class="issue-count">{{ status_issues|length }}</span>
+                </div>
+                
+                <div class="board-column-body sortable-column" data-status-id="{{ status.id }}">
+                    {% if status_issues %}
+                        {% for issue in status_issues %}
+                            {% set priority_class = 'priority-critical' if issue.priority == 1 else ('priority-high' if issue.priority == 2 else ('priority-medium' if issue.priority == 3 else 'priority-low')) %}
+                            <div class="issue-card {{ priority_class }}" data-issue-id="{{ issue.id }}" data-issue-key="{{ issue.key }}">
+                                <div class="issue-card-header">
+                                    <span class="issue-type-icon" style="background-color: {{ issue.issue_type.color or '#666' }};">
+                                        <i class="bi bi-{{ issue.issue_type.icon or 'circle' }}"></i>
+                                    </span>
+                                    <span class="issue-card-key">{{ issue.key }}</span>
+                                    {% if issue.story_points %}
+                                    <span class="story-points-badge" title="Story Points">{{ issue.story_points }} SP</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="issue-card-summary">
+                                    <a href="{{ url_for('projects.item_detail', project_id=project.id, issue_key=issue.key) }}">
+                                        {{ issue.summary }}
+                                    </a>
+                                </div>
+                                
+                                <div class="issue-card-footer">
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if issue.assignee %}
+                                            <span class="assignee-avatar" title="{{ issue.assignee.name }}">
+                                                {{ issue.assignee.name[:2]|upper }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    {% if issue.priority %}
+                                    <span class="priority-icon {{ 'critical' if issue.priority == 1 else ('high' if issue.priority == 2 else ('medium' if issue.priority == 3 else 'low')) }}" title="{{ 'Priorität' if lang == 'de' else 'Priority' }}">
+                                        {% if issue.priority == 1 %}
+                                            <i class="bi bi-fire"></i>
+                                        {% elif issue.priority == 2 %}
+                                            <i class="bi bi-arrow-up-circle-fill"></i>
+                                        {% elif issue.priority == 3 %}
+                                            <i class="bi bi-dash-circle"></i>
+                                        {% else %}
+                                            <i class="bi bi-arrow-down-circle"></i>
+                                        {% endif %}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-column-placeholder">
+                            <i class="bi bi-inbox"></i>
+                            {{ 'Keine Issues' if lang == 'de' else 'No issues' }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- SortableJS with SRI -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" integrity="sha384-Ky0s0Uj0zEcvQP7bZKwjNeXEsRD6jBZ7L6v8Kb8GSareN6BO8Py8T/7j/u0bXN6" crossorigin="anonymous"></script>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize drag and drop for each column
+    const columns = document.querySelectorAll('.sortable-column');
+    
+    columns.forEach(column => {
+        new Sortable(column, {
+            group: 'sprint-board',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            onEnd: function(evt) {
+                const issueId = evt.item.dataset.issueId;
+                const newStatusId = evt.to.dataset.statusId;
+                const oldStatusId = evt.from.dataset.statusId;
+                
+                if (newStatusId !== oldStatusId) {
+                    // Show loading state
+                    evt.item.style.opacity = '0.5';
+                    
+                    const moveHeaders = {
+                        'Content-Type': 'application/json'
+                    };
+                    if (window.csrfToken) {
+                        moveHeaders['X-CSRFToken'] = window.csrfToken;
+                    }
+
+                    // Move issue to new status
+                    fetch(`{{ url_for('projects.kanban_move_issue', project_id=project.id) }}`, {
+                        method: 'POST',
+                        headers: moveHeaders,
+                        body: JSON.stringify({
+                            issue_id: parseInt(issueId),
+                            status_id: parseInt(newStatusId),
+                            position: evt.newIndex
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        evt.item.style.opacity = '1';
+                        if (!data.success) {
+                            // Revert the move
+                            evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
+                            alert(data.error || '{{ "Fehler beim Verschieben" if lang == "de" else "Error moving issue" }}');
+                        } else {
+                            // Update counts
+                            updateColumnCounts();
+                            updateProgressBar();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        evt.item.style.opacity = '1';
+                        evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
+                    });
+                }
+            }
+        });
+    });
+    
+    function updateColumnCounts() {
+        columns.forEach(column => {
+            const count = column.querySelectorAll('.issue-card').length;
+            const header = column.closest('.board-column').querySelector('.issue-count');
+            if (header) {
+                header.textContent = count;
+            }
+            
+            // Show/hide empty placeholder
+            const placeholder = column.querySelector('.empty-column-placeholder');
+            if (count === 0 && !placeholder) {
+                column.innerHTML = `<div class="empty-column-placeholder"><i class="bi bi-inbox"></i>{{ 'Keine Issues' if lang == 'de' else 'No issues' }}</div>`;
+            } else if (count > 0 && placeholder) {
+                placeholder.remove();
+            }
+        });
+    }
+    
+    function updateProgressBar() {
+        // Reload page to get accurate progress (simpler than recalculating)
+        // Could be enhanced to calculate locally if needed
+        setTimeout(() => location.reload(), 500);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,241 @@
+{
+  "source_file": "steuerarten_aufgaben.md",
+  "records": [
+    {
+      "steuerart": "Aufsichtsratssteuer / Abzugssteuer",
+      "aufgabe": "Abgabe Anmeldung AR-Steuer (§ 50a EStG)"
+    },
+    {
+      "steuerart": "Ertragsteuer / UmwStG",
+      "aufgabe": "Abgabe Bestätigung nach § 22 (3) UmwStG (Steuerlicher Übertragungsstichtag DATUM)"
+    },
+    {
+      "steuerart": "Jahresabschluss / Ertragsteuer",
+      "aufgabe": "Abstimm. Aufw. f. Bewirtungen (ist der Anteil 30 % sauber gebucht? Verprobung!)"
+    },
+    {
+      "steuerart": "Jahresabschluss / Ertragsteuer",
+      "aufgabe": "Abstimm. Aufw. f. Geschenke (sind die Geschenke über 35 € als nichtabzugsf. erfasst?)"
+    },
+    {
+      "steuerart": "Jahresabschluss / Ertragsteuer",
+      "aufgabe": "Abstimm. Aufw. f. Spenden (liegen alle Spendenbescheinigungen vor?)"
+    },
+    {
+      "steuerart": "KapESt/KESt (inkl. SolZ)",
+      "aufgabe": "Abstimm. Aufw. Konten Quellenst., KESt, Soli durch Buchh. (sind alle Steuerbesch. da?)"
+    },
+    {
+      "steuerart": "Körperschaftsteuer / Ertragsteuer",
+      "aufgabe": "Angemessenheitsdokumentation für die Vergütung von AK (Geschäftsführer)"
+    },
+    {
+      "steuerart": "Gewerbesteuer (Hinzurechnung) / Jahresabschluss",
+      "aufgabe": "Anpassung Miete XY Gesellschaft"
+    },
+    {
+      "steuerart": "Lohnsteuer",
+      "aufgabe": "Antrag § 39d EStG für beschränkt steuerpflichtige AN"
+    },
+    {
+      "steuerart": "Abzugssteuer (DBA-Entlastung)",
+      "aufgabe": "Antrag nach § 50 d EStG"
+    },
+    {
+      "steuerart": "Ertragsteuer (Wahlrechte)",
+      "aufgabe": "Ausübung Wahlrecht XY"
+    },
+    {
+      "steuerart": "Ertragsteuer / UmwStG",
+      "aufgabe": "Ausübung Wahlrecht Einbringung - StE JAHR"
+    },
+    {
+      "steuerart": "Umsatzsteuer (NL) / ICP",
+      "aufgabe": "Belastingdienst BTW NL (VAT-Returns, ICP-Meldung)"
+    },
+    {
+      "steuerart": "Umsatzsteuer (Organschaft)",
+      "aufgabe": "Besteht Organisatorische Eingliederung (BFH 7.7.2011, VR 53/10, NZG 2011)"
+    },
+    {
+      "steuerart": "Jahresabschluss",
+      "aufgabe": "Bilanz / GuV / Anlagespiegel / Anhang"
+    },
+    {
+      "steuerart": "Lohnsteuer-nahe Pauschalsteuer",
+      "aufgabe": "Check §37b EStG"
+    },
+    {
+      "steuerart": "Feststellung / Ertragsteuer",
+      "aufgabe": "Dokumentation der Entnahme der XY aus dem gewillkürten Sonderbetriebsvermögen der XY"
+    },
+    {
+      "steuerart": "Feststellung / Ertragsteuer",
+      "aufgabe": "Einholen Zinsabrechnung für Gesellschafterkonten für StE"
+    },
+    {
+      "steuerart": "E-Bilanz",
+      "aufgabe": "Einreichung Elektronische Steuerbilanz"
+    },
+    {
+      "steuerart": "AO / Other",
+      "aufgabe": "Entscheidung über Steuervorauszahlung: Zinssatz"
+    },
+    {
+      "steuerart": "Lohnsteuer",
+      "aufgabe": "Erinnerung Betriebsrat: Keine Überschreitung der EUR 44-Grenze in Bezug auf das XY Fest"
+    },
+    {
+      "steuerart": "Feststellungserklärung",
+      "aufgabe": "Feststellungserklärung"
+    },
+    {
+      "steuerart": "Feststellung / AStG / Other",
+      "aufgabe": "Feststellungserklärung für Zwecke §18 Abs. 3 AStG"
+    },
+    {
+      "steuerart": "Abzugssteuer (Lizenzen)",
+      "aufgabe": "Freistellungsantrag für Lizenzzahlungen an XY"
+    },
+    {
+      "steuerart": "Körperschaftsteuer (Einlagenkonto)",
+      "aufgabe": "Fetstellung des Steuerlichen Einlagenkontos in XY Land/Gesellschaft"
+    },
+    {
+      "steuerart": "Gewerbesteuer",
+      "aufgabe": "Gewerbesteuererklärung"
+    },
+    {
+      "steuerart": "Gewerbesteuer",
+      "aufgabe": "Gewerbesteuerl. Hinzurechnungen (Miete etc)"
+    },
+    {
+      "steuerart": "Gewerbesteuer",
+      "aufgabe": "Ggf. Nachholen der Indexanpassung für VJ"
+    },
+    {
+      "steuerart": "Gewerbesteuer",
+      "aufgabe": "Information an EU Gesellschaften GewStErklärung XY Jahr: Review / Abstimmung"
+    },
+    {
+      "steuerart": "Körperschaftsteuer / AO",
+      "aufgabe": "Info an FA wg. Einlage Bet."
+    },
+    {
+      "steuerart": "Umsatzsteuer",
+      "aufgabe": "Jährliche Korrektur VSt-Abzug (Sonderfall XY)"
+    },
+    {
+      "steuerart": "KapESt/KESt",
+      "aufgabe": "Kapitalertragsteuer-Anmeldung"
+    },
+    {
+      "steuerart": "Körperschaftsteuer",
+      "aufgabe": "Körperschaftsteuererklärung"
+    },
+    {
+      "steuerart": "Other (Meldewesen)",
+      "aufgabe": "Meldung von Beteiligungserwerb/ -aufstockung"
+    },
+    {
+      "steuerart": "Gewerbesteuer (Hinzurechnung) / Jahresabschluss",
+      "aufgabe": "Mietanpassung für Vermietung"
+    },
+    {
+      "steuerart": "Ertragsteuer / UmwStG",
+      "aufgabe": "Abstimmung bzgl. Antrag auf BW-Fortführung"
+    },
+    {
+      "steuerart": "Jahresabschluss",
+      "aufgabe": "Nebenkostenabrechnung für Immo XY und Ermittlung der neuen Abschläge"
+    },
+    {
+      "steuerart": "KISt auf KESt",
+      "aufgabe": "Prüfung bei BZSt ob KISt-Pflicht Gesellschafter"
+    },
+    {
+      "steuerart": "Abzugssteuer (Lizenzen)",
+      "aufgabe": "Quartalsweise Anmeldung wegen Lizenzen"
+    },
+    {
+      "steuerart": "Subventionen",
+      "aufgabe": "Test: Stromkosten >14% der Bruttowertschöpfung"
+    },
+    {
+      "steuerart": "Körperschaftsteuer + KapESt",
+      "aufgabe": "Track: Ausschüttbarer Gewinn für etwaige steuerneutrale Kapitalherabsetzung"
+    },
+    {
+      "steuerart": "Körperschaftsteuer + Gewerbesteuer",
+      "aufgabe": "Überprüfung der Anpassung der KSt-/GewSt-Vorauszahlungen"
+    },
+    {
+      "steuerart": "ErbSt",
+      "aufgabe": "Überwachung Lohnsumme"
+    },
+    {
+      "steuerart": "Umsatzsteuer",
+      "aufgabe": "Umsatzsteuer Jahreserklärung"
+    },
+    {
+      "steuerart": "Umsatzsteuer",
+      "aufgabe": "Umsatzsteueranmeldung"
+    },
+    {
+      "steuerart": "Umsatzsteuer",
+      "aufgabe": "Umsatzsteuer-Dauerfristverlägerung"
+    },
+    {
+      "steuerart": "Umsatzsteuer (Organschaft)",
+      "aufgabe": "Umsatzsteuer-Dauerfristverlägerung (Organschaft)"
+    },
+    {
+      "steuerart": "Umsatzsteuer",
+      "aufgabe": "Umsatzsteuer-Voranmeldung"
+    },
+    {
+      "steuerart": "Umsatzsteuer (Organschaft)",
+      "aufgabe": "Umsatzsteuer-Voranmeldung (Organschaft)"
+    },
+    {
+      "steuerart": "Umsatzsteuer",
+      "aufgabe": "Umsatzversteuerung Heimfahrten mit Dienst-Kfz"
+    },
+    {
+      "steuerart": "Lohnsteuer",
+      "aufgabe": "Versteuerung Bezingutscheine"
+    },
+    {
+      "steuerart": "Other / Ertragsteuer",
+      "aufgabe": "Verzeichnis aktualisieren (§ 5 (1) S. 2 EStG)"
+    },
+    {
+      "steuerart": "Einkommensteuer",
+      "aufgabe": "Vorbereitung Einkommensteuererklärung"
+    },
+    {
+      "steuerart": "Umsatzsteuer",
+      "aufgabe": "Vorsteuervergütungsantrag (§ 18 (9) UStG)"
+    },
+    {
+      "steuerart": "Umsatzsteuer",
+      "aufgabe": "Vorsteuervergütungsantrag für Drittland (LAND)"
+    },
+    {
+      "steuerart": "Umsatzsteuer",
+      "aufgabe": "Weiterbelastung von IC Kosten (Projekt/Event)"
+    },
+    {
+      "steuerart": "Umsatzsteuer",
+      "aufgabe": "Weiterbelastung Grundstücksbezogene Kosten IC"
+    },
+    {
+      "steuerart": "Umsatzsteuer",
+      "aufgabe": "Weiterbelasung der tauschähnlichen Umsätze aus VorBP"
+    },
+    {
+      "steuerart": "EC Sales List / ZM",
+      "aufgabe": "ZM-Meldung"
+    }
+  ]
+}

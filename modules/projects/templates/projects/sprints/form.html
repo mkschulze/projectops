@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+
+{% block title %}{{ (project.get_term('sprint_edit', lang) if sprint else project.get_term('sprint_new', lang)) }} - {{ project.name }}{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    /* Header Bar */
+    .form-header-bar {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 3px solid #00A3E0;
+        padding: 1.25rem 0;
+        margin: -1rem -1rem 1.5rem -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .form-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #000;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .form-title i {
+        color: #00A3E0;
+    }
+    
+    /* Breadcrumb */
+    .breadcrumb {
+        background: none;
+        padding: 0;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .breadcrumb-item a {
+        color: #0076A8;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Form Card */
+    .form-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        overflow: hidden;
+    }
+    
+    .form-card .card-body {
+        padding: 2rem;
+    }
+    
+    /* Form Controls */
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.625rem 0.875rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #00A3E0;
+        box-shadow: 0 0 0 3px rgba(0, 163, 224, 0.15);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Date Range */
+    .date-range {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .date-separator {
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #00A3E0 0%, #0076A8 100%);
+        border: none;
+        color: white;
+    }
+    
+    .btn-save:hover {
+        background: linear-gradient(135deg, #0076A8 0%, #004165 100%);
+        color: white;
+    }
+    
+    /* Info Card */
+    .info-card {
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    
+    .info-card .card-header {
+        background: transparent;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 1rem 1.25rem;
+        font-weight: 600;
+        color: #212529;
+    }
+    
+    .info-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    /* Tips List */
+    .tips-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .tips-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 0.875rem;
+        font-size: 0.9rem;
+        color: #555;
+        line-height: 1.4;
+    }
+    
+    .tips-list li i {
+        color: #00A3E0;
+        flex-shrink: 0;
+        margin-top: 0.15rem;
+    }
+    
+    /* Issues in Sprint */
+    .sprint-issues-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .sprint-issues-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .sprint-issues-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .sprint-issues-list a {
+        text-decoration: none;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .sprint-issues-list a:hover {
+        color: #00A3E0;
+    }
+    
+    .issue-key-badge {
+        background: #e9ecef;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    /* State Banner */
+    .state-banner {
+        border-radius: 8px;
+        padding: 0.875rem 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .state-banner.active {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border: 1px solid #4A90D9;
+    }
+    
+    .state-banner.closed {
+        background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+        border: 1px solid #6c757d;
+    }
+    
+    .state-banner i {
+        font-size: 1.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <!-- Header Bar -->
+    <div class="form-header-bar">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}">{{ 'Projekte' if lang == 'de' else 'Projects' }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.name }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.sprint_list', project_id=project.id) }}">{{ project.get_term('sprint_plural', lang) }}</a></li>
+                <li class="breadcrumb-item active">{{ ('Bearbeiten' if sprint else 'Neu') if lang == 'de' else ('Edit' if sprint else 'New') }}</li>
+            </ol>
+        </nav>
+        <h1 class="form-title">
+            <i class="bi bi-lightning-charge-fill"></i>
+            {{ project.get_term('sprint_edit', lang) if sprint else project.get_term('sprint_new', lang) }}
+        </h1>
+    </div>
+
+    <!-- State Banner -->
+    {% if sprint and sprint.state != 'future' %}
+    <div class="state-banner {{ 'active' if sprint.state == 'active' else 'closed' }}">
+        <i class="bi bi-{{ 'play-circle' if sprint.state == 'active' else 'check-circle' }}"></i>
+        <div>
+            <strong>
+                {% if sprint.state == 'active' %}
+                    {{ (project.get_term('sprint', lang) + ' ist aktiv') if lang == 'de' else (project.get_term('sprint', lang) + ' is active') }}
+                {% else %}
+                    {{ (project.get_term('sprint', lang) + ' ist abgeschlossen') if lang == 'de' else (project.get_term('sprint', lang) + ' is closed') }}
+                {% endif %}
+            </strong>
+            <br>
+            <span class="text-muted small">
+                {{ 'Änderungen sind eingeschränkt.' if lang == 'de' else 'Some changes may be restricted.' }}
+            </span>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <!-- Main Form -->
+        <div class="col-lg-8">
+            <div class="form-card card">
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- Name -->
+                        <div class="mb-4">
+                            <label for="name" class="form-label">
+                                <i class="bi bi-tag me-1"></i>
+                                {{ (project.get_term('sprint', lang) + '-Name') if lang == 'de' else (project.get_term('sprint', lang) + ' Name') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ sprint.name if sprint else '' }}" required
+                                   placeholder="{{ ('z.B. ' + project.get_term('sprint', lang) + ' 1, Release 2.0') if lang == 'de' else ('e.g. ' + project.get_term('sprint', lang) + ' 1, Release 2.0') }}">
+                        </div>
+                        
+                        <!-- Goal -->
+                        <div class="mb-4">
+                            <label for="goal" class="form-label">
+                                <i class="bi bi-bullseye me-1"></i>
+                                {{ (project.get_term('sprint', lang) + '-Ziel') if lang == 'de' else (project.get_term('sprint', lang) + ' Goal') }}
+                            </label>
+                            <textarea class="form-control" id="goal" name="goal" rows="4"
+                                      placeholder="{{ ('Was soll in dieser ' + project.get_term('sprint', lang) + ' erreicht werden?') if lang == 'de' else ('What should be achieved in this ' + project.get_term('sprint', lang)|lower + '?') }}">{{ sprint.goal if sprint else '' }}</textarea>
+                            <div class="form-text">{{ 'Ein klares Ziel hilft dem Team fokussiert zu bleiben.' if lang == 'de' else 'A clear goal helps the team stay focused.' }}</div>
+                        </div>
+                        
+                        <!-- Date Range -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-calendar3 me-1"></i>
+                                {{ 'Zeitraum' if lang == 'de' else 'Time Period' }}
+                            </label>
+                            <div class="row g-3">
+                                <div class="col-md-5">
+                                    <label for="start_date" class="form-label small text-muted">{{ 'Start' if lang == 'de' else 'Start' }}</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" 
+                                           value="{{ sprint.start_date.strftime('%Y-%m-%d') if sprint and sprint.start_date else '' }}">
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end justify-content-center pb-2">
+                                    <i class="bi bi-arrow-right text-muted"></i>
+                                </div>
+                                <div class="col-md-5">
+                                    <label for="end_date" class="form-label small text-muted">{{ 'Ende' if lang == 'de' else 'End' }}</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date"
+                                           value="{{ sprint.end_date.strftime('%Y-%m-%d') if sprint and sprint.end_date else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="d-flex gap-3 pt-3">
+                            <button type="submit" class="btn btn-save action-btn">
+                                <i class="bi bi-check-lg me-2"></i>
+                                {{ 'Speichern' if lang == 'de' else 'Save' }}
+                            </button>
+                            <a href="{{ url_for('projects.sprint_list', project_id=project.id) }}" class="btn btn-outline-secondary action-btn">
+                                {{ 'Abbrechen' if lang == 'de' else 'Cancel' }}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Tips -->
+            <div class="info-card card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-lightbulb me-2 text-warning"></i>
+                    {{ 'Tipps' if lang == 'de' else 'Tips' }}
+                </div>
+                <div class="card-body">
+                    <ul class="tips-list">
+                        <li>
+                            <i class="bi bi-check2"></i>
+                            <span>{{ (project.get_article('sprint', 'nom')|capitalize + ' typische' + ('r ' if project.get_article('sprint', 'nom') == 'ein' else ' ') + project.get_term('sprint', lang) + ' dauert 1-4 Wochen.') if lang == 'de' else ('A typical ' + project.get_term('sprint', lang)|lower + ' lasts 1-4 weeks.') }}</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-check2"></i>
+                            <span>{{ ('Das ' + project.get_term('sprint', lang) + '-Ziel sollte klar und erreichbar sein.') if lang == 'de' else ('The ' + project.get_term('sprint', lang)|lower + ' goal should be clear and achievable.') }}</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-check2"></i>
+                            <span>{{ ('Nur ' + project.get_article('sprint', 'nom') + ' ' + project.get_term('sprint', lang) + ' kann gleichzeitig aktiv sein.') if lang == 'de' else ('Only one ' + project.get_term('sprint', lang)|lower + ' can be active at a time.') }}</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-check2"></i>
+                            <span>{{ (project.get_term('issue_plural', lang) + ' können über den Bearbeiten-Dialog ' + project.get_article('sprint', 'dat') + ' ' + project.get_term('sprint', lang) + ' zugewiesen werden.') if lang == 'de' else (project.get_term('issue_plural', lang) + ' can be assigned to a ' + project.get_term('sprint', lang)|lower + ' via the edit dialog.') }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Issues in Sprint -->
+            {% if sprint and sprint.issues %}
+            <div class="info-card card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi bi-list-task me-2"></i>
+                        {{ ('Issues in ' + project.get_term('sprint', lang)) if lang == 'de' else ('Issues in ' + project.get_term('sprint', lang)) }}
+                    </span>
+                    <span class="badge bg-secondary">{{ sprint.issues|length }}</span>
+                </div>
+                <div class="card-body">
+                    <ul class="sprint-issues-list">
+                        {% for issue in sprint.issues[:8] %}
+                        <li>
+                            <a href="{{ url_for('projects.issue_detail', project_id=project.id, issue_key=issue.key) }}">
+                                <span class="issue-key-badge">{{ issue.key }}</span>
+                                <span>{{ issue.summary[:35] }}{% if issue.summary|length > 35 %}...{% endif %}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                        {% if sprint.issues|length > 8 %}
+                        <li class="text-muted small pt-2">
+                            <i class="bi bi-three-dots me-1"></i>
+                            {{ 'und' if lang == 'de' else 'and' }} {{ sprint.issues|length - 8 }} {{ 'weitere' if lang == 'de' else 'more' }}
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-set end date 2 weeks after start date if empty
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    startDate.addEventListener('change', function() {
+        if (!endDate.value && this.value) {
+            const start = new Date(this.value);
+            start.setDate(start.getDate() + 14);
+            endDate.value = start.toISOString().split('T')[0];
+        }
+    });
+});
+</script>
+{% endblock %}

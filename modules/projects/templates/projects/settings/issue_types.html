@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Issue Types' if lang == 'en' else 'Issue-Typen' }} - {{ project.key }}{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    /* ============================================
+       SETTINGS: ISSUE TYPES - PROJECTOPS DESIGN
+       Color: Purple #62378a (Settings accent)
+       ============================================ */
+    
+    /* Compact Header Bar */
+    .settings-header-bar {
+        background: white;
+        border-bottom: 3px solid #62378a;
+        padding: 1rem 0;
+        margin: -1rem -1rem 1.5rem -1rem;
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .settings-header-bar .breadcrumb {
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .settings-header-bar .breadcrumb a {
+        color: #666;
+        text-decoration: none;
+    }
+    
+    .settings-header-bar .breadcrumb a:hover {
+        color: #62378a;
+    }
+    
+    .settings-header-bar h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    
+    .settings-header-bar .subtitle {
+        color: #666;
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Content Card */
+    .settings-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .settings-card-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .settings-card-header h5 {
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+    }
+    
+    .count-badge {
+        background: linear-gradient(135deg, #62378a 0%, #4a2a6a 100%);
+        color: white;
+        padding: 0.3rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    /* Table Styling */
+    .settings-table {
+        margin: 0;
+    }
+    
+    .settings-table thead th {
+        background: #f8f9fa;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #666;
+        border: none;
+        padding: 1rem 1.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .settings-table tbody td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        border-color: #f0f0f0;
+    }
+    
+    .settings-table tbody tr:hover {
+        background: #fafbfc;
+    }
+    
+    .type-icon-box {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+    }
+    
+    .type-name {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .default-badge {
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+    
+    .level-badge {
+        background: #e9ecef;
+        color: #495057;
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .property-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        margin-right: 0.25rem;
+    }
+    
+    .property-icon.children {
+        background: rgba(134, 188, 37, 0.15);
+        color: #4A90D9;
+    }
+    
+    .property-icon.subtask {
+        background: rgba(0, 163, 224, 0.15);
+        color: #00A3E0;
+    }
+    
+    /* Sidebar Form Card */
+    .form-sidebar-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .form-sidebar-header {
+        background: linear-gradient(135deg, #62378a 0%, #4a2a6a 100%);
+        color: white;
+        padding: 1rem 1.25rem;
+    }
+    
+    .form-sidebar-header h5 {
+        font-weight: 600;
+        margin: 0;
+        font-size: 1rem;
+    }
+    
+    .form-sidebar-body {
+        padding: 1.5rem 1.25rem;
+    }
+    
+    .form-sidebar-body .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.4rem;
+    }
+    
+    .form-sidebar-body .form-control,
+    .form-sidebar-body .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.6rem 0.9rem;
+    }
+    
+    .form-sidebar-body .form-control:focus,
+    .form-sidebar-body .form-select:focus {
+        border-color: #62378a;
+        box-shadow: 0 0 0 3px rgba(98, 55, 138, 0.15);
+    }
+    
+    .form-sidebar-body .form-check-input:checked {
+        background-color: #62378a;
+        border-color: #62378a;
+    }
+    
+    .btn-add-type {
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        width: 100%;
+        transition: all 0.2s;
+    }
+    
+    .btn-add-type:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(134, 188, 37, 0.3);
+        color: white;
+    }
+    
+    /* Info Card */
+    .info-card {
+        background: linear-gradient(135deg, #e8f4fd 0%, #d4ecfd 100%);
+        border-radius: 12px;
+        padding: 1.25rem;
+        border-left: 4px solid #00A3E0;
+    }
+    
+    .info-card h6 {
+        color: #0076A8;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-card p {
+        color: #495057;
+        font-size: 0.875rem;
+        margin: 0;
+        line-height: 1.5;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: none;
+    }
+    
+    .action-btn-outline {
+        background: white;
+        color: #666;
+        border: 1px solid #dee2e6;
+    }
+    
+    .action-btn-outline:hover {
+        background: #f8f9fa;
+        color: #333;
+        border-color: #62378a;
+    }
+    
+    /* Icon Preview in Form */
+    .icon-preview {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Compact Header Bar -->
+<div class="settings-header-bar">
+    <div class="container-fluid px-0">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}">{{ 'Projects' if lang == 'en' else 'Projekte' }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.key }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'Issue Types' if lang == 'en' else 'Issue-Typen' }}</li>
+                    </ol>
+                </nav>
+                <h1>
+                    <i class="bi bi-collection me-2" style="color: #62378a;"></i>
+                    {{ 'Issue Types' if lang == 'en' else 'Issue-Typen' }}
+                </h1>
+                <p class="subtitle mb-0">{{ 'Configure the types of issues for this project' if lang == 'en' else 'Konfigurieren Sie die Issue-Typen für dieses Projekt' }}</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('projects.project_detail', project_id=project.id) }}" class="action-btn action-btn-outline">
+                    <i class="bi bi-arrow-left"></i>
+                    {{ 'Back' if lang == 'en' else 'Zurück' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row g-4">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <h5>{{ 'Configured Types' if lang == 'en' else 'Konfigurierte Typen' }}</h5>
+                    <span class="count-badge">{{ issue_types|length }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table settings-table mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;"></th>
+                                <th>Name</th>
+                                <th>Name (EN)</th>
+                                <th style="width: 90px;">{{ 'Level' if lang == 'en' else 'Ebene' }}</th>
+                                <th style="width: 120px;">{{ 'Properties' if lang == 'en' else 'Eigenschaften' }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in issue_types %}
+                            <tr>
+                                <td>
+                                    <div class="type-icon-box" style="background-color: {{ t.color }};">
+                                        <i class="{{ t.icon }}"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="type-name">{{ t.name }}</span>
+                                    {% if t.is_default %}
+                                        <span class="default-badge">{{ 'Default' if lang == 'en' else 'Standard' }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted">{{ t.name_en or '—' }}</td>
+                                <td>
+                                    <span class="level-badge">{{ t.hierarchy_level }}</span>
+                                </td>
+                                <td>
+                                    {% if t.can_have_children %}
+                                        <span class="property-icon children" title="{{ 'Can have children' if lang == 'en' else 'Kann Unteraufgaben haben' }}">
+                                            <i class="bi bi-diagram-3"></i>
+                                        </span>
+                                    {% endif %}
+                                    {% if t.is_subtask %}
+                                        <span class="property-icon subtask" title="{{ 'Sub-Task type' if lang == 'en' else 'Unteraufgaben-Typ' }}">
+                                            <i class="bi bi-box-arrow-in-down-right"></i>
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Add New Type Form -->
+            <div class="form-sidebar-card">
+                <div class="form-sidebar-header">
+                    <h5><i class="bi bi-plus-circle me-2"></i>{{ 'Add Type' if lang == 'en' else 'Typ hinzufügen' }}</h5>
+                </div>
+                <div class="form-sidebar-body">
+                    <form method="post" action="{{ url_for('projects.project_issue_type_add', project_id=project.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- Preview -->
+                        <div class="text-center">
+                            <div class="icon-preview mx-auto" id="typePreview" style="background-color: #4A90D9;">
+                                <i class="bi bi-check2-square"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="name" required placeholder="z.B. Feature, Improvement">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Name (EN)</label>
+                            <input type="text" class="form-control" name="name_en" placeholder="e.g. Feature, Improvement">
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Icon</label>
+                                <select name="icon" class="form-select" id="iconSelect">
+                                    <option value="bi-lightning-charge">⚡ Lightning</option>
+                                    <option value="bi-bookmark">🔖 Bookmark</option>
+                                    <option value="bi-check2-square" selected>☑️ Task</option>
+                                    <option value="bi-bug">🐛 Bug</option>
+                                    <option value="bi-card-list">📋 List</option>
+                                    <option value="bi-star">⭐ Star</option>
+                                    <option value="bi-flag">🚩 Flag</option>
+                                    <option value="bi-gear">⚙️ Gear</option>
+                                    <option value="bi-lightbulb">💡 Idea</option>
+                                    <option value="bi-rocket">🚀 Rocket</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">{{ 'Color' if lang == 'en' else 'Farbe' }}</label>
+                                <input type="color" class="form-control form-control-color w-100" name="color" value="#4A90D9" id="colorInput">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ 'Hierarchy Level' if lang == 'en' else 'Hierarchie-Ebene' }}</label>
+                            <select name="hierarchy_level" class="form-select">
+                                <option value="0">0 - {{ 'Top Level (Epic)' if lang == 'en' else 'Oberste Ebene (Epic)' }}</option>
+                                <option value="1" selected>1 - {{ 'Standard (Story)' if lang == 'en' else 'Standard (Story)' }}</option>
+                                <option value="2">2 - {{ 'Detail (Task)' if lang == 'en' else 'Detail (Task)' }}</option>
+                                <option value="3">3 - {{ 'Sub-Task' if lang == 'en' else 'Unteraufgabe' }}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="can_have_children" id="can_have_children" checked>
+                                <label class="form-check-label" for="can_have_children">
+                                    {{ 'Can have child issues' if lang == 'en' else 'Kann Unter-Issues haben' }}
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_subtask" id="is_subtask">
+                                <label class="form-check-label" for="is_subtask">
+                                    {{ 'Is a sub-task type' if lang == 'en' else 'Ist ein Unteraufgaben-Typ' }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-add-type">
+                            <i class="bi bi-plus-lg me-1"></i>
+                            {{ 'Add Type' if lang == 'en' else 'Typ hinzufügen' }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="info-card mt-4">
+                <h6><i class="bi bi-info-circle me-1"></i>{{ 'About Hierarchy Levels' if lang == 'en' else 'Über Hierarchie-Ebenen' }}</h6>
+                <p>
+                    {{ 'Level 0 is for high-level items like Epics. Level 1 for Stories, Level 2 for Tasks, and Level 3 for Sub-Tasks. Issues can only have children with a higher level number.' if lang == 'en' else 'Ebene 0 ist für übergeordnete Elemente wie Epics. Ebene 1 für Stories, Ebene 2 für Tasks und Ebene 3 für Unteraufgaben. Issues können nur untergeordnete Issues mit einer höheren Ebenennummer haben.' }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    const iconSelect = document.getElementById('iconSelect');
+    const colorInput = document.getElementById('colorInput');
+    const preview = document.getElementById('typePreview');
+    
+    function updatePreview() {
+        const iconClass = iconSelect.value;
+        const color = colorInput.value;
+        
+        preview.style.backgroundColor = color;
+        preview.innerHTML = `<i class="bi ${iconClass.replace('bi-', '')}"></i>`;
+    }
+    
+    iconSelect.addEventListener('change', updatePreview);
+    colorInput.addEventListener('input', updatePreview);
+});
+</script>
+{% endblock %}

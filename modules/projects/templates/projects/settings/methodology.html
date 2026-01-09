@@ -1,0 +1,505 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Methodology' if lang == 'en' else 'Methodik' }} - {{ project.key }}{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    /* ============================================
+       SETTINGS: METHODOLOGY - PROJECTOPS DESIGN
+       Color: Purple #62378a (Settings accent)
+       ============================================ */
+    
+    /* Compact Header Bar */
+    .settings-header-bar {
+        background: white;
+        border-bottom: 3px solid #62378a;
+        padding: 1rem 0;
+        margin: -1rem -1rem 1.5rem -1rem;
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .settings-header-bar .breadcrumb {
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .settings-header-bar .breadcrumb a {
+        color: #666;
+        text-decoration: none;
+    }
+    
+    .settings-header-bar .breadcrumb a:hover {
+        color: #62378a;
+    }
+    
+    .settings-header-bar h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    
+    .settings-header-bar .subtitle {
+        color: #666;
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Content Card */
+    .settings-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .settings-card-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .settings-card-header h5 {
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+    }
+    
+    .settings-card-body {
+        padding: 1.5rem;
+    }
+    
+    /* Methodology Cards */
+    .methodology-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+    }
+    
+    .methodology-card {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.25rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+    
+    .methodology-card:hover {
+        border-color: #62378a;
+        background: rgba(98, 55, 138, 0.02);
+    }
+    
+    .methodology-card.selected {
+        border-color: #62378a;
+        background: rgba(98, 55, 138, 0.05);
+    }
+    
+    .methodology-card.selected::after {
+        content: '';
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .methodology-card.selected::before {
+        content: '✓';
+        position: absolute;
+        top: 12px;
+        right: 17px;
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 1;
+    }
+    
+    .methodology-card h6 {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+    
+    .methodology-card p {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 0.75rem;
+    }
+    
+    .methodology-card .features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+    
+    .feature-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 10px;
+        background: #e9ecef;
+        color: #666;
+    }
+    
+    .feature-badge.enabled {
+        background: rgba(134, 188, 37, 0.15);
+        color: #6a9c1f;
+    }
+    
+    /* Terminology Table */
+    .terminology-table {
+        width: 100%;
+    }
+    
+    .terminology-table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border: none;
+    }
+    
+    .terminology-table td {
+        padding: 0.75rem;
+        vertical-align: middle;
+        border-color: #f0f0f0;
+    }
+    
+    .terminology-table .term-key {
+        font-weight: 600;
+        color: #333;
+        width: 150px;
+    }
+    
+    .terminology-table .form-control {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .terminology-table .form-control:focus {
+        border-color: #62378a;
+        box-shadow: 0 0 0 3px rgba(98, 55, 138, 0.15);
+    }
+    
+    .terminology-table .form-control::placeholder {
+        color: #adb5bd;
+        font-style: italic;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: none;
+    }
+    
+    .action-btn-outline {
+        background: white;
+        color: #666;
+        border: 1px solid #dee2e6;
+    }
+    
+    .action-btn-outline:hover {
+        background: #f8f9fa;
+        color: #333;
+        border-color: #62378a;
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #4A90D9 0%, #6a9c1f 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(134, 188, 37, 0.3);
+        color: white;
+    }
+    
+    .btn-reset {
+        background: white;
+        border: 1px solid #dc3545;
+        color: #dc3545;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .btn-reset:hover {
+        background: #dc3545;
+        color: white;
+    }
+    
+    /* Save button pulse animation for unsaved changes */
+    .btn-save-pulse {
+        animation: pulse-green 2s infinite;
+    }
+    
+    @keyframes pulse-green {
+        0% { box-shadow: 0 0 0 0 rgba(134, 188, 37, 0.6); }
+        50% { box-shadow: 0 0 0 8px rgba(134, 188, 37, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(134, 188, 37, 0); }
+    }
+    
+    /* Info Alert */
+    .info-alert {
+        background: linear-gradient(135deg, #e8f4fd 0%, #d4ecfd 100%);
+        border: none;
+        border-radius: 12px;
+        border-left: 4px solid #00A3E0;
+        padding: 1rem 1.25rem;
+    }
+    
+    .info-alert i {
+        color: #0076A8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Compact Header Bar -->
+<div class="settings-header-bar">
+    <div class="container-fluid px-0">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}">{{ 'Projects' if lang == 'en' else 'Projekte' }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.key }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'Methodology' if lang == 'en' else 'Methodik' }}</li>
+                    </ol>
+                </nav>
+                <h1>
+                    <i class="bi bi-gear me-2" style="color: #62378a;"></i>
+                    {{ 'Methodology & Terminology' if lang == 'en' else 'Methodik & Terminologie' }}
+                </h1>
+                <p class="subtitle mb-0">{{ 'Choose your project style and customize terminology' if lang == 'en' else 'Wählen Sie Ihren Projektstil und passen Sie die Terminologie an' }}</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('projects.project_detail', project_id=project.id) }}" class="action-btn action-btn-outline">
+                    <i class="bi bi-arrow-left"></i>
+                    {{ 'Back' if lang == 'en' else 'Zurück' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Methodology Selection -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <h5><i class="bi bi-signpost-split me-2"></i>{{ 'Project Methodology' if lang == 'en' else 'Projektmethodik' }}</h5>
+            </div>
+            <div class="settings-card-body">
+                <div class="methodology-grid">
+                    {% for key, config in methodology_config.items() %}
+                    <label class="methodology-card {{ 'selected' if project.methodology == key else '' }}" for="methodology_{{ key }}">
+                        <input type="radio" name="methodology" id="methodology_{{ key }}" value="{{ key }}" 
+                               {{ 'checked' if project.methodology == key }} class="d-none" 
+                               onchange="selectMethodology('{{ key }}')">
+                        <h6>{{ config.name[lang] }}</h6>
+                        <p>{{ config.description[lang] }}</p>
+                        <div class="features">
+                            {% if config.features.sprints %}
+                            <span class="feature-badge enabled">{{ 'Sprints' if lang == 'en' else 'Sprints' }}</span>
+                            {% endif %}
+                            {% if config.features.kanban_board %}
+                            <span class="feature-badge enabled">{{ 'Board' if lang == 'en' else 'Board' }}</span>
+                            {% endif %}
+                            {% if config.features.backlog %}
+                            <span class="feature-badge enabled">{{ 'Backlog' if lang == 'en' else 'Backlog' }}</span>
+                            {% endif %}
+                            {% if config.features.get('velocity') %}
+                            <span class="feature-badge enabled">{{ 'Velocity' if lang == 'en' else 'Velocity' }}</span>
+                            {% endif %}
+                            {% if config.features.get('wip_limits') %}
+                            <span class="feature-badge enabled">{{ 'WIP Limits' if lang == 'en' else 'WIP Limits' }}</span>
+                            {% endif %}
+                            {% if config.features.get('phases') %}
+                            <span class="feature-badge enabled">{{ 'Phases' if lang == 'en' else 'Phasen' }}</span>
+                            {% endif %}
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminology Customization -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <h5><i class="bi bi-translate me-2"></i>{{ 'Terminology' if lang == 'en' else 'Terminologie' }}</h5>
+                <button type="button" class="btn-reset" onclick="resetTerminology()">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>
+                    {{ 'Reset to Defaults' if lang == 'en' else 'Auf Standard' }}
+                </button>
+            </div>
+            <div class="settings-card-body">
+                <div class="alert info-alert mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    {{ 'Customize the terminology used throughout the project. Leave fields empty to use methodology defaults.' if lang == 'en' else 'Passen Sie die Terminologie an, die im gesamten Projekt verwendet wird. Lassen Sie Felder leer, um die Methodik-Standardwerte zu verwenden.' }}
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table terminology-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>{{ 'Term' if lang == 'en' else 'Begriff' }}</th>
+                                <th>{{ 'German' if lang == 'en' else 'Deutsch' }}</th>
+                                <th>{{ 'English' if lang == 'en' else 'Englisch' }}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="terminologyTable">
+                            {% set term_keys = ['sprint', 'backlog', 'epic', 'story', 'task', 'bug', 'story_points', 'velocity', 'burndown', 'board', 'done', 'in_progress', 'todo', 'release'] %}
+                            {% set current_config = methodology_config.get(project.methodology, methodology_config['scrum']) %}
+                            {% for key in term_keys %}
+                            {% set custom_term = project.terminology.get(key, {}) if project.terminology else {} %}
+                            {% set default_de = current_config.terminology.de.get(key, key) %}
+                            {% set default_en = current_config.terminology.en.get(key, key) %}
+                            <tr>
+                                <td class="term-key">{{ key.replace('_', ' ').title() }}</td>
+                                <td>
+                                    <input type="text" class="form-control" name="term_{{ key }}_de" 
+                                           value="{{ custom_term.de if custom_term else '' }}"
+                                           placeholder="{{ default_de }}"
+                                           data-key="{{ key }}" data-lang="de">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" name="term_{{ key }}_en" 
+                                           value="{{ custom_term.en if custom_term else '' }}"
+                                           placeholder="{{ default_en }}"
+                                           data-key="{{ key }}" data-lang="en">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="d-flex justify-content-end gap-2 mb-4">
+            <a href="{{ url_for('projects.project_detail', project_id=project.id) }}" class="action-btn action-btn-outline">
+                {{ 'Cancel' if lang == 'en' else 'Abbrechen' }}
+            </a>
+            <button type="submit" class="btn-save">
+                <i class="bi bi-check2 me-1"></i>
+                {{ 'Save Changes' if lang == 'en' else 'Änderungen speichern' }}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+// Methodology configuration from server
+const methodologyConfig = {{ methodology_config|tojson|safe }};
+const lang = '{{ lang }}';
+let hasChanges = false;
+
+function selectMethodology(key) {
+    // Update card selection
+    document.querySelectorAll('.methodology-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    document.querySelector(`label[for="methodology_${key}"]`).classList.add('selected');
+    
+    // Update terminology placeholders
+    const config = methodologyConfig[key];
+    if (config && config.terminology) {
+        const terms = config.terminology;
+        document.querySelectorAll('#terminologyTable input').forEach(input => {
+            const termKey = input.dataset.key;
+            const termLang = input.dataset.lang;
+            if (terms[termLang] && terms[termLang][termKey]) {
+                input.placeholder = terms[termLang][termKey];
+            }
+        });
+    }
+    
+    markAsChanged();
+}
+
+function resetTerminology() {
+    const confirmMsg = lang === 'de' 
+        ? 'Terminologie auf Standard zurücksetzen? Die Felder werden geleert und verwenden dann die Standardwerte der gewählten Methodik.'
+        : 'Reset terminology to defaults? The fields will be cleared and use the default values of the selected methodology.';
+    
+    if (confirm(confirmMsg)) {
+        document.querySelectorAll('#terminologyTable input').forEach(input => {
+            input.value = '';
+        });
+        markAsChanged();
+    }
+}
+
+function markAsChanged() {
+    hasChanges = true;
+    const saveBtn = document.querySelector('.btn-save');
+    if (saveBtn && !saveBtn.classList.contains('btn-save-pulse')) {
+        saveBtn.classList.add('btn-save-pulse');
+        // Add visual indicator that there are unsaved changes
+        saveBtn.innerHTML = '<i class="bi bi-check2 me-1"></i>' + (lang === 'de' ? 'Änderungen speichern *' : 'Save Changes *');
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Radio button changes
+    document.querySelectorAll('input[name="methodology"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            selectMethodology(this.value);
+        });
+    });
+    
+    // Track terminology input changes
+    document.querySelectorAll('#terminologyTable input').forEach(input => {
+        input.addEventListener('input', markAsChanged);
+    });
+    
+    // Warn on leaving with unsaved changes
+    window.addEventListener('beforeunload', function(e) {
+        if (hasChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+    
+    // Clear warning on form submit
+    document.querySelector('form').addEventListener('submit', function() {
+        hasChanges = false;
+    });
+});
+</script>
+{% endblock %}

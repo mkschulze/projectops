@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+{% block title %}{{ issue.key if issue else (('New ' + project.get_term('issue', lang)) if lang == 'en' else ('Neue ' + project.get_term('issue', lang))) }} - {{ project.key }}{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    /* Form Header Bar */
+    .form-header-bar {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 3px solid #0076A8;
+        padding: 1.25rem 0;
+        margin: -1rem -1rem 1.5rem -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .form-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #000;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .form-title i {
+        color: #0076A8;
+    }
+    
+    /* Breadcrumb */
+    .breadcrumb {
+        background: none;
+        padding: 0;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .breadcrumb-item a {
+        color: #0076A8;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Form Cards */
+    .form-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        margin-bottom: 1.25rem;
+        overflow: hidden;
+    }
+    
+    .form-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 1px solid #f0f0f0;
+        padding: 1rem 1.25rem;
+        font-weight: 600;
+    }
+    
+    .form-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    /* Type Selector */
+    .type-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .type-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 0.875rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+    
+    .type-btn:hover {
+        border-color: #0076A8;
+        background: #f8f9fa;
+    }
+    
+    .type-btn.selected {
+        border-color: var(--type-color, #0076A8);
+        background: var(--type-color, #0076A8);
+        color: white;
+    }
+    
+    .type-btn input {
+        display: none;
+    }
+    
+    /* Form Controls */
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.625rem 0.875rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4A90D9;
+        box-shadow: 0 0 0 3px rgba(134, 188, 37, 0.15);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Priority Selector */
+    .priority-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #4A90D9 0%, #6fa01e 100%);
+        border: none;
+        color: white;
+    }
+    
+    .btn-save:hover {
+        background: linear-gradient(135deg, #6fa01e 0%, #5c8a18 100%);
+        color: white;
+    }
+    
+    /* Sidebar Info Card */
+    .info-card {
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    
+    .info-card .card-header {
+        background: transparent;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 1rem;
+    }
+    
+    .info-card .card-body {
+        padding: 1rem;
+    }
+    
+    /* Tips List */
+    .tips-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .tips-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.9rem;
+        color: #555;
+    }
+    
+    .tips-list li i {
+        color: #4A90D9;
+        flex-shrink: 0;
+        margin-top: 0.15rem;
+    }
+    
+    /* Markdown Hint */
+    .markdown-hint {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+    
+    .markdown-hint i {
+        color: #0076A8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <!-- Compact Header -->
+    <div class="form-header-bar">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}">{{ 'Projects' if lang == 'en' else 'Projekte' }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.key }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.issue_list', project_id=project.id) }}">{{ project.get_term('issue_plural', lang) }}</a></li>
+                <li class="breadcrumb-item active">{{ issue.key if issue else ('New' if lang == 'en' else 'Neu') }}</li>
+            </ol>
+        </nav>
+        <h1 class="form-title">
+            <i class="bi bi-{{ 'pencil-square' if issue else 'plus-circle' }}"></i>
+            {{ (issue.key + ' ' + ('bearbeiten' if lang == 'de' else 'Edit')) if issue else ((project.get_term('issue', lang) + ' erstellen') if lang == 'de' else ('Create ' + project.get_term('issue', lang))) }}
+        </h1>
+    </div>
+
+    <form method="post" class="needs-validation" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row">
+            <!-- Main Form -->
+            <div class="col-lg-8">
+                <!-- Issue Type & Summary -->
+                <div class="form-card card">
+                    <div class="card-header">
+                        <i class="bi bi-card-text me-2"></i>{{ 'Details' if lang == 'en' else 'Details' }}
+                    </div>
+                    <div class="card-body">
+                        <!-- Issue Type -->
+                        <div class="mb-4">
+                            <label class="form-label">{{ 'Type' if lang == 'en' else 'Typ' }} <span class="text-danger">*</span></label>
+                            <div class="type-selector">
+                                {% for t in issue_types %}
+                                <label class="type-btn {{ 'selected' if (issue and issue.type_id == t.id) or (not issue and t.is_default) }}" 
+                                       style="--type-color: {{ t.color }};" onclick="selectType(this, '{{ t.color }}')">
+                                    <input type="radio" name="type_id" value="{{ t.id }}" {{ 'checked' if (issue and issue.type_id == t.id) or (not issue and t.is_default) }} required>
+                                    <i class="{{ t.icon }}"></i>
+                                    {{ t.get_name(lang) }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Summary -->
+                        <div class="mb-4">
+                            <label for="summary" class="form-label">{{ 'Summary' if lang == 'en' else 'Zusammenfassung' }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="summary" name="summary" 
+                                   value="{{ issue.summary if issue else '' }}" required maxlength="500" 
+                                   placeholder="{{ 'Brief description of the issue' if lang == 'en' else 'Kurze Beschreibung des Issues' }}">
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">{{ 'Description' if lang == 'en' else 'Beschreibung' }}</label>
+                            <textarea class="form-control" id="description" name="description" rows="8" 
+                                      placeholder="{{ 'Detailed description...' if lang == 'en' else 'Detaillierte Beschreibung...' }}">{{ issue.description if issue else '' }}</textarea>
+                            <div class="markdown-hint">
+                                <i class="bi bi-markdown"></i>
+                                {{ 'Markdown formatting is supported' if lang == 'en' else 'Markdown-Formatierung wird unterstützt' }}
+                            </div>
+                        </div>
+
+                        <!-- Labels -->
+                        <div>
+                            <label for="labels" class="form-label">Labels</label>
+                            <input type="text" class="form-control" id="labels" name="labels" 
+                                   value="{{ issue.labels|join(', ') if issue and issue.labels else '' }}" 
+                                   placeholder="{{ 'e.g. urgent, backend, needs-review' if lang == 'en' else 'z.B. dringend, backend, prüfen' }}">
+                            <div class="form-text">{{ 'Separate with commas' if lang == 'en' else 'Mit Kommas trennen' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parent Issue -->
+                {% if parent_issues %}
+                <div class="form-card card">
+                    <div class="card-header">
+                        <i class="bi bi-diagram-3 me-2"></i>{{ 'Parent Issue' if lang == 'en' else 'Übergeordnetes Issue' }}
+                    </div>
+                    <div class="card-body">
+                        <select name="parent_id" class="form-select">
+                            <option value="">{{ 'None (Top-level issue)' if lang == 'en' else 'Keines (Top-Level Issue)' }}</option>
+                            {% for p in parent_issues %}
+                            <option value="{{ p.id }}" {{ 'selected' if issue and issue.parent_id == p.id }}>
+                                {{ p.key }} - {{ p.summary[:60] }}{{ '...' if p.summary|length > 60 }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">{{ 'Link this issue as a sub-task of another issue' if lang == 'en' else 'Dieses Issue als Unteraufgabe eines anderen Issues verknüpfen' }}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Assignment -->
+                <div class="form-card card">
+                    <div class="card-header">
+                        <i class="bi bi-person me-2"></i>{{ 'Assignment' if lang == 'en' else 'Zuweisung' }}
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="assignee_id" class="form-label">{{ 'Assignee' if lang == 'en' else 'Bearbeiter' }}</label>
+                            <select name="assignee_id" id="assignee_id" class="form-select">
+                                <option value="">{{ 'Unassigned' if lang == 'en' else 'Nicht zugewiesen' }}</option>
+                                {% for m in members %}
+                                <option value="{{ m.user.id }}" {{ 'selected' if issue and issue.assignee_id == m.user.id }}>
+                                    {{ m.user.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="priority" class="form-label">{{ 'Priority' if lang == 'en' else 'Priorität' }}</label>
+                            <select name="priority" id="priority" class="form-select">
+                                <option value="1" {{ 'selected' if issue and issue.priority == 1 }}>🔴 {{ 'Highest' if lang == 'en' else 'Höchste' }}</option>
+                                <option value="2" {{ 'selected' if issue and issue.priority == 2 }}>🟠 {{ 'High' if lang == 'en' else 'Hoch' }}</option>
+                                <option value="3" {{ 'selected' if (not issue) or issue.priority == 3 }}>🟡 {{ 'Medium' if lang == 'en' else 'Mittel' }}</option>
+                                <option value="4" {{ 'selected' if issue and issue.priority == 4 }}>🟢 {{ 'Low' if lang == 'en' else 'Niedrig' }}</option>
+                                <option value="5" {{ 'selected' if issue and issue.priority == 5 }}>⚪ {{ 'Lowest' if lang == 'en' else 'Niedrigste' }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Planning -->
+                <div class="form-card card">
+                    <div class="card-header">
+                        <i class="bi bi-calendar3 me-2"></i>{{ 'Planning' if lang == 'en' else 'Planung' }}
+                    </div>
+                    <div class="card-body">
+                        {% if sprints %}
+                        <div class="mb-3">
+                            <label for="sprint_id" class="form-label">{{ project.get_term('sprint', lang) }}</label>
+                            <select name="sprint_id" id="sprint_id" class="form-select">
+                                <option value="">{{ project.get_term('backlog', lang) }}</option>
+                                {% for s in sprints %}
+                                <option value="{{ s.id }}" {{ 'selected' if issue and issue.sprint_id == s.id }}>
+                                    {{ s.name }}{% if s.is_active %} ⚡{% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="story_points" class="form-label">{{ project.get_term('story_points', lang) }}</label>
+                            <input type="number" class="form-control" id="story_points" name="story_points" 
+                                   value="{{ issue.story_points if issue and issue.story_points else '' }}" 
+                                   min="0" step="0.5" placeholder="0">
+                        </div>
+
+                        <div>
+                            <label for="due_date" class="form-label">{{ 'Due Date' if lang == 'en' else 'Fälligkeitsdatum' }}</label>
+                            <input type="date" class="form-control" id="due_date" name="due_date" 
+                                   value="{{ issue.due_date.strftime('%Y-%m-%d') if issue and issue.due_date else '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-save action-btn">
+                        <i class="bi bi-check-lg me-2"></i>{{ 'Save' if lang == 'en' else 'Speichern' }}
+                    </button>
+                    <a href="{{ url_for('projects.issue_detail', project_id=project.id, issue_key=issue.key) if issue else url_for('projects.issue_list', project_id=project.id) }}" 
+                       class="btn btn-outline-secondary action-btn">
+                        {{ 'Cancel' if lang == 'en' else 'Abbrechen' }}
+                    </a>
+                </div>
+
+                <!-- Tips -->
+                <div class="info-card card mt-4">
+                    <div class="card-header">
+                        <i class="bi bi-lightbulb me-2 text-warning"></i>{{ 'Tips' if lang == 'en' else 'Tipps' }}
+                    </div>
+                    <div class="card-body">
+                        <ul class="tips-list">
+                            <li>
+                                <i class="bi bi-check"></i>
+                                {{ 'Use clear, concise summaries' if lang == 'en' else 'Verwenden Sie klare, prägnante Zusammenfassungen' }}
+                            </li>
+                            <li>
+                                <i class="bi bi-check"></i>
+                                {{ 'Add labels for easy filtering' if lang == 'en' else 'Fügen Sie Labels für einfaches Filtern hinzu' }}
+                            </li>
+                            <li>
+                                <i class="bi bi-check"></i>
+                                {{ 'Set priority to help with triage' if lang == 'en' else 'Setzen Sie Prioritäten zur Priorisierung' }}
+                            </li>
+                            <li>
+                                <i class="bi bi-check"></i>
+                                {{ 'Assign to a sprint for planning' if lang == 'en' else 'Weisen Sie einen Sprint zur Planung zu' }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+function selectType(label, color) {
+    // Remove selected from all
+    document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        btn.style.borderColor = '#e0e0e0';
+        btn.style.background = 'white';
+        btn.style.color = 'inherit';
+    });
+    // Add selected to clicked
+    label.classList.add('selected');
+    label.style.borderColor = color;
+    label.style.background = color;
+    label.style.color = 'white';
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

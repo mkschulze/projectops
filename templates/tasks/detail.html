@@ -1,0 +1,896 @@
+{% extends "base.html" %}
+{% block title %}{{ task.title }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    {% if task.is_archived %}
+    <!-- Archived Banner -->
+    <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+        <i class="bi bi-archive-fill fs-4 me-3"></i>
+        <div>
+            <strong>{{ 'Diese Aufgabe ist archiviert' if lang == 'de' else 'This task is archived' }}</strong>
+            {% if task.archived_at %}
+            <br><small class="text-muted">
+                {{ 'Archiviert am' if lang == 'de' else 'Archived on' }} {{ task.archived_at.strftime('%d.%m.%Y %H:%M') }}
+                {% if task.archived_by %} {{ 'von' if lang == 'de' else 'by' }} {{ task.archived_by.name }}{% endif %}
+                {% if task.archive_reason %} — {{ task.archive_reason }}{% endif %}
+            </small>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('tasks.task_list') }}">{{ t('tasks') }}</a></li>
+                    <li class="breadcrumb-item active">{{ task.title }}</li>
+                </ol>
+            </nav>
+            <h1 class="mb-2">{{ task.title }}</h1>
+            <div class="d-flex align-items-center gap-3">
+                <!-- Status Badge -->
+                {% if task.status == 'completed' %}
+                <span class="badge fs-6" style="background-color: var(--dtt-sec-green-5);">
+                    <i class="bi bi-check-circle me-1"></i>{{ t('status_completed') }}
+                </span>
+                {% elif task.is_overdue %}
+                <span class="badge fs-6" style="background-color: var(--dtt-danger-red);">
+                    <i class="bi bi-exclamation-triangle me-1"></i>{{ t('status_overdue') }}
+                </span>
+                {% elif task.is_due_soon %}
+                <span class="badge fs-6" style="background-color: var(--dtt-warning-orange);">
+                    <i class="bi bi-clock me-1"></i>{{ t('status_due_soon') }}
+                </span>
+                {% elif task.status == 'submitted' %}
+                <span class="badge fs-6" style="background-color: var(--dtt-sec-blue-4);">
+                    <i class="bi bi-send me-1"></i>{{ t('status_submitted') }}
+                </span>
+                {% elif task.status == 'in_review' %}
+                <span class="badge fs-6" style="background-color: var(--dtt-sec-teal-6);">
+                    <i class="bi bi-eye me-1"></i>{{ t('status_in_review') }}
+                </span>
+                {% else %}
+                <span class="badge fs-6 bg-secondary">
+                    <i class="bi bi-pencil me-1"></i>{{ t('status_draft') }}
+                </span>
+                {% endif %}
+                
+                <span class="text-muted">
+                    <i class="bi bi-calendar me-1"></i>{{ task.due_date.strftime('%d.%m.%Y') }}
+                </span>
+                <span class="text-muted">
+                    <i class="bi bi-building me-1"></i>{{ task.entity.get_name(lang) }}
+                </span>
+                {% if task.is_recurring_instance and task.preset %}
+                <span class="badge bg-info text-white" title="{{ 'Generated from preset' if lang == 'en' else 'Aus Vorlage generiert' }}: {{ task.preset.get_title(lang) }}">
+                    <i class="bi bi-arrow-repeat me-1"></i>{{ 'Recurring' if lang == 'en' else 'Wiederkehrend' }}
+                </span>
+                {% endif %}
+                {% if task.template %}
+                <span class="badge bg-light text-dark">{{ task.template.tax_type.code }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-nowrap">
+            <a href="{{ url_for('tasks.export_pdf', task_id=task.id) }}" class="btn btn-outline-secondary text-nowrap" title="{{ 'Export as PDF' if lang == 'en' else 'Als PDF exportieren' }}">
+                <i class="bi bi-file-earmark-pdf text-danger me-1"></i>PDF
+            </a>
+            <a href="{{ url_for('tasks.task_edit', task_id=task.id) }}" class="btn btn-outline-primary text-nowrap">
+                <i class="bi bi-pencil me-1"></i>{{ t('edit') }}
+            </a>
+            {% if task.is_archived %}
+            <!-- Restore button for archived tasks -->
+            {% if current_user.is_admin() or current_user.is_manager() %}
+            <form method="POST" action="{{ url_for('tasks.task_restore', task_id=task.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-success text-nowrap" onclick="return confirm('{{ 'Aufgabe wirklich wiederherstellen?' if lang == 'de' else 'Really restore this task?' }}')">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>{{ 'Aktivieren' if lang == 'de' else 'Restore' }}
+                </button>
+            </form>
+            {% endif %}
+            {% else %}
+            <!-- Archive button for active tasks -->
+            {% if current_user.is_admin() or current_user.is_manager() or current_user.id == task.owner_id %}
+            <button type="button" class="btn btn-outline-warning text-nowrap" data-bs-toggle="modal" data-bs-target="#archiveModal">
+                <i class="bi bi-archive me-1"></i>{{ 'Archivieren' if lang == 'de' else 'Archive' }}
+            </button>
+            {% endif %}
+            {% endif %}
+            <a href="{{ url_for('tasks.task_list') }}" class="btn btn-outline-secondary text-nowrap">
+                <i class="bi bi-arrow-left me-1"></i>{{ t('back') }}
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs" id="taskTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview">
+                        <i class="bi bi-info-circle me-1"></i>{{ t('overview') if lang == 'en' else 'Übersicht' }}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#evidence">
+                        <i class="bi bi-paperclip me-1"></i>{{ t('evidence') }}
+                        {% if task.evidence.count() > 0 %}
+                        <span class="badge bg-secondary">{{ task.evidence.count() }}</span>
+                        {% endif %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#comments">
+                        <i class="bi bi-chat-dots me-1"></i>{{ t('comments') }}
+                        {% if task.comments.count() > 0 %}
+                        <span class="badge bg-secondary">{{ task.comments.count() }}</span>
+                        {% endif %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#audit">
+                        <i class="bi bi-clock-history me-1"></i>{{ t('audit_log') }}
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content card shadow-sm">
+                <!-- Overview Tab -->
+                <div class="tab-pane fade show active p-4" id="overview">
+                    {% if task.description %}
+                    <h6>{{ t('description') }}</h6>
+                    <p>{{ task.description }}</p>
+                    <hr>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-lg-5 col-md-12 mb-4">
+                            <h6>{{ t('details') if lang == 'en' else 'Details' }}</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td class="text-muted" style="width: 40%;">{{ t('year') if lang == 'en' else 'Jahr' }}</td>
+                                    <td><strong>{{ task.year }}</strong></td>
+                                </tr>
+                                {% if task.period %}
+                                <tr>
+                                    <td class="text-muted">{{ t('period') if lang == 'en' else 'Periode' }}</td>
+                                    <td><strong>{{ task.period }}</strong></td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="text-muted">{{ t('due_date') }}</td>
+                                    <td><strong>{{ task.due_date.strftime('%d.%m.%Y') }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">{{ t('entity') }}</td>
+                                    <td><strong>{{ task.entity.get_name(lang) }}</strong></td>
+                                </tr>
+                                {% if task.template %}
+                                <tr>
+                                    <td class="text-muted">{{ t('tax_type') }}</td>
+                                    <td><strong>{{ task.template.tax_type.get_name(lang) }}</strong></td>
+                                </tr>
+                                {% endif %}
+                        </table>
+                        </div>
+                        <div class="col-lg-7 col-md-12">
+                            <h6>{{ t('assignment') if lang == 'en' else 'Zuweisung' }}</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td class="text-muted" style="width: 35%; white-space: nowrap;">{{ t('owner') }}</td>
+                                    <td>
+                                        {% if task.owner %}
+                                        <strong>{{ task.owner.name }}</strong>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if task.owner_team %}
+                                <tr>
+                                    <td class="text-muted align-top" style="white-space: nowrap;">{{ t('owner_team') }}</td>
+                                    <td>
+                                        <div class="d-flex flex-wrap align-items-center gap-1">
+                                            <span class="d-inline-block rounded-circle flex-shrink-0" 
+                                                  style="width: 10px; height: 10px; background-color: {{ task.owner_team.color or '#4A90D9' }};">
+                                            </span>
+                                            <strong>{{ task.owner_team.get_name(lang) }}</strong>
+                                        </div>
+                                        <small class="text-muted">{{ task.owner_team.get_member_count() }} {{ t('members') }}</small>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="text-muted align-top" style="white-space: nowrap;">{{ t('reviewer') }}</td>
+                                    <td>
+                                        {% set reviewers = task.reviewers.all() %}
+                                        {% if reviewers %}
+                                        <div class="d-flex flex-column gap-1">
+                                            {% for tr in reviewers %}
+                                            <div>
+                                                <span class="d-inline-flex align-items-center gap-1">
+                                                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white" style="width:22px;height:22px;font-size:0.65rem;">
+                                                        {{ tr.user.name[:2]|upper }}
+                                                    </span>
+                                                    <strong>{{ tr.user.name }}</strong>
+                                                </span>
+                                                {% if tr.has_approved %}
+                                                <span class="badge" style="background-color: var(--dtt-sec-green-5); font-size: 0.7rem;">
+                                                    <i class="bi bi-check"></i> {{ 'Genehmigt' if lang == 'de' else 'Approved' }}
+                                                </span>
+                                                {% elif tr.has_rejected %}
+                                                <span class="badge" style="background-color: var(--dtt-danger-red); font-size: 0.7rem;">
+                                                    <i class="bi bi-x"></i> {{ 'Abgelehnt' if lang == 'de' else 'Rejected' }}
+                                                </span>
+                                                {% else %}
+                                                <span class="badge bg-secondary" style="font-size: 0.7rem;">
+                                                    <i class="bi bi-hourglass"></i> {{ 'Ausstehend' if lang == 'de' else 'Pending' }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                            {% endfor %}
+                                            {% set approval_info = task.get_approval_count() %}
+                                            {% if approval_info[1] > 0 %}
+                                            <small class="text-muted">{{ approval_info[0] }}/{{ approval_info[1] }} {{ 'genehmigt' if lang == 'de' else 'approved' }}</small>
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if task.reviewer_team %}
+                                <tr>
+                                    <td class="text-muted align-top" style="white-space: nowrap;">{{ t('reviewer_team') }}</td>
+                                    <td>
+                                        <div class="d-flex flex-wrap align-items-center gap-1">
+                                            <span class="d-inline-block rounded-circle flex-shrink-0" 
+                                                  style="width: 10px; height: 10px; background-color: {{ task.reviewer_team.color or '#4A90D9' }};">
+                                            </span>
+                                            <strong>{{ task.reviewer_team.get_name(lang) }}</strong>
+                                        </div>
+                                        <small class="text-muted">{{ task.reviewer_team.get_member_count() }} {{ t('members') }}</small><br>
+                                        <small class="text-muted fst-italic">{{ 'Jedes Teammitglied kann prüfen' if lang == 'de' else 'Any team member can review' }}</small>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% if task.submitted_at %}
+                                <tr>
+                                    <td class="text-muted">{{ t('submitted_at') if lang == 'en' else 'Eingereicht am' }}</td>
+                                    <td><strong>{{ task.submitted_at.strftime('%d.%m.%Y %H:%M') }}</strong></td>
+                                </tr>
+                                {% endif %}
+                                {% if task.completed_at %}
+                                <tr>
+                                    <td class="text-muted">{{ t('completed_at') if lang == 'en' else 'Abgeschlossen am' }}</td>
+                                    <td><strong>{{ task.completed_at.strftime('%d.%m.%Y %H:%M') }}</strong></td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                    
+                    {% if task.completion_note %}
+                    <hr>
+                    <h6>{{ t('completion_note') if lang == 'en' else 'Abschlussnotiz' }}</h6>
+                    <p>{{ task.completion_note }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Evidence Tab -->
+                <div class="tab-pane fade p-4" id="evidence">
+                    {% set evidence_list = task.evidence.all() %}
+                    
+                    {% if evidence_list|length > 0 %}
+                    <div class="list-group mb-4">
+                        {% for ev in evidence_list %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="d-flex align-items-center">
+                                    {% if ev.evidence_type == 'file' %}
+                                    <i class="bi {{ get_file_icon(ev.filename) if get_file_icon else 'bi-file-earmark' }} fs-4 me-3"></i>
+                                    <div>
+                                        <a href="{{ url_for('tasks.task_download_evidence', task_id=task.id, evidence_id=ev.id) }}" 
+                                           class="text-decoration-none fw-medium">
+                                            {{ ev.filename }}
+                                        </a>
+                                        <div class="small text-muted">
+                                            {% if ev.file_size %}
+                                            {{ (ev.file_size / 1024)|round(1) }} KB
+                                            {% endif %}
+                                            {% if ev.mime_type %}• {{ ev.mime_type.split('/')[-1]|upper }}{% endif %}
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <i class="bi bi-link-45deg fs-4 me-3 text-primary"></i>
+                                    <div>
+                                        <a href="{{ ev.url }}" target="_blank" rel="noopener" class="text-decoration-none fw-medium">
+                                            {{ ev.link_title or ev.url }}
+                                            <i class="bi bi-box-arrow-up-right small ms-1"></i>
+                                        </a>
+                                        <div class="small text-muted text-truncate" style="max-width: 400px;">
+                                            {{ ev.url }}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end d-flex align-items-start gap-1">
+                                    <div class="me-2">
+                                        <small class="text-muted d-block">
+                                            {{ ev.uploaded_by.name if ev.uploaded_by else '-' }}
+                                        </small>
+                                        <small class="text-muted d-block">
+                                            {{ ev.uploaded_at.strftime('%d.%m.%Y %H:%M') }}
+                                        </small>
+                                    </div>
+                                    {% if ev.evidence_type == 'file' %}
+                                    {% set mime = ev.mime_type or '' %}
+                                    {% set is_image = mime[:6] == 'image/' %}
+                                    {% set is_pdf = mime == 'application/pdf' %}
+                                    {% set is_text = mime[:5] == 'text/' %}
+                                    {% set previewable = is_image or is_pdf or is_text %}
+                                    {% if previewable %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            onclick="openPreview('{{ url_for('tasks.task_preview_evidence', task_id=task.id, evidence_id=ev.id) }}', '{{ ev.filename }}', '{{ mime }}')"
+                                            title="Vorschau">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    {% endif %}
+                                    <a href="{{ url_for('tasks.task_download_evidence', task_id=task.id, evidence_id=ev.id) }}" 
+                                       class="btn btn-sm btn-outline-secondary" title="Herunterladen">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if current_user.is_admin() or current_user.id == ev.uploaded_by_id or current_user.id == task.owner_id %}
+                                    <form action="{{ url_for('tasks.task_delete_evidence', task_id=task.id, evidence_id=ev.id) }}" 
+                                          method="post" class="d-inline" 
+                                          onsubmit="return confirm('Nachweis wirklich löschen?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Löschen">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        {{ t('no_evidence') if lang == 'en' else 'Keine Nachweise vorhanden' }}
+                    </p>
+                    {% endif %}
+                    
+                    <!-- Upload Forms -->
+                    {% set can_upload = current_user.is_admin() or current_user.is_manager() or current_user.id == task.owner_id or task.is_reviewer(current_user) %}
+                    {% if can_upload %}
+                    <hr>
+                    <div class="row g-4">
+                        <!-- File Upload -->
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-3">
+                                        <i class="bi bi-upload me-2"></i>Datei hochladen
+                                    </h6>
+                                    <form action="{{ url_for('tasks.task_upload_evidence', task_id=task.id) }}" 
+                                          method="post" enctype="multipart/form-data">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="mb-3">
+                                            <input type="file" class="form-control" name="file" required
+                                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg,.gif,.zip">
+                                            <div class="form-text">
+                                                Max. 16 MB • PDF, Office, Bilder, ZIP
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-brand w-100">
+                                            <i class="bi bi-cloud-upload me-2"></i>Hochladen
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Link hinzufügen -->
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-3">
+                                        <i class="bi bi-link-45deg me-2"></i>Link hinzufügen
+                                    </h6>
+                                    <form action="{{ url_for('tasks.task_add_link', task_id=task.id) }}" method="post">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="mb-2">
+                                            <input type="url" class="form-control" name="url" 
+                                                   placeholder="https://..." required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control" name="link_title" 
+                                                   placeholder="Titel (optional)">
+                                        </div>
+                                        <button type="submit" class="btn btn-outline-primary w-100">
+                                            <i class="bi bi-plus-circle me-2"></i>Link speichern
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Comments Tab -->
+                <div class="tab-pane fade p-4" id="comments">
+                    {% set comment_list = task.comments.all() %}
+                    
+                    {% if comment_list|length > 0 %}
+                    <div class="list-group mb-4">
+                        {% for comment in comment_list|sort(attribute='created_at', reverse=true) %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="d-flex">
+                                    <div class="rounded-circle bg-brand text-white d-flex align-items-center justify-content-center me-3" 
+                                         style="width: 40px; height: 40px; flex-shrink: 0;">
+                                        {{ comment.created_by.name[0]|upper if comment.created_by and comment.created_by.name else '?' }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-medium">{{ comment.created_by.name if comment.created_by else 'System' }}</div>
+                                        <small class="text-muted">{{ comment.created_at.strftime('%d.%m.%Y um %H:%M') }}</small>
+                                        <p class="mb-0 mt-2">{{ comment.text }}</p>
+                                    </div>
+                                </div>
+                                {% if current_user.is_admin() or current_user.id == comment.created_by_id or current_user.id == task.owner_id %}
+                                <form action="{{ url_for('tasks.task_delete_comment', task_id=task.id, comment_id=comment.id) }}" 
+                                      method="post" class="ms-2"
+                                      onsubmit="return confirm('Kommentar wirklich löschen?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Löschen">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">
+                        <i class="bi bi-chat fs-1 d-block mb-2"></i>
+                        {{ t('no_comments') if lang == 'en' else 'Keine Kommentare vorhanden' }}
+                    </p>
+                    {% endif %}
+                    
+                    <!-- Comment Form -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">
+                                <i class="bi bi-chat-dots me-2"></i>Kommentar hinzufügen
+                            </h6>
+                            <form action="{{ url_for('tasks.task_add_comment', task_id=task.id) }}" method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="mb-3">
+                                    <textarea class="form-control" name="text" rows="3" 
+                                              placeholder="Schreiben Sie einen Kommentar..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-brand">
+                                    <i class="bi bi-send me-2"></i>Kommentar senden
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Audit Log Tab -->
+                <div class="tab-pane fade p-4" id="audit">
+                    {% if audit_logs %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('timestamp') if lang == 'en' else 'Zeitpunkt' }}</th>
+                                    <th>{{ t('user') if lang == 'en' else 'Benutzer' }}</th>
+                                    <th>{{ t('action') if lang == 'en' else 'Aktion' }}</th>
+                                    <th>{{ t('details') if lang == 'en' else 'Details' }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in audit_logs %}
+                                <tr>
+                                    <td><small>{{ log.timestamp.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                                    <td><small>{{ log.user.name if log.user else '-' }}</small></td>
+                                    <td>
+                                        {% set action_badges = {
+                                            'CREATE': ('bg-success', 'bi-plus-circle', 'Erstellt'),
+                                            'UPDATE': ('bg-primary', 'bi-pencil', 'Geändert'),
+                                            'DELETE': ('bg-danger', 'bi-trash', 'Gelöscht'),
+                                            'STATUS_CHANGE': ('bg-info', 'bi-arrow-repeat', 'Status'),
+                                            'UPLOAD': ('bg-brand', 'bi-cloud-upload', 'Upload'),
+                                            'LINK_ADD': ('bg-primary', 'bi-link-45deg', 'Link'),
+                                            'EVIDENCE_DELETE': ('bg-warning text-dark', 'bi-file-x', 'Nachweis entfernt'),
+                                            'COMMENT': ('bg-secondary', 'bi-chat-dots', 'Kommentar'),
+                                            'COMMENT_DELETE': ('bg-warning text-dark', 'bi-chat-x', 'Kommentar entfernt')
+                                        } %}
+                                        {% set badge = action_badges.get(log.action, ('bg-secondary', 'bi-dot', log.action)) %}
+                                        <span class="badge {{ badge[0] }}">
+                                            <i class="bi {{ badge[1] }} me-1"></i>{{ badge[2] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if log.action == 'COMMENT' and log.new_value %}
+                                        <small class="text-muted fst-italic">"{{ log.new_value }}"</small>
+                                        {% elif log.action in ['UPLOAD', 'LINK_ADD'] and log.new_value %}
+                                        <small><i class="bi bi-file-earmark me-1"></i>{{ log.new_value }}</small>
+                                        {% elif log.action in ['EVIDENCE_DELETE', 'COMMENT_DELETE'] and log.old_value %}
+                                        <small class="text-muted"><del>{{ log.old_value }}</del></small>
+                                        {% elif log.old_value and log.new_value %}
+                                        <small>{{ log.old_value }} → {{ log.new_value }}</small>
+                                        {% elif log.new_value %}
+                                        <small>{{ log.new_value }}</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">
+                        <i class="bi bi-clock-history fs-1 d-block mb-2"></i>
+                        {{ t('no_audit_logs') if lang == 'en' else 'Keine Änderungen protokolliert' }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Workflow Progress -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>{{ t('workflow') if lang == 'en' else 'Freigabe-Workflow' }}</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Progress Bar -->
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar 
+                            {% if task.status == 'rejected' %}bg-danger
+                            {% elif task.status == 'completed' %}bg-success
+                            {% else %}bg-primary{% endif %}" 
+                             style="width: {{ task.workflow_progress }}%"></div>
+                    </div>
+                    
+                    <!-- Workflow Steps -->
+                    <div class="workflow-steps">
+                        <div class="workflow-step {% if task.status == 'draft' %}active{% elif task.workflow_progress > 0 %}completed{% endif %}">
+                            <div class="step-icon"><i class="bi bi-pencil"></i></div>
+                            <div class="step-label">{{ t('status_draft') }}</div>
+                        </div>
+                        <div class="workflow-step {% if task.status == 'submitted' %}active{% elif task.workflow_progress > 25 %}completed{% endif %}">
+                            <div class="step-icon"><i class="bi bi-send"></i></div>
+                            <div class="step-label">{{ t('status_submitted') }}</div>
+                            {% if task.submitted_by %}
+                            <small class="text-muted d-block">{{ task.submitted_by.name }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="workflow-step {% if task.status == 'in_review' %}active{% elif task.workflow_progress > 50 %}completed{% endif %}">
+                            <div class="step-icon"><i class="bi bi-eye"></i></div>
+                            <div class="step-label">{{ t('status_in_review') }}</div>
+                            {% if task.reviewed_by %}
+                            <small class="text-muted d-block">{{ task.reviewed_by.name }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="workflow-step {% if task.status == 'approved' %}active{% elif task.workflow_progress > 75 %}completed{% endif %}">
+                            <div class="step-icon"><i class="bi bi-check2-circle"></i></div>
+                            <div class="step-label">{{ t('status_approved') }}</div>
+                            {% if task.approved_by %}
+                            <small class="text-muted d-block">{{ task.approved_by.name }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="workflow-step {% if task.status == 'completed' %}completed{% endif %}">
+                            <div class="step-icon"><i class="bi bi-check-circle-fill"></i></div>
+                            <div class="step-label">{{ t('status_completed') }}</div>
+                            {% if task.completed_by %}
+                            <small class="text-muted d-block">{{ task.completed_by.name }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if task.status == 'rejected' %}
+                    <div class="alert alert-danger mt-3 mb-0">
+                        <i class="bi bi-x-circle me-1"></i>
+                        <strong>{{ t('rejected') if lang == 'en' else 'Zurückgewiesen' }}</strong>
+                        {% if task.rejected_by %}
+                        <small class="d-block">von {{ task.rejected_by.name }}</small>
+                        {% endif %}
+                        {% if task.rejection_reason %}
+                        <p class="mb-0 mt-2 small">{{ task.rejection_reason }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Status Actions Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-arrow-repeat me-2"></i>{{ t('actions') }}</h6>
+                </div>
+                <div class="card-body">
+                    {% set allowed_transitions = task.get_allowed_transitions(current_user) %}
+                    {% if allowed_transitions %}
+                    <form method="POST" action="{{ url_for('tasks.task_change_status', task_id=task.id) }}" id="statusForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="d-grid gap-2">
+                            {% if 'submitted' in allowed_transitions %}
+                            <button type="submit" name="status" value="submitted" class="btn btn-primary">
+                                <i class="bi bi-send me-1"></i>{{ t('submit') if lang == 'en' else 'Einreichen' }}
+                            </button>
+                            {% endif %}
+                            
+                            {% if 'in_review' in allowed_transitions %}
+                            <button type="submit" name="status" value="in_review" class="btn btn-info text-white">
+                                <i class="bi bi-eye me-1"></i>{{ t('start_review') if lang == 'en' else 'Prüfung starten' }}
+                            </button>
+                            {% endif %}
+                            
+                            {% if 'approved' in allowed_transitions %}
+                            <button type="submit" name="status" value="approved" class="btn btn-success">
+                                <i class="bi bi-check2-circle me-1"></i>{{ t('approve') if lang == 'en' else 'Genehmigen' }}
+                            </button>
+                            {% endif %}
+                            
+                            {% if 'completed' in allowed_transitions %}
+                            <button type="submit" name="status" value="completed" class="btn btn-success">
+                                <i class="bi bi-check-circle me-1"></i>{{ t('complete') if lang == 'en' else 'Abschließen' }}
+                            </button>
+                            {% endif %}
+                            
+                            {% if 'rejected' in allowed_transitions %}
+                            <hr class="my-2">
+                            <div class="mb-2">
+                                <input type="text" name="note" class="form-control form-control-sm" 
+                                       placeholder="{{ t('rejection_reason') if lang == 'en' else 'Grund für Zurückweisung...' }}">
+                            </div>
+                            <button type="submit" name="status" value="rejected" class="btn btn-outline-danger">
+                                <i class="bi bi-x-circle me-1"></i>{{ t('reject') if lang == 'en' else 'Zurückweisen' }}
+                            </button>
+                            {% endif %}
+                            
+                            {% if 'draft' in allowed_transitions %}
+                            <button type="submit" name="status" value="draft" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>{{ t('restart') if lang == 'en' else 'Neu beginnen' }}
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                    {% elif task.status == 'completed' %}
+                    <p class="text-success text-center mb-0">
+                        <i class="bi bi-check-circle fs-3 d-block mb-2"></i>
+                        {{ t('task_completed') if lang == 'en' else 'Aufgabe abgeschlossen' }}
+                    </p>
+                    {% else %}
+                    <p class="text-muted text-center mb-0">
+                        <i class="bi bi-lock fs-3 d-block mb-2"></i>
+                        {{ t('no_actions_available') if lang == 'en' else 'Keine Aktionen verfügbar' }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Multi-Reviewer Approval Card -->
+            {% if task.status == 'in_review' and task.is_reviewer(current_user) %}
+            {% set my_review = task.get_reviewer_status(current_user) %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-person-check me-2"></i>{{ 'Your Review' if lang == 'en' else 'Ihre Prüfung' }}</h6>
+                </div>
+                <div class="card-body">
+                    {% if my_review.has_approved %}
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-check-circle me-2"></i>
+                        {{ 'You have approved this task.' if lang == 'en' else 'Sie haben diese Aufgabe genehmigt.' }}
+                        <small class="d-block mt-1">{{ my_review.approved_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                    </div>
+                    {% elif my_review.has_rejected %}
+                    <div class="alert alert-danger mb-0">
+                        <i class="bi bi-x-circle me-2"></i>
+                        {{ 'You have rejected this task.' if lang == 'en' else 'Sie haben diese Aufgabe abgelehnt.' }}
+                        <small class="d-block mt-1">{{ my_review.rejected_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                        {% if my_review.rejection_note %}
+                        <p class="mb-0 mt-2 small">{{ my_review.rejection_note }}</p>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <form action="{{ url_for('tasks.task_reviewer_action', task_id=task.id) }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <p class="text-muted mb-3">
+                            <i class="bi bi-hourglass-split me-1"></i>
+                            {{ 'Your approval is pending. Please review and decide.' if lang == 'en' else 'Ihre Genehmigung steht aus. Bitte prüfen und entscheiden.' }}
+                        </p>
+                        <div class="mb-3">
+                            <textarea name="note" class="form-control form-control-sm" rows="2" 
+                                      placeholder="{{ 'Note (optional)...' if lang == 'en' else 'Anmerkung (optional)...' }}"></textarea>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="action" value="approve" class="btn btn-success">
+                                <i class="bi bi-check-circle me-1"></i>{{ 'Approve' if lang == 'en' else 'Genehmigen' }}
+                            </button>
+                            <button type="submit" name="action" value="reject" class="btn btn-outline-danger">
+                                <i class="bi bi-x-circle me-1"></i>{{ 'Reject' if lang == 'en' else 'Ablehnen' }}
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+                    
+                    <!-- Show progress -->
+                    {% set approval_info = task.get_approval_count() %}
+                    {% set approved_count = approval_info[0] %}
+                    {% set total_reviewers = approval_info[1] %}
+                    {% if total_reviewers > 1 %}
+                    <hr>
+                    <div class="text-center">
+                        <small class="text-muted">
+                            {{ 'Approvals' if lang == 'en' else 'Genehmigungen' }}: 
+                            <strong>{{ approved_count }}/{{ total_reviewers }}</strong>
+                        </small>
+                        <div class="progress mt-2" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: {{ (approved_count / total_reviewers * 100)|int }}%;"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Quick Info Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>{{ t('quick_info') if lang == 'en' else 'Schnellinfo' }}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">{{ t('created') if lang == 'en' else 'Erstellt' }}</span>
+                        <span>{{ task.created_at.strftime('%d.%m.%Y') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">{{ t('updated') if lang == 'en' else 'Aktualisiert' }}</span>
+                        <span>{{ task.updated_at.strftime('%d.%m.%Y %H:%M') if task.updated_at else '-' }}</span>
+                    </div>
+                    {% if task.next_action_by %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">{{ t('next_action') if lang == 'en' else 'Nächste Aktion' }}</span>
+                        <span class="badge bg-primary">{{ task.next_action_by.name }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">{{ t('evidence') }}</span>
+                        <span>{{ task.evidence.count() }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">
+                    <i class="bi bi-eye me-2"></i>Vorschau
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+            </div>
+            <div class="modal-body p-0" id="previewContent" style="min-height: 400px; max-height: 80vh; overflow: auto;">
+                <!-- Content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="previewDownloadBtn" class="btn btn-brand">
+                    <i class="bi bi-download me-2"></i>Herunterladen
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+function openPreview(url, filename, mimeType) {
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    const content = document.getElementById('previewContent');
+    const title = document.getElementById('previewModalLabel');
+    const downloadBtn = document.getElementById('previewDownloadBtn');
+    
+    // Update title and download link
+    title.innerHTML = '<i class="bi bi-eye me-2"></i>' + filename;
+    downloadBtn.href = url.replace('/preview', '/download');
+    
+    // Clear previous content
+    content.innerHTML = '<div class="d-flex justify-content-center align-items-center" style="min-height: 400px;"><div class="spinner-border text-brand" role="status"><span class="visually-hidden">Lädt...</span></div></div>';
+    
+    // Show modal
+    modal.show();
+    
+    // Load content based on type
+    if (mimeType.startsWith('image/')) {
+        // Image preview
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'img-fluid w-100';
+        img.style.objectFit = 'contain';
+        img.style.maxHeight = '80vh';
+        img.onload = function() {
+            content.innerHTML = '';
+            content.appendChild(img);
+        };
+        img.onerror = function() {
+            content.innerHTML = '<div class="alert alert-danger m-4">Bild konnte nicht geladen werden.</div>';
+        };
+    } else if (mimeType === 'application/pdf') {
+        // PDF preview - use embed/iframe
+        content.innerHTML = '<iframe src="' + url + '#view=FitH" style="width: 100%; height: 80vh; border: none;"></iframe>';
+    } else if (mimeType.startsWith('text/')) {
+        // Text file preview
+        fetch(url)
+            .then(response => response.text())
+            .then(text => {
+                const pre = document.createElement('pre');
+                pre.className = 'p-4 bg-light mb-0';
+                pre.style.maxHeight = '80vh';
+                pre.style.overflow = 'auto';
+                pre.style.whiteSpace = 'pre-wrap';
+                pre.style.wordWrap = 'break-word';
+                pre.textContent = text;
+                content.innerHTML = '';
+                content.appendChild(pre);
+            })
+            .catch(err => {
+                content.innerHTML = '<div class="alert alert-danger m-4">Datei konnte nicht geladen werden.</div>';
+            });
+    } else {
+        // Unsupported type
+        content.innerHTML = '<div class="text-center p-5"><i class="bi bi-file-earmark fs-1 text-muted d-block mb-3"></i><p class="text-muted">Vorschau für diesen Dateityp nicht verfügbar.</p></div>';
+    }
+}
+</script>
+
+<!-- Archive Modal -->
+<div class="modal fade" id="archiveModal" tabindex="-1" aria-labelledby="archiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('tasks.task_archive', task_id=task.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="archiveModalLabel">
+                        <i class="bi bi-archive me-2"></i>{{ 'Aufgabe archivieren' if lang == 'de' else 'Archive Task' }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ 'Möchten Sie diese Aufgabe wirklich archivieren? Archivierte Aufgaben werden aus den normalen Ansichten ausgeblendet.' if lang == 'de' else 'Do you really want to archive this task? Archived tasks will be hidden from normal views.' }}</p>
+                    <div class="mb-3">
+                        <label class="form-label">{{ 'Grund (optional)' if lang == 'de' else 'Reason (optional)' }}</label>
+                        <textarea name="reason" class="form-control" rows="2" placeholder="{{ 'z.B. Aufgabe nicht mehr relevant' if lang == 'de' else 'e.g. Task no longer relevant' }}"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Abbrechen' if lang == 'de' else 'Cancel' }}</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-archive me-1"></i>{{ 'Archivieren' if lang == 'de' else 'Archive' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1055 @@
+{% extends "base.html" %}
+{% block title %}{{ issue.key }} - {{ project.key }}{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    /* Compact Header Bar */
+    .issue-header-bar {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 3px solid {{ issue.issue_type.color if issue.issue_type else '#4A90D9' }};
+        padding: 1.25rem 0;
+        margin: -1rem -1rem 1.5rem -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .issue-key-badge {
+        background: {{ issue.issue_type.color if issue.issue_type else '#4A90D9' }};
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .issue-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #000;
+        margin: 0.75rem 0 0 0;
+        line-height: 1.3;
+    }
+    
+    /* Status Transition Buttons */
+    .status-btn-group {
+        display: flex;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+    
+    .status-btn {
+        padding: 0.4rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        border: 2px solid transparent;
+        background: #f0f0f0;
+        color: #666;
+        transition: all 0.2s;
+    }
+    
+    .status-btn:hover:not(.active):not(:disabled) {
+        background: #e0e0e0;
+        transform: translateY(-1px);
+    }
+    
+    .status-btn.active {
+        color: white;
+        cursor: default;
+    }
+    
+    /* Modern Cards */
+    .detail-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        margin-bottom: 1.25rem;
+        overflow: hidden;
+    }
+    
+    .detail-card .card-header {
+        background: white;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 1rem 1.25rem;
+        font-weight: 600;
+    }
+    
+    .detail-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    /* Sidebar Cards */
+    .sidebar-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        margin-bottom: 1rem;
+    }
+    
+    .sidebar-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 1px solid #f0f0f0;
+        padding: 0.875rem 1rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    .sidebar-card .card-body {
+        padding: 1rem;
+    }
+    
+    /* Avatar Circle */
+    .avatar-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    
+    .avatar-circle-sm {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+    }
+    
+    /* Priority Indicator */
+    .priority-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    
+    /* Description Styling */
+    .description-content {
+        background: #fafafa;
+        border-radius: 8px;
+        padding: 1.25rem;
+        word-break: break-word;
+    }
+    
+    .description-content h1,
+    .description-content h2,
+    .description-content h3 {
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .description-content h1 { font-size: 1.4rem; border-bottom: 1px solid #e9ecef; padding-bottom: 0.3rem; }
+    .description-content h2 { font-size: 1.2rem; }
+    .description-content h3 { font-size: 1.05rem; }
+    .description-content ul, .description-content ol { padding-left: 1.5rem; }
+    .description-content code { background: rgba(0,0,0,0.06); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+    .description-content pre { background: #f1f3f5; border-radius: 6px; padding: 1rem; overflow-x: auto; }
+    .description-content blockquote { border-left: 4px solid #4A90D9; padding-left: 1rem; margin-left: 0; color: #6c757d; }
+    
+    /* Comment Styling */
+    .comment-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .comment-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    /* Approval Section */
+    .approval-progress {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    .reviewer-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+    }
+    
+    .reviewer-item:not(:last-child) {
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        border-radius: 8px;
+        padding: 0.625rem 1rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    /* Breadcrumb */
+    .breadcrumb {
+        background: none;
+        padding: 0;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .breadcrumb-item a {
+        color: #0076A8;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Label Badge */
+    .label-badge {
+        background: #e9ecef;
+        color: #495057;
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    /* Archived Banner */
+    .archived-banner {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 0.875rem 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Child Issues Table */
+    .child-issue-row {
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    
+    .child-issue-row:hover {
+        background: #f8f9fa;
+    }
+    
+    /* Collapse Form Styling */
+    .collapse-form {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Details List */
+    .detail-list dt {
+        color: #6c757d;
+        font-weight: 500;
+        font-size: 0.85rem;
+    }
+    
+    .detail-list dd {
+        margin-bottom: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <!-- Compact Header Bar -->
+    <div class="issue-header-bar">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}">{{ 'Projects' if lang == 'en' else 'Projekte' }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.key }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.item_list', project_id=project.id) }}">Issues</a></li>
+                <li class="breadcrumb-item active">{{ issue.key }}</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+            <div class="flex-grow-1">
+                <span class="issue-key-badge">
+                    <i class="{{ issue.issue_type.icon if issue.issue_type else 'bi-check2-square' }}"></i>
+                    {{ issue.key }}
+                </span>
+                <h1 class="issue-title">{{ issue.summary }}</h1>
+            </div>
+            <div class="d-flex gap-2 align-items-start">
+                <a href="{{ url_for('projects.item_edit', project_id=project.id, issue_key=issue.key) }}" class="btn btn-outline-primary action-btn">
+                    <i class="bi bi-pencil me-1"></i> {{ 'Edit' if lang == 'en' else 'Bearbeiten' }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archived Banner -->
+    {% if issue.is_archived %}
+    <div class="archived-banner d-flex align-items-center">
+        <i class="bi bi-archive me-2 fs-5"></i>
+        <div>
+            <strong>{{ 'This issue is archived' if lang == 'en' else 'Dieses Issue ist archiviert' }}</strong>
+            {% if issue.archived_at %}
+            <span class="text-muted ms-2">{{ issue.archived_at.strftime('%d.%m.%Y') }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Status Transition -->
+            <div class="detail-card card">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="text-muted fw-500">Status:</span>
+                        <form method="post" action="{{ url_for('projects.item_transition', project_id=project.id, issue_key=issue.key) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="status-btn-group">
+                                {% for s in available_statuses %}
+                                <button type="submit" name="status_id" value="{{ s.id }}" 
+                                    class="status-btn {{ 'active' if s.id == issue.status_id else '' }}"
+                                    style="{{ 'background-color: ' + s.color + ';' if s.id == issue.status_id else '' }}"
+                                    {{ 'disabled' if s.id == issue.status_id }}>
+                                    {{ s.get_name(lang) }}
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            {% if issue.description %}
+            <div class="detail-card card">
+                <div class="card-header">
+                    <i class="bi bi-file-text me-2"></i>{{ 'Description' if lang == 'en' else 'Beschreibung' }}
+                </div>
+                <div class="card-body">
+                    <div class="description-content" id="description-markdown">
+                        <noscript>{{ issue.description }}</noscript>
+                    </div>
+                    <template id="description-source">{{ issue.description | e }}</template>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Labels -->
+            {% if issue.labels %}
+            <div class="mb-4">
+                {% for label in issue.labels %}
+                <span class="label-badge me-1">{{ label }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Child Issues (Sub-tasks) -->
+            {% if children %}
+            <div class="detail-card card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-diagram-3 me-2"></i>{{ 'Child Issues' if lang == 'en' else 'Untergeordnete Issues' }}</span>
+                    <span class="badge bg-secondary">{{ children|length }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <tbody>
+                            {% for child in children %}
+                            <tr class="child-issue-row" onclick="window.location='{{ url_for('projects.item_detail', project_id=project.id, issue_key=child.key) }}'">
+                                <td style="width: 40px;">
+                                    <i class="{{ child.issue_type.icon }}" style="color: {{ child.issue_type.color }};"></i>
+                                </td>
+                                <td style="width: 100px;">
+                                    <a href="{{ url_for('projects.item_detail', project_id=project.id, issue_key=child.key) }}" class="fw-500" onclick="event.stopPropagation();">{{ child.key }}</a>
+                                </td>
+                                <td>{{ child.summary }}</td>
+                                <td style="width: 120px;">
+                                    <span class="badge" style="background-color: {{ child.status.color }};">{{ child.status.get_name(lang) }}</span>
+                                </td>
+                                <td style="width: 40px;">
+                                    <i class="{{ child.get_priority_icon() }}"></i>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Comments -->
+            <div class="detail-card card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-chat-dots me-2"></i>{{ 'Comments' if lang == 'en' else 'Kommentare' }}</span>
+                    <span class="badge bg-secondary">{{ issue.comments.count() }}</span>
+                </div>
+                <div class="card-body">
+                    <!-- Add Comment Form -->
+                    <form method="post" action="{{ url_for('projects.comment_add', project_id=project.id, issue_key=issue.key) }}" class="mb-4">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="d-flex gap-3">
+                            <span class="avatar-circle flex-shrink-0" style="background-color: #4A90D9;">
+                                {{ current_user.name[:1].upper() }}
+                            </span>
+                            <div class="flex-grow-1">
+                                <textarea name="content" class="form-control" rows="2" placeholder="{{ 'Add a comment...' if lang == 'en' else 'Kommentar hinzufügen...' }}" required style="border-radius: 8px;"></textarea>
+                                <div class="mt-2">
+                                    <button type="submit" class="btn btn-sm btn-brand">
+                                        <i class="bi bi-send me-1"></i>{{ 'Send' if lang == 'en' else 'Senden' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- Comments List -->
+                    {% for comment in issue.comments.order_by(db.desc('created_at')).all() %}
+                    <div class="comment-item">
+                        <div class="d-flex gap-3">
+                            <span class="avatar-circle flex-shrink-0" style="background-color: #0076A8;">
+                                {{ comment.author.name[:1].upper() if comment.author else '?' }}
+                            </span>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>{{ comment.author.name if comment.author else 'Unbekannt' }}</strong>
+                                        <span class="text-muted small ms-2">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                                    </div>
+                                    {% if comment.author_id == current_user.id or project.is_admin(current_user) %}
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-link text-muted p-0" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <form method="post" action="{{ url_for('projects.comment_delete', project_id=project.id, issue_key=issue.key, comment_id=comment.id) }}" onsubmit="return confirm('{{ 'Delete comment?' if lang == 'en' else 'Kommentar löschen?' }}')">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <button type="submit" class="dropdown-item text-danger">
+                                                        <i class="bi bi-trash me-2"></i>{{ 'Delete' if lang == 'en' else 'Löschen' }}
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mt-2">{{ comment.content }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-chat-left-text d-block mb-2" style="font-size: 2rem; opacity: 0.5;"></i>
+                        {{ 'No comments yet' if lang == 'en' else 'Noch keine Kommentare' }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Issue Links -->
+            <div class="detail-card card">
+                <div class="card-header">
+                    <span><i class="bi bi-link-45deg me-2"></i>{{ 'Linked Issues' if lang == 'en' else 'Verknüpfte Issues' }}</span>
+                </div>
+                <div class="card-body">
+                    <!-- Add Link Button -->
+                    <button class="btn btn-sm btn-outline-secondary w-100 mb-3" data-bs-toggle="collapse" data-bs-target="#addLinkForm" style="border-radius: 8px; border-style: dashed;">
+                        <i class="bi bi-link me-2"></i>{{ 'Link Issue' if lang == 'en' else 'Issue verknüpfen' }}
+                    </button>
+                    
+                    <!-- Add Link Form -->
+                    <div class="collapse" id="addLinkForm">
+                        <div class="collapse-form">
+                            <form method="post" action="{{ url_for('projects.link_add', project_id=project.id, issue_key=issue.key) }}" class="row g-2 align-items-end">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="col-auto">
+                                    <select name="link_type" class="form-select form-select-sm" required style="border-radius: 6px;">
+                                        <option value="blocks">{{ 'blocks' if lang == 'en' else 'blockiert' }}</option>
+                                        <option value="is_blocked_by">{{ 'is blocked by' if lang == 'en' else 'wird blockiert von' }}</option>
+                                        <option value="relates_to">{{ 'relates to' if lang == 'en' else 'bezieht sich auf' }}</option>
+                                        <option value="duplicates">{{ 'duplicates' if lang == 'en' else 'dupliziert' }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <input type="text" name="target_key" class="form-control form-control-sm" placeholder="{{ project.key }}-..." required style="width: 120px; border-radius: 6px;">
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-sm btn-brand">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Links List -->
+                    {% set outward_links = issue.outward_links.all() %}
+                    {% set inward_links = issue.inward_links.all() %}
+                    {% if outward_links or inward_links %}
+                        {% for link in outward_links %}
+                        <div class="d-flex justify-content-between align-items-center py-2 {{ 'border-bottom' if not loop.last or inward_links else '' }}">
+                            <div>
+                                <span class="text-muted small">{{ link.get_link_display(lang) }}</span>
+                                <a href="{{ url_for('projects.item_detail', project_id=link.target_issue.project_id, issue_key=link.target_issue.key) }}" class="ms-2 fw-500">
+                                    <i class="{{ link.target_issue.issue_type.icon }}" style="color: {{ link.target_issue.issue_type.color }};"></i>
+                                    {{ link.target_issue.key }}
+                                </a>
+                                <span class="text-muted small ms-1">{{ link.target_issue.summary[:30] }}{% if link.target_issue.summary|length > 30 %}...{% endif %}</span>
+                            </div>
+                            <form method="post" action="{{ url_for('projects.link_delete', project_id=project.id, issue_key=issue.key, link_id=link.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-x"></i></button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                        {% for link in inward_links %}
+                        <div class="d-flex justify-content-between align-items-center py-2 {{ 'border-bottom' if not loop.last else '' }}">
+                            <div>
+                                <span class="text-muted small">{{ 'is ' + link.get_link_display(lang) if lang == 'en' else 'wird ' + link.get_link_display(lang) }}</span>
+                                <a href="{{ url_for('projects.item_detail', project_id=link.source_issue.project_id, issue_key=link.source_issue.key) }}" class="ms-2 fw-500">
+                                    <i class="{{ link.source_issue.issue_type.icon }}" style="color: {{ link.source_issue.issue_type.color }};"></i>
+                                    {{ link.source_issue.key }}
+                                </a>
+                                <span class="text-muted small ms-1">{{ link.source_issue.summary[:30] }}{% if link.source_issue.summary|length > 30 %}...{% endif %}</span>
+                            </div>
+                            <form method="post" action="{{ url_for('projects.link_delete', project_id=project.id, issue_key=issue.key, link_id=link.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-x"></i></button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-diagram-2 d-block mb-2" style="font-size: 1.5rem; opacity: 0.5;"></i>
+                        <small>{{ 'No linked issues' if lang == 'en' else 'Keine verknüpften Issues' }}</small>
+                        <small class="d-block text-muted mt-1">{{ 'Link related issues using the button above' if lang == 'en' else 'Verknüpfen Sie verwandte Issues über den Button oben' }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Attachments -->
+            <div class="detail-card card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-paperclip me-2"></i>{{ 'Attachments' if lang == 'en' else 'Anhänge' }}</span>
+                    <span class="badge bg-secondary">{{ issue.attachments.count() }}</span>
+                </div>
+                <div class="card-body">
+                    <!-- Upload Button -->
+                    <button class="btn btn-sm btn-outline-secondary w-100 mb-3" data-bs-toggle="collapse" data-bs-target="#uploadForm" style="border-radius: 8px; border-style: dashed;">
+                        <i class="bi bi-cloud-upload me-2"></i>{{ 'Upload File' if lang == 'en' else 'Datei hochladen' }}
+                    </button>
+                    
+                    <!-- Upload Form -->
+                    <div class="collapse" id="uploadForm">
+                        <div class="collapse-form">
+                            <form method="post" action="{{ url_for('projects.attachment_upload', project_id=project.id, issue_key=issue.key) }}" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="input-group input-group-sm">
+                                    <input type="file" name="file" class="form-control" required style="border-radius: 6px 0 0 6px;">
+                                    <button type="submit" class="btn btn-brand" style="border-radius: 0 6px 6px 0;">
+                                        <i class="bi bi-upload"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text mt-1">Max. 10 MB. {{ 'Allowed: PDF, Images, Office, ZIP' if lang == 'en' else 'Erlaubt: PDF, Bilder, Office, ZIP' }}</div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Attachments List -->
+                    {% for att in issue.attachments.all() %}
+                    <div class="d-flex justify-content-between align-items-center py-2 {{ 'border-bottom' if not loop.last else '' }}">
+                        <div class="d-flex align-items-center">
+                            <i class="{{ att.icon }} me-2 text-muted"></i>
+                            <div>
+                                <a href="{{ url_for('projects.attachment_download', project_id=project.id, issue_key=issue.key, attachment_id=att.id) }}" class="text-decoration-none fw-500">
+                                    {{ att.filename }}
+                                </a>
+                                <div class="text-muted small">
+                                    {{ att.filesize_display }} • {{ att.uploaded_by.name if att.uploaded_by else 'Unbekannt' }} • {{ att.uploaded_at.strftime('%d.%m.%Y') }}
+                                </div>
+                            </div>
+                        </div>
+                        {% if att.uploaded_by_id == current_user.id or project.is_admin(current_user) %}
+                        <form method="post" action="{{ url_for('projects.attachment_delete', project_id=project.id, issue_key=issue.key, attachment_id=att.id) }}" onsubmit="return confirm('{{ 'Delete file?' if lang == 'en' else 'Datei löschen?' }}')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-link text-danger p-0">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-folder2-open d-block mb-2" style="font-size: 1.5rem; opacity: 0.5;"></i>
+                        <small>{{ 'No attachments' if lang == 'en' else 'Keine Anhänge' }}</small>
+                        <small class="d-block text-muted mt-1">{{ 'Upload documents using the button above' if lang == 'en' else 'Laden Sie Dokumente über den Button oben hoch' }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Work Log -->
+            <div class="detail-card card">
+                <div class="card-header">
+                    <span><i class="bi bi-clock-history me-2"></i>{{ 'Work Log' if lang == 'en' else 'Arbeitsprotokoll' }}</span>
+                </div>
+                <div class="card-body">
+                    <!-- Log Time Button -->
+                    <button class="btn btn-sm btn-outline-secondary w-100 mb-3" data-bs-toggle="collapse" data-bs-target="#logTimeForm" style="border-radius: 8px; border-style: dashed;">
+                        <i class="bi bi-stopwatch me-2"></i>{{ 'Log Time' if lang == 'en' else 'Zeit erfassen' }}
+                    </button>
+                    
+                    <!-- Log Time Form -->
+                    <div class="collapse" id="logTimeForm">
+                        <div class="collapse-form">
+                            <form method="post" action="{{ url_for('projects.worklog_add', project_id=project.id, issue_key=issue.key) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-4">
+                                        <input type="text" name="time_spent" class="form-control form-control-sm" placeholder="2h 30m" required style="border-radius: 6px;">
+                                    </div>
+                                    <div class="col-5">
+                                        <input type="date" name="work_date" class="form-control form-control-sm" value="{{ now.strftime('%Y-%m-%d') if now else '' }}" style="border-radius: 6px;">
+                                    </div>
+                                    <div class="col-3">
+                                        <button type="submit" class="btn btn-sm btn-brand w-100">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea name="description" class="form-control form-control-sm" rows="2" placeholder="{{ 'What did you work on?' if lang == 'en' else 'Woran haben Sie gearbeitet?' }}" style="border-radius: 6px;"></textarea>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Worklog Entries -->
+                    {% for wl in issue.worklogs.order_by(db.desc('work_date')).limit(5).all() %}
+                    <div class="d-flex justify-content-between align-items-start py-2 {{ 'border-bottom' if not loop.last else '' }}">
+                        <div>
+                            <strong>{{ wl.time_spent_display }}</strong>
+                            <span class="text-muted small ms-2">{{ wl.author.name if wl.author else 'Unbekannt' }} • {{ wl.work_date.strftime('%d.%m.%Y') }}</span>
+                            {% if wl.description %}
+                            <div class="text-muted small">{{ wl.description[:100] }}{% if wl.description|length > 100 %}...{% endif %}</div>
+                            {% endif %}
+                        </div>
+                        {% if wl.author_id == current_user.id or project.is_admin(current_user) %}
+                        <form method="post" action="{{ url_for('projects.worklog_delete', project_id=project.id, issue_key=issue.key, worklog_id=wl.id) }}" onsubmit="return confirm('{{ 'Delete entry?' if lang == 'en' else 'Eintrag löschen?' }}')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-link text-danger p-0">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-hourglass d-block mb-2" style="font-size: 1.5rem; opacity: 0.5;"></i>
+                        <small>{{ 'No time logged' if lang == 'en' else 'Keine Zeit erfasst' }}</small>
+                        <small class="d-block text-muted mt-1">{{ 'Track your work using the button above' if lang == 'en' else 'Erfassen Sie Ihre Arbeitszeit über den Button oben' }}</small>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if issue.time_spent %}
+                    <div class="mt-3 pt-3 border-top">
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">{{ 'Total logged' if lang == 'en' else 'Gesamt erfasst' }}:</span>
+                            <strong>{{ issue.time_spent_display }}</strong>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Activity Log -->
+            <div class="detail-card card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-activity me-2"></i>{{ 'Activity' if lang == 'en' else 'Aktivität' }}</span>
+                    <span class="badge bg-secondary">{{ issue.activities.count() }}</span>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% for activity in issue.activities.order_by(db.desc('created_at')).limit(20).all() %}
+                    <div class="d-flex gap-2 py-2 {{ 'border-bottom' if not loop.last else '' }}">
+                        <div class="flex-shrink-0">
+                            <i class="{{ activity.get_activity_icon() }}" style="font-size: 1.1rem;"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="small">
+                                <strong>{{ activity.user.name if activity.user else 'System' }}</strong>
+                                <span class="text-muted">{{ activity.get_activity_text(lang) }}</span>
+                                {% if activity.old_value and activity.new_value %}
+                                <span class="text-muted">
+                                    <span class="text-decoration-line-through">{{ activity.old_value }}</span>
+                                    → <span class="fw-500">{{ activity.new_value }}</span>
+                                </span>
+                                {% elif activity.details %}
+                                {% if activity.activity_type == 'rejected' %}
+                                <div class="text-danger small mt-1 fst-italic">
+                                    <i class="bi bi-quote me-1"></i>"{{ activity.details }}"
+                                </div>
+                                {% elif activity.activity_type in ['reviewer_added', 'reviewer_removed'] %}
+                                <span class="text-muted">: <strong>{{ activity.details }}</strong></span>
+                                {% elif activity.activity_type == 'approved' and activity.details %}
+                                <div class="text-success small mt-1 fst-italic">
+                                    <i class="bi bi-quote me-1"></i>"{{ activity.details }}"
+                                </div>
+                                {% else %}
+                                <span class="text-muted">: {{ activity.details[:50] }}{% if activity.details|length > 50 %}...{% endif %}</span>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                            <div class="text-muted" style="font-size: 0.75rem;">
+                                {{ activity.created_at.strftime('%d.%m.%Y %H:%M') }}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-clock-history d-block mb-2" style="font-size: 1.5rem; opacity: 0.5;"></i>
+                        <small>{{ 'No activity yet' if lang == 'en' else 'Noch keine Aktivität' }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Actions -->
+            {% if not issue.is_archived %}
+            <div class="sidebar-card card">
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <form method="post" action="{{ url_for('projects.item_delete', project_id=project.id, issue_key=issue.key) }}" onsubmit="return confirm('{{ 'Archive this issue?' if lang == 'en' else 'Dieses Issue archivieren?' }}')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-secondary w-100 action-btn">
+                                <i class="bi bi-archive me-2"></i>{{ 'Archive' if lang == 'en' else 'Archivieren' }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Reviewers / Approval Workflow -->
+            <div class="sidebar-card card">
+                <div class="card-header">
+                    <span><i class="bi bi-check2-square me-2"></i>{{ 'Reviewers' if lang == 'en' else 'Freigabe' }}</span>
+                </div>
+                <div class="card-body">
+                    <!-- Add Reviewer Button & Form -->
+                    {% if project.is_admin(current_user) or issue.reporter_id == current_user.id %}
+                    {% set existing_reviewer_ids = issue.reviewers.all()|map(attribute='user_id')|list %}
+                    
+                    <!-- Add Reviewer Button - Always visible -->
+                    <button class="btn btn-sm btn-outline-secondary w-100 mb-3" data-bs-toggle="collapse" data-bs-target="#addReviewerForm" style="border-radius: 8px; border-style: dashed;">
+                        <i class="bi bi-person-plus me-2"></i>{{ 'Add Reviewer' if lang == 'en' else 'Reviewer hinzufügen' }}
+                    </button>
+                    
+                    <div class="collapse" id="addReviewerForm">
+                        <div class="collapse-form">
+                            <form method="post" action="{{ url_for('projects.item_reviewer_add', project_id=project.id, issue_key=issue.key) }}" class="row g-2 align-items-end">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="col">
+                                    <label class="form-label small text-muted mb-1">{{ 'Team member' if lang == 'en' else 'Teammitglied' }}</label>
+                                    <select name="user_id" class="form-select form-select-sm" required style="border-radius: 6px;">
+                                        <option value="">{{ 'Select person...' if lang == 'en' else 'Person wählen...' }}</option>
+                                        {% for member in project.members %}
+                                        {% if member.user_id not in existing_reviewer_ids %}
+                                        {# Only show users who have the projects module enabled #}
+                                        {% set has_projects_module = member.user.user_modules | selectattr('module.code', 'equalto', 'projects') | list | length > 0 %}
+                                        {% if has_projects_module %}
+                                        <option value="{{ member.user_id }}">{{ member.user.name if member.user else 'Unknown' }}</option>
+                                        {% endif %}
+                                        {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-sm btn-brand">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% set approval_status = issue.get_approval_status() %}
+                    
+                    <!-- Approval Progress -->
+                    {% if approval_status.total > 0 %}
+                    <div class="approval-progress mb-3">
+                        <div class="d-flex justify-content-between small mb-2">
+                            <span>{{ 'Progress' if lang == 'en' else 'Fortschritt' }}</span>
+                            <span class="fw-500">{{ approval_status.approved_count }}/{{ approval_status.total }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                            {% if approval_status.is_rejected %}
+                            <div class="progress-bar bg-danger" style="width: 100%;"></div>
+                            {% else %}
+                            <div class="progress-bar" style="width: {{ approval_status.progress_percent }}%; background-color: #4A90D9;"></div>
+                            {% endif %}
+                        </div>
+                        {% if approval_status.is_complete %}
+                        <div class="text-success small mt-2">
+                            <i class="bi bi-check-circle-fill me-1"></i>{{ 'All approved' if lang == 'en' else 'Alle genehmigt' }}
+                        </div>
+                        {% elif approval_status.is_rejected %}
+                        <div class="text-danger small mt-2">
+                            <i class="bi bi-x-circle-fill me-1"></i>{{ 'Rejected' if lang == 'en' else 'Abgelehnt' }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Reviewer List -->
+                    {% for reviewer in issue.reviewers.order_by('order').all() %}
+                    <div class="reviewer-item">
+                        <div class="d-flex align-items-center gap-2">
+                            <span>
+                                {% if reviewer.has_approved %}
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                {% elif reviewer.has_rejected %}
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                                {% else %}
+                                <i class="bi bi-circle text-secondary"></i>
+                                {% endif %}
+                            </span>
+                            <span class="avatar-circle avatar-circle-sm" style="background-color: #0076A8;">
+                                {{ reviewer.user.name[:1].upper() if reviewer.user else '?' }}
+                            </span>
+                            <span class="{{ 'text-decoration-line-through text-muted' if reviewer.has_rejected else '' }}">
+                                {{ reviewer.user.name if reviewer.user else 'Unbekannt' }}
+                            </span>
+                        </div>
+                        {% if project.is_admin(current_user) or issue.reporter_id == current_user.id %}
+                        <form method="post" action="{{ url_for('projects.item_reviewer_remove', project_id=project.id, issue_key=issue.key, reviewer_id=reviewer.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-x"></i></button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-people d-block mb-2" style="font-size: 1.5rem; opacity: 0.5;"></i>
+                        <small>{{ 'No reviewers assigned yet' if lang == 'en' else 'Noch keine Reviewer zugewiesen' }}</small>
+                        {% if project.is_admin(current_user) or issue.reporter_id == current_user.id %}
+                        <small class="d-block text-muted mt-1">{{ 'Click the button above to add reviewers' if lang == 'en' else 'Klicken Sie oben um Reviewer hinzuzufügen' }}</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Approval Actions -->
+                    {% set review_check = issue.can_user_review(current_user) %}
+                    {% set is_in_review = issue.status and (issue.status.name in ['In Prüfung', 'In Review'] or issue.status.name_en == 'In Review') %}
+                    {% if review_check[0] %}
+                    <hr class="my-3">
+                    {% if not is_in_review %}
+                    <div class="alert alert-info small py-2 px-3 mb-2" style="border-radius: 8px;">
+                        <i class="bi bi-info-circle me-1"></i>{{ 'Issue must be in "In Review" status before approval.' if lang == 'en' else 'Issue muss auf Status "In Prüfung" gesetzt werden, bevor genehmigt werden kann.' }}
+                    </div>
+                    {% endif %}
+                    <div class="d-flex gap-2">
+                        <form method="post" action="{{ url_for('projects.item_approve', project_id=project.id, issue_key=issue.key) }}" class="flex-grow-1">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-success btn-sm w-100 action-btn" {% if not is_in_review %}disabled{% endif %}>
+                                <i class="bi bi-check-lg me-1"></i>{{ 'Approve' if lang == 'en' else 'Genehmigen' }}
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn-outline-danger btn-sm action-btn" data-bs-toggle="modal" data-bs-target="#rejectModal" {% if not is_in_review %}disabled{% endif %}>
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    {% elif issue.reviewers.count() > 0 %}
+                    <!-- Show status for non-reviewers or already voted -->
+                    <hr class="my-3">
+                    <div class="text-center small text-muted">
+                        {% set user_reviewer = issue.reviewers.filter_by(user_id=current_user.id).first() %}
+                        {% if user_reviewer %}
+                            {% if user_reviewer.has_approved %}
+                            <i class="bi bi-check-circle-fill text-success me-1"></i>{{ 'You have approved this issue' if lang == 'en' else 'Sie haben dieses Issue genehmigt' }}
+                            {% elif user_reviewer.has_rejected %}
+                            <i class="bi bi-x-circle-fill text-danger me-1"></i>{{ 'You have rejected this issue' if lang == 'en' else 'Sie haben dieses Issue abgelehnt' }}
+                            {% endif %}
+                        {% else %}
+                        <i class="bi bi-info-circle me-1"></i>{{ 'Only assigned reviewers can approve' if lang == 'en' else 'Nur zugewiesene Reviewer können genehmigen' }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Details -->
+            <div class="sidebar-card card">
+                <div class="card-header">
+                    <i class="bi bi-info-circle me-2"></i>{{ 'Details' if lang == 'en' else 'Details' }}
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0 detail-list">
+                        <dt class="col-5">{{ 'Assignee' if lang == 'en' else 'Bearbeiter' }}</dt>
+                        <dd class="col-7">
+                            {% if issue.assignee %}
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="avatar-circle avatar-circle-sm" style="background-color: #4A90D9;">{{ issue.assignee.name[:1].upper() }}</span>
+                                {{ issue.assignee.name }}
+                            </div>
+                            {% else %}
+                            <span class="text-muted">{{ 'Unassigned' if lang == 'en' else 'Nicht zugewiesen' }}</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-5">{{ 'Reporter' if lang == 'en' else 'Ersteller' }}</dt>
+                        <dd class="col-7">{{ issue.reporter.name if issue.reporter else '-' }}</dd>
+
+                        <dt class="col-5">{{ 'Priority' if lang == 'en' else 'Priorität' }}</dt>
+                        <dd class="col-7">
+                            <span class="priority-indicator">
+                                <i class="{{ issue.get_priority_icon() }}"></i>
+                                {{ issue.get_priority_display(lang) }}
+                            </span>
+                        </dd>
+
+                        {% if issue.parent %}
+                        <dt class="col-5">{{ 'Parent' if lang == 'en' else 'Übergeordnet' }}</dt>
+                        <dd class="col-7">
+                            <a href="{{ url_for('projects.item_detail', project_id=project.id, issue_key=issue.parent.key) }}">{{ issue.parent.key }}</a>
+                        </dd>
+                        {% endif %}
+
+                        {% if issue.sprint %}
+                        <dt class="col-5">Sprint</dt>
+                        <dd class="col-7">{{ issue.sprint.name }}</dd>
+                        {% endif %}
+
+                        {% if issue.story_points %}
+                        <dt class="col-5">Story Points</dt>
+                        <dd class="col-7">{{ issue.story_points }}</dd>
+                        {% endif %}
+
+                        {% if issue.due_date %}
+                        <dt class="col-5">{{ 'Due Date' if lang == 'en' else 'Fällig' }}</dt>
+                        <dd class="col-7 {{ 'text-danger fw-bold' if issue.is_overdue else '' }}">
+                            {{ issue.due_date.strftime('%d.%m.%Y') }}
+                            {% if issue.is_overdue %}<i class="bi bi-exclamation-triangle ms-1"></i>{% endif %}
+                        </dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Time Tracking -->
+            {% if issue.original_estimate or issue.time_spent %}
+            <div class="sidebar-card card">
+                <div class="card-header">
+                    <i class="bi bi-clock me-2"></i>{{ 'Time Tracking' if lang == 'en' else 'Zeiterfassung' }}
+                </div>
+                <div class="card-body">
+                    {% if issue.original_estimate %}
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>{{ 'Time Spent' if lang == 'en' else 'Aufgewendet' }}</span>
+                            <span>{{ issue.time_spent_display }} / {{ issue.original_estimate_display }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                            <div class="progress-bar" style="width: {{ issue.progress_percent }}%; background-color: #4A90D9;"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if issue.remaining_estimate %}
+                    <small class="text-muted">
+                        {{ 'Remaining' if lang == 'en' else 'Verbleibend' }}: {{ issue.remaining_estimate_display }}
+                    </small>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Dates -->
+            <div class="sidebar-card card">
+                <div class="card-header">
+                    <i class="bi bi-calendar3 me-2"></i>{{ 'Dates' if lang == 'en' else 'Daten' }}
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0 detail-list small">
+                        <dt class="col-5">{{ 'Created' if lang == 'en' else 'Erstellt' }}</dt>
+                        <dd class="col-7">{{ issue.created_at.strftime('%d.%m.%Y %H:%M') }}</dd>
+
+                        <dt class="col-5">{{ 'Updated' if lang == 'en' else 'Aktualisiert' }}</dt>
+                        <dd class="col-7">{{ issue.updated_at.strftime('%d.%m.%Y %H:%M') if issue.updated_at else '-' }}</dd>
+
+                        {% if issue.resolution_date %}
+                        <dt class="col-5">{{ 'Resolved' if lang == 'en' else 'Erledigt' }}</dt>
+                        <dd class="col-7">{{ issue.resolution_date.strftime('%d.%m.%Y %H:%M') }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Marked.js for Markdown -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    const sourceEl = document.getElementById('description-source');
+    const targetEl = document.getElementById('description-markdown');
+    
+    if (sourceEl && targetEl) {
+        let markdown = sourceEl.innerHTML;
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = markdown;
+        markdown = textarea.value;
+        
+        marked.setOptions({ breaks: true, gfm: true, headerIds: false, mangle: false });
+        targetEl.innerHTML = marked.parse(markdown);
+    }
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
+});
+</script>
+
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 12px;">
+            <form method="post" action="{{ url_for('projects.item_reject', project_id=project.id, issue_key=issue.key) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title">
+                        <i class="bi bi-x-circle text-danger me-2"></i>
+                        {{ 'Reject Issue' if lang == 'en' else 'Issue ablehnen' }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="rejection_note" class="form-label">
+                            {{ 'Reason' if lang == 'en' else 'Grund' }} <span class="text-danger">*</span>
+                        </label>
+                        <textarea name="note" id="rejection_note" class="form-control" rows="3" required 
+                            placeholder="{{ 'Please explain why...' if lang == 'en' else 'Bitte erklären Sie warum...' }}" style="border-radius: 8px;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary action-btn" data-bs-dismiss="modal">
+                        {{ 'Cancel' if lang == 'en' else 'Abbrechen' }}
+                    </button>
+                    <button type="submit" class="btn btn-danger action-btn">
+                        <i class="bi bi-x-lg me-1"></i>{{ 'Reject' if lang == 'en' else 'Ablehnen' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

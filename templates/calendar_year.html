@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('year_view') }} - {{ year }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-calendar3 me-2"></i>{{ t('year_view') }} {{ year }}</h1>
+    
+    <!-- View Switcher -->
+    <div class="btn-group">
+        <a href="{{ url_for('main.calendar_year_view', year=year) }}" class="btn btn-success">
+            <i class="bi bi-calendar3"></i> {{ t('year_view') }}
+        </a>
+        <a href="{{ url_for('main.calendar_view', year=year, month=today.month) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-calendar-month"></i> {{ t('month_view') }}
+        </a>
+        <a href="{{ url_for('main.calendar_week_view', year=year, week=today.isocalendar()[1]) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-calendar-week"></i> {{ t('week_view') }}
+        </a>
+    </div>
+</div>
+
+<!-- Year Navigation -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('main.calendar_year_view', year=year-1) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-chevron-left"></i> {{ year - 1 }}
+            </a>
+            <h3 class="mb-0">{{ year }}</h3>
+            <a href="{{ url_for('main.calendar_year_view', year=year+1) }}" class="btn btn-outline-secondary">
+                {{ year + 1 }} <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Year Grid -->
+<div class="row g-3">
+    {% for month in range(1, 13) %}
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100 month-card {% if today.year == year and today.month == month %}border-success border-2{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <a href="{{ url_for('main.calendar_view', year=year, month=month) }}" class="text-decoration-none text-dark fw-bold">
+                    {{ month_names[month] }}
+                </a>
+                {% if month_stats[month].total > 0 %}
+                <span class="badge bg-secondary">{{ month_stats[month].total }}</span>
+                {% endif %}
+            </div>
+            <div class="card-body p-2">
+                {% if month_stats[month].total > 0 %}
+                <!-- Status Summary -->
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    {% if month_stats[month].overdue > 0 %}
+                    <span class="badge bg-danger" title="{{ t('status_overdue') }}">
+                        <i class="bi bi-exclamation-circle"></i> {{ month_stats[month].overdue }}
+                    </span>
+                    {% endif %}
+                    {% if month_stats[month].in_review > 0 %}
+                    <span class="badge bg-warning text-dark" title="{{ t('status_in_review') }}">
+                        <i class="bi bi-hourglass-split"></i> {{ month_stats[month].in_review }}
+                    </span>
+                    {% endif %}
+                    {% if month_stats[month].completed > 0 %}
+                    <span class="badge bg-success" title="{{ t('status_completed') }}">
+                        <i class="bi bi-check-circle"></i> {{ month_stats[month].completed }}
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <!-- Task List (first 5) -->
+                <div class="task-list small">
+                    {% for task in tasks_by_month[month][:5] %}
+                    <div class="d-flex align-items-center mb-1">
+                        <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" 
+                           class="flex-grow-1 text-decoration-none text-truncate
+                                  {% if task.status == 'completed' %}text-success
+                                  {% elif task.is_overdue %}text-danger
+                                  {% elif task.status == 'in_review' %}text-warning
+                                  {% else %}text-secondary{% endif %}"
+                           title="{{ task.title }}">
+                            <small class="text-muted">{{ task.due_date.strftime('%d.') }}</small>
+                            <strong>{{ task.entity.short_name or task.entity.name[:6] }}</strong>
+                            {{ task.title[:12] }}{% if task.title|length > 12 %}…{% endif %}
+                        </a>
+                        {% set yr_reviewers = task.reviewers.all() %}
+                        {% set yr_approval = task.get_approval_count() %}
+                        {% set yr_evidence = task.evidence.count() %}
+                        {% set yr_comments = task.comments.count() %}
+                        <button type="button" class="btn btn-link btn-sm p-0 ms-1 task-preview-btn" 
+                                data-bs-toggle="popover" 
+                                data-bs-html="true"
+                                data-bs-placement="right"
+                                data-bs-title="<div class='d-flex justify-content-between align-items-center w-100'><span><i class='bi bi-clipboard-check me-1'></i>{{ task.title[:30] }}{% if task.title|length > 30 %}…{% endif %}</span><button class='btn btn-link btn-sm p-0 ms-2 popover-pin-btn' title='{{ 'Fixieren' if lang == 'de' else 'Pin' }}'><i class='bi bi-pin'></i></button></div>"
+                                data-bs-content="
+                                    <div class='small'>
+                                        {% if task.is_overdue %}<div class='alert alert-danger py-1 px-2 mb-2'><i class='bi bi-exclamation-triangle me-1'></i><strong>{{ 'Überfällig!' if lang == 'de' else 'Overdue!' }}</strong></div>{% elif task.is_due_soon %}<div class='alert alert-warning py-1 px-2 mb-2'><i class='bi bi-clock me-1'></i><strong>{{ 'Bald fällig' if lang == 'de' else 'Due soon' }}</strong></div>{% endif %}
+                                        <table class='table table-sm table-borderless mb-2' style='font-size: 0.8rem;'>
+                                            <tr><td class='text-muted pe-2' style='width:40%;'>{{ 'Mandant' if lang == 'de' else 'Entity' }}:</td><td><strong>{{ task.entity.get_name(lang) }}</strong></td></tr>
+                                            <tr><td class='text-muted'>{{ 'Fällig' if lang == 'de' else 'Due' }}:</td><td class='{{ 'text-danger fw-bold' if task.is_overdue else '' }}'>{{ task.due_date.strftime('%d.%m.%Y') }}</td></tr>
+                                            <tr><td class='text-muted'>Status:</td><td><span class='badge {% if task.status == 'completed' %}bg-success{% elif task.status == 'in_review' %}bg-info{% elif task.status == 'submitted' %}bg-primary{% elif task.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}'>{{ t('status_' + task.status) }}</span></td></tr>
+                                            {% if task.period %}<tr><td class='text-muted'>{{ 'Zeitraum' if lang == 'de' else 'Period' }}:</td><td>{{ task.period }}</td></tr>{% endif %}
+                                            {% if task.template and task.template.tax_type %}<tr><td class='text-muted'>{{ 'Steuerart' if lang == 'de' else 'Tax type' }}:</td><td>{{ task.template.tax_type.code }}</td></tr>{% endif %}
+                                        </table>
+                                        <hr class='my-2'>
+                                        <div class='mb-2'>
+                                            <div class='d-flex align-items-center gap-1 mb-1'>
+                                                <i class='bi bi-person text-muted'></i>
+                                                <span class='text-muted'>{{ 'Bearbeiter' if lang == 'de' else 'Owner' }}:</span>
+                                                <strong>{{ task.owner.name if task.owner else '-' }}</strong>
+                                            </div>
+                                            {% if task.owner_team %}
+                                            <div class='d-flex align-items-center gap-1 mb-1'>
+                                                <i class='bi bi-people text-muted'></i>
+                                                <span class='text-muted'>Team:</span>
+                                                <span class='d-inline-block rounded-circle' style='width:8px;height:8px;background-color:{{ task.owner_team.color or '#4A90D9' }};'></span>
+                                                <span>{{ task.owner_team.get_name(lang) }}</span>
+                                            </div>
+                                            {% endif %}
+                                            <div class='d-flex align-items-center gap-1'>
+                                                <i class='bi bi-check2-circle text-muted'></i>
+                                                <span class='text-muted'>{{ 'Prüfer' if lang == 'de' else 'Reviewers' }}:</span>
+                                                {% if yr_reviewers %}
+                                                    <span>{{ yr_approval[0] }}/{{ yr_approval[1] }} {{ 'genehmigt' if lang == 'de' else 'approved' }}</span>
+                                                {% elif task.reviewer_team %}
+                                                    <span>{{ task.reviewer_team.get_name(lang) }}</span>
+                                                {% else %}
+                                                    <span>-</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <hr class='my-2'>
+                                        <div class='d-flex justify-content-between text-muted mb-2'>
+                                            <span><i class='bi bi-paperclip me-1'></i>{{ yr_evidence }} {{ 'Belege' if lang == 'de' else 'Evidence' }}</span>
+                                            <span><i class='bi bi-chat-dots me-1'></i>{{ yr_comments }} {{ 'Kommentare' if lang == 'de' else 'Comments' }}</span>
+                                        </div>
+                                    </div>
+                                    <a href='{{ url_for('tasks.task_detail', task_id=task.id) }}' class='btn btn-sm btn-brand w-100'><i class='bi bi-arrow-right me-1'></i>{{ 'Details öffnen' if lang == 'de' else 'Open Details' }}</a>
+                                ">
+                            <i class="bi bi-eye-fill text-muted" style="font-size: 0.65rem;"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                    {% if tasks_by_month[month]|length > 5 %}
+                    <a href="{{ url_for('main.calendar_view', year=year, month=month) }}" class="d-block text-muted small">
+                        +{{ tasks_by_month[month]|length - 5 }} {{ t('more') }}...
+                    </a>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="text-muted text-center small py-3">
+                    {{ t('no_tasks') }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Progress Bar -->
+            {% if month_stats[month].total > 0 %}
+            <div class="card-footer p-2">
+                <div class="progress" style="height: 6px;">
+                    {% set pct = (month_stats[month].completed / month_stats[month].total * 100)|int %}
+                    <div class="progress-bar bg-success" style="width: {{ pct }}%"></div>
+                </div>
+                <small class="text-muted">{{ pct }}% {{ t('status_completed') }}</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Legend -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="card-title mb-3">{{ t('legend') }}</h6>
+        <div class="d-flex flex-wrap gap-3">
+            <span><span class="badge bg-danger">&nbsp;&nbsp;</span> {{ t('status_overdue') }}</span>
+            <span><span class="badge bg-warning text-dark">&nbsp;&nbsp;</span> {{ t('status_in_review') }}</span>
+            <span><span class="badge bg-success">&nbsp;&nbsp;</span> {{ t('status_completed') }}</span>
+            <span><span class="badge bg-secondary">&nbsp;&nbsp;</span> {{ t('status_draft') }}</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    .month-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .month-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .month-card .card-header {
+        background: var(--del-gray-light);
+        font-size: 0.95rem;
+    }
+    
+    .task-list a:hover {
+        text-decoration: underline !important;
+    }
+    
+    .task-preview-btn {
+        opacity: 0.4;
+        transition: opacity 0.2s;
+    }
+    
+    .task-preview-btn:hover {
+        opacity: 1;
+    }
+    
+    /* Wider popovers for task preview */
+    .popover {
+        max-width: 350px !important;
+    }
+    
+    .popover .table {
+        margin-bottom: 0;
+    }
+    
+    .popover .table td {
+        padding: 0.15rem 0.25rem;
+    }
+    
+    .popover-header {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .popover-pin-btn {
+        color: #6c757d;
+        transition: color 0.2s;
+    }
+    
+    .popover-pin-btn:hover {
+        color: var(--dtt-green-3);
+    }
+    
+    .popover-pin-btn.text-success {
+        color: var(--dtt-green-3) !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+// Initialize all popovers with hover-intent behavior
+document.addEventListener('DOMContentLoaded', function() {
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.forEach(function(popoverTriggerEl) {
+        var popover = new bootstrap.Popover(popoverTriggerEl, {
+            container: 'body',
+            sanitize: false,
+            trigger: 'manual'
+        });
+        
+        var hideTimeout = null;
+        var isOverTrigger = false;
+        var isOverPopover = false;
+        var isPinned = false;
+        
+        function showPopover() {
+            clearTimeout(hideTimeout);
+            document.querySelectorAll('.popover.show').forEach(function(p) {
+                var existingPopover = bootstrap.Popover.getInstance(p);
+                if (existingPopover) existingPopover.hide();
+            });
+            popover.show();
+            setTimeout(function() {
+                var popoverEl = document.querySelector('.popover');
+                if (popoverEl) {
+                    popoverEl.addEventListener('mouseenter', function() {
+                        isOverPopover = true;
+                        clearTimeout(hideTimeout);
+                    });
+                    popoverEl.addEventListener('mouseleave', function() {
+                        isOverPopover = false;
+                        if (!isPinned) scheduleHide();
+                    });
+                    var pinBtn = popoverEl.querySelector('.popover-pin-btn');
+                    if (pinBtn) {
+                        pinBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            isPinned = !isPinned;
+                            this.classList.toggle('text-success', isPinned);
+                            this.querySelector('i').className = isPinned ? 'bi bi-pin-fill' : 'bi bi-pin';
+                        });
+                    }
+                }
+            }, 10);
+        }
+        
+        function scheduleHide() {
+            hideTimeout = setTimeout(function() {
+                if (!isOverTrigger && !isOverPopover && !isPinned) {
+                    popover.hide();
+                }
+            }, 150);
+        }
+        
+        popoverTriggerEl.addEventListener('mouseenter', function() {
+            isOverTrigger = true;
+            showPopover();
+        });
+        
+        popoverTriggerEl.addEventListener('mouseleave', function() {
+            isOverTrigger = false;
+            if (!isPinned) scheduleHide();
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                isPinned = false;
+                popover.hide();
+            }
+        });
+        
+        document.addEventListener('click', function(e) {
+            var popoverEl = document.querySelector('.popover');
+            if (popoverEl && !popoverEl.contains(e.target) && !popoverTriggerEl.contains(e.target)) {
+                isPinned = false;
+                popover.hide();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

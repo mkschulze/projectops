@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Benutzerberechtigungen' if lang == 'de' else 'User Permissions' }}: {{ entity.get_name(lang) }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.entities') }}">{{ t('entities') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.entity_edit', entity_id=entity.id) }}">{{ entity.get_name(lang) }}</a></li>
+            <li class="breadcrumb-item active">{{ 'Benutzerberechtigungen' if lang == 'de' else 'User Permissions' }}</li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-people me-2" style="color: var(--dtt-green-3);"></i>
+            {{ 'Benutzerberechtigungen' if lang == 'de' else 'User Permissions' }}: {{ entity.get_name(lang) }}
+        </h1>
+    </div>
+    
+    <form method="POST" action="{{ url_for('admin.entity_users_save', entity_id=entity.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="bi bi-person-plus me-2"></i>
+                    {{ 'Benutzer zuweisen' if lang == 'de' else 'Assign Users' }}
+                </h6>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="selectAll()">
+                        {{ 'Alle auswählen' if lang == 'de' else 'Select All' }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAll()">
+                        {{ 'Alle abwählen' if lang == 'de' else 'Deselect All' }}
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"></th>
+                                <th>{{ 'Benutzer' if lang == 'de' else 'User' }}</th>
+                                <th>{{ 'E-Mail' if lang == 'de' else 'Email' }}</th>
+                                <th>{{ 'Rolle' if lang == 'de' else 'Role' }}</th>
+                                <th>{{ 'Zugriffsebene' if lang == 'de' else 'Access Level' }}</th>
+                                <th>{{ 'Vererben' if lang == 'de' else 'Inherit' }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            {% set perm = current_perms.get(user.id) %}
+                            {% set is_auto_access = user.is_admin() or user.is_manager() %}
+                            <tr class="{% if perm %}table-success{% elif is_auto_access %}table-info{% endif %}">
+                                <td>
+                                    {% if is_auto_access %}
+                                    <i class="bi bi-check-circle-fill text-info" title="{{ 'Automatischer Zugriff durch Rolle' if lang == 'de' else 'Automatic access via role' }}"></i>
+                                    {% else %}
+                                    <input type="checkbox" class="form-check-input user-checkbox" 
+                                           name="user_ids" value="{{ user.id }}"
+                                           {% if perm %}checked{% endif %}
+                                           onchange="toggleRow(this)">
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ user.name }}</strong>
+                                    {% if is_auto_access %}
+                                    <span class="badge bg-info ms-2">{{ 'Auto' if lang == 'de' else 'Auto' }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    <span class="badge {% if user.role == 'admin' %}bg-danger{% elif user.role == 'manager' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                        {{ user.role.title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if is_auto_access %}
+                                    <span class="text-muted">{{ 'Verwalten (Auto)' if lang == 'de' else 'Manage (Auto)' }}</span>
+                                    {% else %}
+                                    <select name="access_level_{{ user.id }}" 
+                                            class="form-select form-select-sm access-select"
+                                            style="width: 150px;"
+                                            {% if not perm %}disabled{% endif %}>
+                                        <option value="view" {% if perm and perm.access_level == 'view' %}selected{% endif %}>
+                                            {{ 'Anzeigen' if lang == 'de' else 'View' }}
+                                        </option>
+                                        <option value="edit" {% if perm and perm.access_level == 'edit' %}selected{% endif %}>
+                                            {{ 'Bearbeiten' if lang == 'de' else 'Edit' }}
+                                        </option>
+                                        <option value="manage" {% if perm and perm.access_level == 'manage' %}selected{% endif %}>
+                                            {{ 'Verwalten' if lang == 'de' else 'Manage' }}
+                                        </option>
+                                    </select>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if is_auto_access %}
+                                    <span class="text-muted">-</span>
+                                    {% else %}
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input inherit-checkbox" 
+                                               name="inherit_{{ user.id }}"
+                                               {% if perm and perm.inherit_to_children %}checked{% endif %}
+                                               {% if not perm %}disabled{% endif %}>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-between">
+                <a href="{{ url_for('admin.entities') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    {{ 'Zurück' if lang == 'de' else 'Back' }}
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>
+                    {{ 'Speichern' if lang == 'de' else 'Save' }}
+                </button>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Child Entities Info -->
+    {% if entity.children.count() > 0 %}
+    <div class="card mt-4 border-info">
+        <div class="card-body">
+            <h6 class="card-title text-info">
+                <i class="bi bi-diagram-3 me-2"></i>
+                {{ 'Tochtergesellschaften' if lang == 'de' else 'Child Entities' }}
+            </h6>
+            <p class="text-muted small mb-2">
+                {{ 'Benutzer mit aktivierter Vererbung haben auch Zugriff auf:' if lang == 'de' else 'Users with inheritance enabled also have access to:' }}
+            </p>
+            <ul class="mb-0">
+                {% for child in entity.children %}
+                <li>
+                    <a href="{{ url_for('admin.entity_users', entity_id=child.id) }}">{{ child.get_name(lang) }}</a>
+                    {% if child.children.count() > 0 %}
+                    <span class="text-muted small">(+ {{ child.children.count() }} {{ 'weitere' if lang == 'de' else 'more' }})</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script nonce="{{ csp_nonce }}">
+function toggleRow(checkbox) {
+    const row = checkbox.closest('tr');
+    const accessSelect = row.querySelector('.access-select');
+    const inheritCheckbox = row.querySelector('.inherit-checkbox');
+    
+    if (checkbox.checked) {
+        row.classList.add('table-success');
+        if (accessSelect) accessSelect.disabled = false;
+        if (inheritCheckbox) inheritCheckbox.disabled = false;
+    } else {
+        row.classList.remove('table-success');
+        if (accessSelect) accessSelect.disabled = true;
+        if (inheritCheckbox) inheritCheckbox.disabled = true;
+    }
+}
+
+function selectAll() {
+    document.querySelectorAll('.user-checkbox').forEach(cb => {
+        cb.checked = true;
+        toggleRow(cb);
+    });
+}
+
+function deselectAll() {
+    document.querySelectorAll('.user-checkbox').forEach(cb => {
+        cb.checked = false;
+        toggleRow(cb);
+    });
+}
+</script>
+{% endblock %}

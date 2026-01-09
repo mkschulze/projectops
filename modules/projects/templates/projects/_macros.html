@@ -1,0 +1,67 @@
+{# Macros for Projects Module #}
+
+{% macro render_issue_type_icon(issue_type) %}
+{% if issue_type %}
+<i class="bi {{ issue_type.icon or 'bi-circle' }}" 
+   style="color: {{ issue_type.color or '#666' }};"
+   title="{{ issue_type.name }}"></i>
+{% else %}
+<i class="bi bi-circle" style="color: #666;"></i>
+{% endif %}
+{% endmacro %}
+
+{% macro render_issue_priority_badge(priority) %}
+{% if priority == 'critical' %}
+<span class="badge bg-danger" title="Critical">
+    <i class="bi bi-chevron-double-up"></i>
+</span>
+{% elif priority == 'high' %}
+<span class="badge bg-warning text-dark" title="High">
+    <i class="bi bi-chevron-up"></i>
+</span>
+{% elif priority == 'medium' %}
+<span class="badge bg-info text-dark" title="Medium">
+    <i class="bi bi-dash"></i>
+</span>
+{% elif priority == 'low' %}
+<span class="badge bg-success" title="Low">
+    <i class="bi bi-chevron-down"></i>
+</span>
+{% else %}
+<span class="badge bg-secondary" title="{{ priority or 'None' }}">
+    <i class="bi bi-circle"></i>
+</span>
+{% endif %}
+{% endmacro %}
+
+{% macro render_issue_status_badge(status) %}
+{% if status %}
+<span class="badge" style="background-color: {{ status.color or '#6c757d' }}; color: white;">
+    {{ status.name }}
+</span>
+{% else %}
+<span class="badge bg-secondary">-</span>
+{% endif %}
+{% endmacro %}
+
+{% macro render_user_avatar(user, size=24) %}
+{% if user %}
+<span class="user-avatar" 
+      style="width: {{ size }}px; height: {{ size }}px; border-radius: 50%; background: #4A90D9; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: {{ (size * 0.4)|int }}px; font-weight: 600;"
+      title="{{ user.username }}">
+    {{ user.username[:2]|upper }}
+</span>
+{% else %}
+<span class="user-avatar-empty" 
+      style="width: {{ size }}px; height: {{ size }}px; border-radius: 50%; background: #e9ecef; color: #6c757d; display: inline-flex; align-items: center; justify-content: center; font-size: {{ (size * 0.5)|int }}px;">
+    <i class="bi bi-person"></i>
+</span>
+{% endif %}
+{% endmacro %}
+
+{% macro render_project_icon(project, size=40) %}
+<div class="project-icon" 
+     style="width: {{ size }}px; height: {{ size }}px; background-color: {{ project.color or '#4A90D9' }}; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+    <i class="{{ project.icon or 'bi-folder' }}" style="font-size: {{ (size * 0.5)|int }}px;"></i>
+</div>
+{% endmacro %}

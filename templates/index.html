@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row align-items-center py-5">
+    <div class="col-lg-7">
+        <h1 class="display-4 fw-bold mb-3">
+            <i class="bi bi-rocket-takeoff text-primary me-3"></i>{{ app_name }}
+        </h1>
+        <p class="lead text-muted mb-4">
+            {% if lang == 'de' %}
+            Ihre zentrale Plattform für Projektmanagement. Verwalten Sie Projekte, Aufgaben und Teams mit flexiblen Methoden – Scrum, Kanban, Waterfall oder individuell.
+            {% else %}
+            Your central platform for project management. Manage projects, tasks, and teams with flexible methodologies – Scrum, Kanban, Waterfall, or custom.
+            {% endif %}
+        </p>
+        <div class="d-flex gap-3">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-box-arrow-in-right me-2"></i>{{ t('login_button') }}
+            </a>
+        </div>
+    </div>
+    <div class="col-lg-5 text-center d-none d-lg-block">
+        <div class="p-4">
+            <i class="bi bi-kanban text-primary" style="font-size: 12rem; opacity: 0.15;"></i>
+        </div>
+    </div>
+</div>
+
+<hr class="my-5">
+
+<!-- Features Section -->
+<div class="row g-4 py-4">
+    <div class="col-12">
+        <h2 class="text-center mb-4">
+            {% if lang == 'de' %}Kernfunktionen{% else %}Key Features{% endif %}
+        </h2>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex p-3 mb-3">
+                    <i class="bi bi-folder text-primary fs-2"></i>
+                </div>
+                <h5 class="card-title">{% if lang == 'de' %}Projekte{% else %}Projects{% endif %}</h5>
+                <p class="card-text text-muted small">
+                    {% if lang == 'de' %}
+                    Verwalten Sie Projekte mit Scrum, Kanban, Waterfall oder individuellen Workflows.
+                    {% else %}
+                    Manage projects with Scrum, Kanban, Waterfall, or custom workflows.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex p-3 mb-3">
+                    <i class="bi bi-kanban text-success fs-2"></i>
+                </div>
+                <h5 class="card-title">{% if lang == 'de' %}Kanban-Boards{% else %}Kanban Boards{% endif %}</h5>
+                <p class="card-text text-muted small">
+                    {% if lang == 'de' %}
+                    Drag-and-Drop-Boards mit WIP-Limits und konfigurierbaren Workflows.
+                    {% else %}
+                    Drag-and-drop boards with WIP limits and configurable workflows.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex p-3 mb-3">
+                    <i class="bi bi-graph-up text-warning fs-2"></i>
+                </div>
+                <h5 class="card-title">{% if lang == 'de' %}Iterationen{% else %}Iterations{% endif %}</h5>
+                <p class="card-text text-muted small">
+                    {% if lang == 'de' %}
+                    Sprints, Phasen und Zyklen mit Burndown-Charts und Velocity-Tracking.
+                    {% else %}
+                    Sprints, phases, and cycles with burndown charts and velocity tracking.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="rounded-circle bg-info bg-opacity-10 d-inline-flex p-3 mb-3">
+                    <i class="bi bi-building text-info fs-2"></i>
+                </div>
+                <h5 class="card-title">{% if lang == 'de' %}Multi-Tenancy{% else %}Multi-Tenancy{% endif %}</h5>
+                <p class="card-text text-muted small">
+                    {% if lang == 'de' %}
+                    Mandantenfähig für mehrere Kunden mit separaten Daten und Berechtigungen.
+                    {% else %}
+                    Multi-tenant support for multiple clients with separate data and permissions.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="my-5">
+
+<!-- Info Section -->
+<div class="row py-4">
+    <div class="col-lg-6">
+        <div class="card border-0 bg-light h-100">
+            <div class="card-body p-4">
+                <h4><i class="bi bi-diagram-3 text-success me-2"></i>{% if lang == 'de' %}Flexible Methoden{% else %}Flexible Methodologies{% endif %}</h4>
+                <p class="text-muted mb-0">
+                    {% if lang == 'de' %}
+                    Wählen Sie die passende Methodik für jedes Projekt: Scrum für agile Teams, Kanban für kontinuierlichen Flow, Waterfall für strukturierte Phasen, oder definieren Sie Ihren eigenen Workflow.
+                    {% else %}
+                    Choose the right methodology for each project: Scrum for agile teams, Kanban for continuous flow, Waterfall for structured phases, or define your own custom workflow.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 bg-light h-100">
+            <div class="card-body p-4">
+                <h4><i class="bi bi-shield-check text-primary me-2"></i>{% if lang == 'de' %}Enterprise-Ready{% else %}Enterprise-Ready{% endif %}</h4>
+                <p class="text-muted mb-0">
+                    {% if lang == 'de' %}
+                    Multi-Mandanten-Architektur, rollenbasierte Berechtigungen, vollständiges Audit-Log und Compliance-Export – entwickelt für professionelle Anforderungen.
+                    {% else %}
+                    Multi-tenant architecture, role-based permissions, complete audit logging, and compliance export – built for professional requirements.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer Info -->
+<div class="text-center py-5 text-muted">
+    <small>{{ app_name }} v{{ app_version }}</small>
+</div>
+{% endblock %}

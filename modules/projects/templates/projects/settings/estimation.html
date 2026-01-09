@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Schätzskala' if lang == 'de' else 'Estimation Scale' }} - {{ project.key }}{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    .settings-header-bar {
+        background: white;
+        border-bottom: 3px solid #62378a;
+        padding: 1rem 0;
+        margin: -1rem -1rem 1.5rem -1rem;
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .settings-header-bar .breadcrumb {
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .settings-header-bar .breadcrumb a {
+        color: #666;
+        text-decoration: none;
+    }
+    
+    .settings-header-bar .breadcrumb a:hover {
+        color: #62378a;
+    }
+    
+    .settings-header-bar h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    
+    .settings-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .settings-card-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .settings-card-header h5 {
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+    }
+    
+    .settings-card-body {
+        padding: 1.5rem;
+    }
+    
+    .scale-option {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.25rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+    }
+    
+    .scale-option:hover {
+        border-color: #0076A8;
+        background: #f8f9fa;
+    }
+    
+    .scale-option.active {
+        border-color: #4A90D9;
+        background: #f8fff0;
+    }
+    
+    .scale-option .scale-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .scale-option .scale-values {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .scale-option .scale-value {
+        background: #e9ecef;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .scale-option.active .scale-value {
+        background: #4A90D9;
+        color: white;
+    }
+    
+    .custom-values-container {
+        display: none;
+    }
+    
+    .custom-values-container.show {
+        display: block;
+    }
+    
+    .custom-value-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        align-items: center;
+    }
+    
+    .custom-value-row input {
+        flex: 1;
+    }
+    
+    .custom-value-row .btn-remove {
+        padding: 0.375rem 0.5rem;
+    }
+    
+    .settings-sidebar {
+        position: sticky;
+        top: 80px;
+    }
+    
+    .settings-nav .nav-link {
+        color: #666;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        margin-bottom: 0.25rem;
+    }
+    
+    .settings-nav .nav-link:hover {
+        background: #f8f9fa;
+        color: #333;
+    }
+    
+    .settings-nav .nav-link.active {
+        background: #62378a15;
+        color: #62378a;
+        font-weight: 500;
+    }
+    
+    .settings-nav .nav-link i {
+        width: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Bar -->
+<div class="settings-header-bar">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}">{{ 'Projekte' if lang == 'de' else 'Projects' }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.key }}</a></li>
+            <li class="breadcrumb-item active">{{ 'Einstellungen' if lang == 'de' else 'Settings' }}</li>
+        </ol>
+    </nav>
+    <h1><i class="bi bi-rulers text-purple me-2"></i>{{ 'Schätzskala' if lang == 'de' else 'Estimation Scale' }}</h1>
+    <p class="subtitle mb-0">{{ 'Wählen Sie die Schätzskala für Story Points in diesem Projekt' if lang == 'de' else 'Choose the estimation scale for story points in this project' }}</p>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="settings-sidebar">
+                <nav class="settings-nav nav flex-column">
+                    <a class="nav-link" href="{{ url_for('projects.project_methodology', project_id=project.id) }}">
+                        <i class="bi bi-diagram-3 me-2"></i>{{ 'Methodik' if lang == 'de' else 'Methodology' }}
+                    </a>
+                    <a class="nav-link" href="{{ url_for('projects.project_issue_types', project_id=project.id) }}">
+                        <i class="bi bi-tags me-2"></i>{{ 'Issue-Typen' if lang == 'de' else 'Issue Types' }}
+                    </a>
+                    <a class="nav-link" href="{{ url_for('projects.project_issue_statuses', project_id=project.id) }}">
+                        <i class="bi bi-kanban me-2"></i>{{ 'Workflow & Status' if lang == 'de' else 'Workflow & Status' }}
+                    </a>
+                    <a class="nav-link active" href="{{ url_for('projects.project_estimation_settings', project_id=project.id) }}">
+                        <i class="bi bi-rulers me-2"></i>{{ 'Schätzskala' if lang == 'de' else 'Estimation Scale' }}
+                    </a>
+                </nav>
+                
+                <hr class="my-3">
+                
+                <a href="{{ url_for('projects.estimation', project_id=project.id) }}" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-play-fill me-1"></i>{{ 'Zur Schätzung' if lang == 'de' else 'Go to Estimation' }}
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <h5><i class="bi bi-collection me-2"></i>{{ 'Skala auswählen' if lang == 'de' else 'Select Scale' }}</h5>
+                    </div>
+                    <div class="settings-card-body">
+                        {# Determine default scale based on methodology #}
+                        {% set default_scale = 'persondays' if project.methodology == 'waterfall' else ('tshirt' if project.methodology == 'kanban' else 'fibonacci') %}
+                        {% set effective_scale = project.estimation_scale or default_scale %}
+                        <div class="row g-3">
+                            <!-- Fibonacci -->
+                            <div class="col-md-6">
+                                <label class="scale-option w-100 {{ 'active' if effective_scale == 'fibonacci' }}">
+                                    <input type="radio" name="estimation_scale" value="fibonacci" 
+                                           class="d-none" {{ 'checked' if effective_scale == 'fibonacci' }}>
+                                    <div class="scale-name">
+                                        <i class="bi bi-graph-up-arrow text-primary me-1"></i>
+                                        Fibonacci
+                                    </div>
+                                    <p class="text-muted small mb-2">{{ 'Klassische agile Schätzung' if lang == 'de' else 'Classic agile estimation' }}</p>
+                                    <div class="scale-values">
+                                        <span class="scale-value">1</span>
+                                        <span class="scale-value">2</span>
+                                        <span class="scale-value">3</span>
+                                        <span class="scale-value">5</span>
+                                        <span class="scale-value">8</span>
+                                        <span class="scale-value">13</span>
+                                        <span class="scale-value">21</span>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <!-- T-Shirt -->
+                            <div class="col-md-6">
+                                <label class="scale-option w-100 {{ 'active' if effective_scale == 'tshirt' }}">
+                                    <input type="radio" name="estimation_scale" value="tshirt" 
+                                           class="d-none" {{ 'checked' if effective_scale == 'tshirt' }}>
+                                    <div class="scale-name">
+                                        <i class="bi bi-basket text-success me-1"></i>
+                                        T-Shirt Sizes
+                                    </div>
+                                    <p class="text-muted small mb-2">{{ 'Intuitiv und einfach' if lang == 'de' else 'Intuitive and simple' }}</p>
+                                    <div class="scale-values">
+                                        <span class="scale-value">XS</span>
+                                        <span class="scale-value">S</span>
+                                        <span class="scale-value">M</span>
+                                        <span class="scale-value">L</span>
+                                        <span class="scale-value">XL</span>
+                                        <span class="scale-value">XXL</span>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <!-- Linear -->
+                            <div class="col-md-6">
+                                <label class="scale-option w-100 {{ 'active' if effective_scale == 'linear' }}">
+                                    <input type="radio" name="estimation_scale" value="linear" 
+                                           class="d-none" {{ 'checked' if effective_scale == 'linear' }}>
+                                    <div class="scale-name">
+                                        <i class="bi bi-123 text-warning me-1"></i>
+                                        Linear (1-10)
+                                    </div>
+                                    <p class="text-muted small mb-2">{{ 'Einfache numerische Skala' if lang == 'de' else 'Simple numeric scale' }}</p>
+                                    <div class="scale-values">
+                                        <span class="scale-value">1</span>
+                                        <span class="scale-value">2</span>
+                                        <span class="scale-value">3</span>
+                                        <span class="scale-value">...</span>
+                                        <span class="scale-value">10</span>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <!-- Person Days -->
+                            <div class="col-md-6">
+                                <label class="scale-option w-100 {{ 'active' if effective_scale == 'persondays' }}">
+                                    <input type="radio" name="estimation_scale" value="persondays" 
+                                           class="d-none" {{ 'checked' if effective_scale == 'persondays' }}>
+                                    <div class="scale-name">
+                                        <i class="bi bi-calendar-day text-info me-1"></i>
+                                        {{ 'Personentage (PT)' if lang == 'de' else 'Person Days (PD)' }}
+                                    </div>
+                                    <p class="text-muted small mb-2">{{ 'Klassische Aufwandsschätzung' if lang == 'de' else 'Traditional effort estimation' }}</p>
+                                    <div class="scale-values">
+                                        <span class="scale-value">0.5</span>
+                                        <span class="scale-value">1</span>
+                                        <span class="scale-value">2</span>
+                                        <span class="scale-value">5</span>
+                                        <span class="scale-value">10</span>
+                                        <span class="scale-value">20</span>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <!-- Custom -->
+                            <div class="col-md-6">
+                                <label class="scale-option w-100 {{ 'active' if effective_scale == 'custom' }}">
+                                    <input type="radio" name="estimation_scale" value="custom" 
+                                           class="d-none" {{ 'checked' if effective_scale == 'custom' }}>
+                                    <div class="scale-name">
+                                        <i class="bi bi-pencil-square text-purple me-1"></i>
+                                        {{ 'Benutzerdefiniert' if lang == 'de' else 'Custom' }}
+                                    </div>
+                                    <p class="text-muted small mb-2">{{ 'Eigene Werte definieren' if lang == 'de' else 'Define your own values' }}</p>
+                                    <div class="scale-values">
+                                        <span class="scale-value"><i class="bi bi-plus"></i></span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Custom Values -->
+                <div class="settings-card custom-values-container {{ 'show' if effective_scale == 'custom' }}">
+                    <div class="settings-card-header">
+                        <h5><i class="bi bi-list-ol me-2"></i>{{ 'Benutzerdefinierte Werte' if lang == 'de' else 'Custom Values' }}</h5>
+                    </div>
+                    <div class="settings-card-body">
+                        <p class="text-muted mb-3">{{ 'Definieren Sie Ihre eigenen Schätzwerte. Das Label wird in der UI angezeigt, die Punkte werden für Berechnungen verwendet.' if lang == 'de' else 'Define your own estimation values. The label is shown in the UI, points are used for calculations.' }}</p>
+                        
+                        <div id="customValuesContainer">
+                            {% if project.estimation_values %}
+                                {% for val in project.estimation_values %}
+                                <div class="custom-value-row">
+                                    <input type="text" name="custom_label[]" class="form-control" 
+                                           placeholder="{{ 'Label (z.B. XS)' if lang == 'de' else 'Label (e.g. XS)' }}"
+                                           value="{{ val.label }}">
+                                    <input type="number" name="custom_points[]" class="form-control" 
+                                           placeholder="{{ 'Punkte' if lang == 'de' else 'Points' }}"
+                                           value="{{ val.points }}" step="0.5" min="0">
+                                    <input type="text" name="custom_description[]" class="form-control" 
+                                           placeholder="{{ 'Beschreibung' if lang == 'de' else 'Description' }}"
+                                           value="{{ val.description.de if val.description else '' }}">
+                                    <button type="button" class="btn btn-outline-danger btn-remove" onclick="this.closest('.custom-value-row').remove()">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="custom-value-row">
+                                    <input type="text" name="custom_label[]" class="form-control" placeholder="{{ 'Label' if lang == 'de' else 'Label' }}">
+                                    <input type="number" name="custom_points[]" class="form-control" placeholder="{{ 'Punkte' if lang == 'de' else 'Points' }}" step="0.5" min="0">
+                                    <input type="text" name="custom_description[]" class="form-control" placeholder="{{ 'Beschreibung' if lang == 'de' else 'Description' }}">
+                                    <button type="button" class="btn btn-outline-danger btn-remove" onclick="this.closest('.custom-value-row').remove()">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <button type="button" class="btn btn-outline-secondary mt-2" id="addCustomValue">
+                            <i class="bi bi-plus me-1"></i>{{ 'Wert hinzufügen' if lang == 'de' else 'Add Value' }}
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Save Button -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('projects.project_detail', project_id=project.id) }}" class="btn btn-outline-secondary">
+                        {{ 'Abbrechen' if lang == 'de' else 'Cancel' }}
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>{{ 'Speichern' if lang == 'de' else 'Save' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    // Scale option selection
+    document.querySelectorAll('.scale-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.scale-option').forEach(o => o.classList.remove('active'));
+            this.classList.add('active');
+            this.querySelector('input[type="radio"]').checked = true;
+            
+            // Show/hide custom values
+            const customContainer = document.querySelector('.custom-values-container');
+            if (this.querySelector('input[value="custom"]')) {
+                customContainer.classList.add('show');
+            } else {
+                customContainer.classList.remove('show');
+            }
+        });
+    });
+    
+    // Add custom value
+    document.getElementById('addCustomValue').addEventListener('click', function() {
+        const container = document.getElementById('customValuesContainer');
+        const row = document.createElement('div');
+        row.className = 'custom-value-row';
+        row.innerHTML = `
+            <input type="text" name="custom_label[]" class="form-control" placeholder="{{ 'Label' if lang == 'de' else 'Label' }}">
+            <input type="number" name="custom_points[]" class="form-control" placeholder="{{ 'Punkte' if lang == 'de' else 'Points' }}" step="0.5" min="0">
+            <input type="text" name="custom_description[]" class="form-control" placeholder="{{ 'Beschreibung' if lang == 'de' else 'Description' }}">
+            <button type="button" class="btn btn-outline-danger btn-remove" onclick="this.closest('.custom-value-row').remove()">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+        container.appendChild(row);
+    });
+});
+</script>
+{% endblock %}

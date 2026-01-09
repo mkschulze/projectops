@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}{{ 'API-Schlüssel' if lang == 'de' else 'API Keys' }} - {{ tenant.name }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<style nonce="{{ csp_nonce }}">
+    .api-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: none;
+        overflow: hidden;
+    }
+    .api-key-row {
+        transition: background-color 0.2s;
+    }
+    .api-key-row:hover {
+        background-color: rgba(0, 118, 168, 0.05);
+    }
+    .key-prefix {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        background: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.85rem;
+    }
+    .status-active {
+        background: rgba(134, 188, 37, 0.15);
+        color: #4A90D9;
+        padding: 0.35rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .status-inactive {
+        background: rgba(108, 117, 125, 0.15);
+        color: #6c757d;
+        padding: 0.35rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_tenants.tenant_list') }}">{{ 'Mandanten' if lang == 'de' else 'Tenants' }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_tenants.tenant_detail', tenant_id=tenant.id) }}">{{ tenant.name }}</a></li>
+            <li class="breadcrumb-item active">{{ 'API-Schlüssel' if lang == 'de' else 'API Keys' }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-1">
+                <i class="bi bi-key me-2 text-warning"></i>{{ 'API-Schlüssel' if lang == 'de' else 'API Keys' }}
+            </h1>
+            <p class="text-muted mb-0">{{ tenant.name }}</p>
+        </div>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createKeyModal">
+            <i class="bi bi-plus-lg me-1"></i>{{ 'Neuer Schlüssel' if lang == 'de' else 'New Key' }}
+        </button>
+    </div>
+
+    <!-- Info Alert -->
+    <div class="alert alert-info border-0 shadow-sm mb-4">
+        <i class="bi bi-info-circle me-2"></i>
+        {% if lang == 'de' %}
+        API-Schlüssel ermöglichen den programmatischen Zugriff auf die API. Der vollständige Schlüssel wird nur einmal bei der Erstellung angezeigt.
+        {% else %}
+        API keys enable programmatic access to the API. The full key is only shown once upon creation.
+        {% endif %}
+    </div>
+
+    <!-- API Keys List -->
+    <div class="api-card card">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">
+                <i class="bi bi-list-ul me-2"></i>{{ 'Alle Schlüssel' if lang == 'de' else 'All Keys' }}
+            </span>
+            <span class="badge bg-secondary">{{ api_keys|length }}</span>
+        </div>
+        <div class="card-body p-0">
+            {% if api_keys %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0 ps-4">{{ 'Name' if lang == 'de' else 'Name' }}</th>
+                            <th class="border-0">{{ 'Schlüssel-Präfix' if lang == 'de' else 'Key Prefix' }}</th>
+                            <th class="border-0">{{ 'Status' if lang == 'de' else 'Status' }}</th>
+                            <th class="border-0">{{ 'Erstellt' if lang == 'de' else 'Created' }}</th>
+                            <th class="border-0">{{ 'Letzter Zugriff' if lang == 'de' else 'Last Used' }}</th>
+                            <th class="border-0 pe-4 text-end">{{ 'Aktionen' if lang == 'de' else 'Actions' }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for key in api_keys %}
+                        <tr class="api-key-row">
+                            <td class="ps-4">
+                                <div class="fw-medium">{{ key.name }}</div>
+                            </td>
+                            <td>
+                                <code class="key-prefix">{{ key.key_prefix }}...</code>
+                            </td>
+                            <td>
+                                {% if key.is_active %}
+                                <span class="status-active">
+                                    <i class="bi bi-check-circle me-1"></i>{{ 'Aktiv' if lang == 'de' else 'Active' }}
+                                </span>
+                                {% else %}
+                                <span class="status-inactive">
+                                    <i class="bi bi-pause-circle me-1"></i>{{ 'Inaktiv' if lang == 'de' else 'Inactive' }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted">
+                                {{ key.created_at.strftime('%d.%m.%Y %H:%M') if key.created_at else '-' }}
+                            </td>
+                            <td class="text-muted">
+                                {{ key.last_used_at.strftime('%d.%m.%Y %H:%M') if key.last_used_at else '-' }}
+                            </td>
+                            <td class="pe-4 text-end">
+                                <form action="{{ url_for('admin_tenants.tenant_api_key_toggle', tenant_id=tenant.id, key_id=key.id) }}" 
+                                      method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="{{ 'Umschalten' if lang == 'de' else 'Toggle' }}">
+                                        {% if key.is_active %}
+                                        <i class="bi bi-pause-fill"></i>
+                                        {% else %}
+                                        <i class="bi bi-play-fill"></i>
+                                        {% endif %}
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('admin_tenants.tenant_api_key_delete', tenant_id=tenant.id, key_id=key.id) }}" 
+                                      method="POST" class="d-inline"
+                                      onsubmit="return confirm('{{ 'Schlüssel wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.' if lang == 'de' else 'Really delete this key? This action cannot be undone.' }}');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ 'Löschen' if lang == 'de' else 'Delete' }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-key display-4 mb-3 d-block opacity-50"></i>
+                <h5>{{ 'Keine API-Schlüssel vorhanden' if lang == 'de' else 'No API keys yet' }}</h5>
+                <p class="mb-3">{{ 'Erstellen Sie Ihren ersten API-Schlüssel, um den programmatischen Zugriff zu ermöglichen.' if lang == 'de' else 'Create your first API key to enable programmatic access.' }}</p>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createKeyModal">
+                    <i class="bi bi-plus-lg me-1"></i>{{ 'Schlüssel erstellen' if lang == 'de' else 'Create Key' }}
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Create Key Modal -->
+<div class="modal fade" id="createKeyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('admin_tenants.tenant_api_key_create', tenant_id=tenant.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-key me-2 text-warning"></i>
+                        {{ 'Neuen API-Schlüssel erstellen' if lang == 'de' else 'Create New API Key' }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ 'Name' if lang == 'de' else 'Name' }} <span class="text-muted">({{ 'optional' }})</span></label>
+                        <input type="text" name="name" class="form-control" 
+                               placeholder="{{ 'z.B. Produktions-API, CI/CD Pipeline' if lang == 'de' else 'e.g. Production API, CI/CD Pipeline' }}">
+                        <div class="form-text">
+                            {{ 'Ein beschreibender Name hilft Ihnen, den Zweck dieses Schlüssels zu identifizieren.' if lang == 'de' else 'A descriptive name helps you identify the purpose of this key.' }}
+                        </div>
+                    </div>
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {% if lang == 'de' %}
+                        <strong>Wichtig:</strong> Der vollständige API-Schlüssel wird nur einmal angezeigt. Kopieren Sie ihn sofort nach der Erstellung.
+                        {% else %}
+                        <strong>Important:</strong> The full API key will only be shown once. Copy it immediately after creation.
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {{ 'Abbrechen' if lang == 'de' else 'Cancel' }}
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-plus-lg me-1"></i>{{ 'Schlüssel erstellen' if lang == 'de' else 'Create Key' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

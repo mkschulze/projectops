@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('teams') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-people me-2"></i>{{ t('teams') }}</h1>
+        <a href="{{ url_for('admin.team_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>{{ t('new_team') }}
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th>{{ t('name') }}</th>
+                            <th>{{ t('description') }}</th>
+                            <th>{{ t('manager') }}</th>
+                            <th>{{ t('members') }}</th>
+                            <th>{{ t('status') }}</th>
+                            <th class="text-end">{{ t('actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for team in teams %}
+                        <tr class="{{ 'text-muted' if not team.is_active }}">
+                            <td>
+                                <span class="d-inline-block rounded-circle" 
+                                      style="width: 20px; height: 20px; background-color: {{ team.color or '#4A90D9' }};">
+                                </span>
+                            </td>
+                            <td>
+                                <strong>{{ team.get_name(lang) }}</strong>
+                            </td>
+                            <td>{{ team.get_description(lang)|truncate(50) if team.get_description(lang) else '-' }}</td>
+                            <td>
+                                {% if team.manager %}
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-person-badge me-1"></i>{{ team.manager.name }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ team.get_member_count() }} {{ t('members') }}</span>
+                            </td>
+                            <td>
+                                {% if team.is_active %}
+                                <span class="badge bg-success">{{ t('active') }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ t('inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ url_for('admin.team_edit', team_id=team.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="{{ t('edit') }}">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if team.is_active %}
+                                <form action="{{ url_for('admin.team_delete', team_id=team.id) }}" 
+                                      method="POST" class="d-inline"
+                                      onsubmit="return confirm('{{ t('confirm_deactivate_team') }}');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ t('deactivate') }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                {{ t('no_teams') }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

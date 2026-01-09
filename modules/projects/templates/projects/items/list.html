@@ -1,0 +1,502 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Issues' if lang == 'en' else 'Issues' }} - {{ project.key }}{% endblock %}
+
+{% block content %}
+<!-- Hero Header -->
+<div class="issues-hero mb-4">
+    <div class="container-fluid py-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark mb-3">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}" class="text-white-50">{{ 'Projekte' if lang == 'de' else 'Projects' }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}" class="text-white-50">{{ project.key }}</a></li>
+                <li class="breadcrumb-item active text-white">Issues</li>
+            </ol>
+        </nav>
+
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="hero-icon">
+                    <i class="bi bi-list-task"></i>
+                </div>
+            </div>
+            <div class="col">
+                <h1 class="text-white mb-1">{{ project.get_name(lang) }} - Issues</h1>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-white-50">
+                        <i class="bi bi-collection me-1"></i>
+                        {{ issues|length }} {{ 'Issues' }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-auto d-flex gap-2">
+                <!-- View Switcher -->
+                <div class="btn-group view-switcher" role="group">
+                    <a href="{{ url_for('projects.item_list', project_id=project.id) }}" 
+                       class="btn btn-light active" title="{{ 'Listenansicht' if lang == 'de' else 'List View' }}">
+                        <i class="bi bi-list-ul"></i>
+                    </a>
+                    <a href="{{ url_for('projects.kanban_board', project_id=project.id) }}" 
+                       class="btn btn-outline-light" title="{{ 'Board-Ansicht' if lang == 'de' else 'Board View' }}">
+                        <i class="bi bi-kanban"></i>
+                    </a>
+                    <a href="{{ url_for('projects.backlog', project_id=project.id) }}" 
+                       class="btn btn-outline-light" title="Backlog">
+                        <i class="bi bi-list-ol"></i>
+                    </a>
+                </div>
+                
+                <!-- Create Issue -->
+                <a href="{{ url_for('projects.item_new', project_id=project.id) }}" class="btn btn-brand">
+                    <i class="bi bi-plus-lg me-1"></i>{{ 'Neues Issue' if lang == 'de' else 'New Issue' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Quick Stats -->
+    <div class="row g-3 mb-4">
+        {% set open_count = issues|selectattr('status.category', 'equalto', 'open')|list|length %}
+        {% set in_progress_count = issues|selectattr('status.category', 'equalto', 'in_progress')|list|length %}
+        {% set done_count = issues|selectattr('status.category', 'equalto', 'done')|list|length %}
+        
+        <div class="col-6 col-md-3">
+            <div class="quick-stat-card">
+                <div class="quick-stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-circle"></i>
+                </div>
+                <div class="quick-stat-content">
+                    <div class="quick-stat-value">{{ open_count }}</div>
+                    <div class="quick-stat-label">{{ 'Offen' if lang == 'de' else 'Open' }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="quick-stat-card">
+                <div class="quick-stat-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="bi bi-arrow-repeat"></i>
+                </div>
+                <div class="quick-stat-content">
+                    <div class="quick-stat-value">{{ in_progress_count }}</div>
+                    <div class="quick-stat-label">{{ 'In Bearbeitung' if lang == 'de' else 'In Progress' }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="quick-stat-card">
+                <div class="quick-stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="quick-stat-content">
+                    <div class="quick-stat-value">{{ done_count }}</div>
+                    <div class="quick-stat-label">{{ 'Erledigt' if lang == 'de' else 'Done' }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="quick-stat-card">
+                <div class="quick-stat-icon bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="quick-stat-content">
+                    {% set overdue_count = issues|selectattr('is_overdue')|list|length if issues else 0 %}
+                    <div class="quick-stat-value">{{ overdue_count }}</div>
+                    <div class="quick-stat-label">{{ 'Überfällig' if lang == 'de' else 'Overdue' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small text-muted fw-medium">
+                        <i class="bi bi-tag me-1"></i>{{ 'Typ' if lang == 'de' else 'Type' }}
+                    </label>
+                    <select name="type" class="form-select">
+                        <option value="">{{ 'Alle' if lang == 'de' else 'All' }}</option>
+                        {% for t in issue_types %}
+                        <option value="{{ t.id }}" {{ 'selected' if filters.type == t.id }}>{{ t.get_name(lang) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted fw-medium">
+                        <i class="bi bi-circle-half me-1"></i>Status
+                    </label>
+                    <select name="status" class="form-select">
+                        <option value="">{{ 'Alle' if lang == 'de' else 'All' }}</option>
+                        {% for s in issue_statuses %}
+                        <option value="{{ s.id }}" {{ 'selected' if filters.status == s.id }}>{{ s.get_name(lang) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted fw-medium">
+                        <i class="bi bi-person me-1"></i>{{ 'Bearbeiter' if lang == 'de' else 'Assignee' }}
+                    </label>
+                    <select name="assignee" class="form-select">
+                        <option value="">{{ 'Alle' if lang == 'de' else 'All' }}</option>
+                        {% for m in members %}
+                        <option value="{{ m.user.id }}" {{ 'selected' if filters.assignee == m.user.id }}>{{ m.user.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted fw-medium">
+                        <i class="bi bi-arrow-up-down me-1"></i>{{ 'Priorität' if lang == 'de' else 'Priority' }}
+                    </label>
+                    <select name="priority" class="form-select">
+                        <option value="">{{ 'Alle' if lang == 'de' else 'All' }}</option>
+                        <option value="1" {{ 'selected' if filters.priority == 1 }}>{{ 'Höchste' if lang == 'de' else 'Highest' }}</option>
+                        <option value="2" {{ 'selected' if filters.priority == 2 }}>{{ 'Hoch' if lang == 'de' else 'High' }}</option>
+                        <option value="3" {{ 'selected' if filters.priority == 3 }}>{{ 'Mittel' if lang == 'de' else 'Medium' }}</option>
+                        <option value="4" {{ 'selected' if filters.priority == 4 }}>{{ 'Niedrig' if lang == 'de' else 'Low' }}</option>
+                        <option value="5" {{ 'selected' if filters.priority == 5 }}>{{ 'Niedrigste' if lang == 'de' else 'Lowest' }}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted fw-medium">
+                        <i class="bi bi-search me-1"></i>{{ 'Suche' if lang == 'de' else 'Search' }}
+                    </label>
+                    <input type="text" name="search" class="form-control" value="{{ filters.search }}" placeholder="{{ 'Key oder Titel...' if lang == 'de' else 'Key or title...' }}">
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-brand w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Issue List -->
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 issue-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;" class="text-center">{{ 'Typ' if lang == 'de' else 'Type' }}</th>
+                        <th style="width: 110px;">Key</th>
+                        <th>{{ 'Zusammenfassung' if lang == 'de' else 'Summary' }}</th>
+                        <th style="width: 140px;">Status</th>
+                        <th style="width: 50px;" class="text-center"><i class="bi bi-arrow-up-down" title="{{ 'Priorität' if lang == 'de' else 'Priority' }}"></i></th>
+                        <th style="width: 60px;" class="text-center" title="Story Points"><i class="bi bi-lightning-charge"></i></th>
+                        <th style="width: 150px;">{{ 'Bearbeiter' if lang == 'de' else 'Assignee' }}</th>
+                        <th style="width: 100px;">{{ 'Fällig' if lang == 'de' else 'Due' }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if issues %}
+                        {% for issue in issues %}
+                        <tr class="issue-row" onclick="window.location='{{ url_for('projects.item_detail', project_id=project.id, issue_key=issue.key) }}'">
+                            <td class="text-center">
+                                <span class="issue-type-badge" style="background-color: {{ issue.issue_type.color }}20; color: {{ issue.issue_type.color }};">
+                                    <i class="{{ issue.issue_type.icon }}"></i>
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('projects.item_detail', project_id=project.id, issue_key=issue.key) }}" class="issue-key-link" onclick="event.stopPropagation()">
+                                    {{ issue.key }}
+                                </a>
+                            </td>
+                            <td>
+                                <div class="issue-summary">{{ issue.summary }}</div>
+                                {% if issue.labels %}
+                                <div class="issue-labels mt-1">
+                                    {% for label in issue.labels[:3] %}
+                                    <span class="issue-label">{{ label }}</span>
+                                    {% endfor %}
+                                    {% if issue.labels|length > 3 %}
+                                    <span class="issue-label-more">+{{ issue.labels|length - 3 }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge" style="background-color: {{ issue.status.color }}15; color: {{ issue.status.color }}; border: 1px solid {{ issue.status.color }}40;">
+                                    {{ issue.status.get_name(lang) }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <i class="{{ issue.get_priority_icon() }}" title="{{ issue.get_priority_display(lang) }}"></i>
+                            </td>
+                            <td class="text-center">
+                                {% if issue.story_points %}
+                                <span class="story-points-badge">{{ issue.story_points|int if issue.story_points == issue.story_points|int else issue.story_points }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if issue.assignee %}
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle avatar-sm me-2" style="background-color: {{ ['#4A90D9', '#0076A8', '#26890D', '#00A3E0'][loop.index0 % 4] }};">
+                                        {{ issue.assignee.name[:1].upper() }}
+                                    </div>
+                                    <span class="assignee-name">{{ issue.assignee.name }}</span>
+                                </div>
+                                {% else %}
+                                <span class="text-muted small">{{ 'Nicht zugewiesen' if lang == 'de' else 'Unassigned' }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if issue.due_date %}
+                                <span class="due-date {{ 'text-danger fw-medium' if issue.is_overdue else '' }}">
+                                    {% if issue.is_overdue %}<i class="bi bi-exclamation-circle me-1"></i>{% endif %}
+                                    {{ issue.due_date.strftime('%d.%m.%y') }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="bi bi-inbox"></i>
+                                    </div>
+                                    <h5 class="mt-3">{{ 'Keine Issues gefunden' if lang == 'de' else 'No issues found' }}</h5>
+                                    <p class="text-muted mb-3">{{ 'Erstellen Sie Ihr erstes Issue oder passen Sie die Filter an.' if lang == 'de' else 'Create your first issue or adjust the filters.' }}</p>
+                                    <a href="{{ url_for('projects.item_new', project_id=project.id) }}" class="btn btn-brand">
+                                        <i class="bi bi-plus-lg me-1"></i>{{ 'Neues Issue' if lang == 'de' else 'New Issue' }}
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style nonce="{{ csp_nonce }}">
+/* Hero Section */
+.issues-hero {
+    background: linear-gradient(135deg, #0076A8 0%, #004165 50%, #000000 100%);
+    margin-top: -1rem;
+    margin-left: -15px;
+    margin-right: -15px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.breadcrumb-dark .breadcrumb-item + .breadcrumb-item::before {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.hero-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.75rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-brand {
+    background-color: #4A90D9;
+    border-color: #4A90D9;
+    color: white;
+    font-weight: 500;
+}
+
+.btn-brand:hover {
+    background-color: #75a821;
+    border-color: #75a821;
+    color: white;
+}
+
+.view-switcher .btn.active {
+    background-color: white;
+    color: #000;
+}
+
+/* Quick Stats */
+.quick-stat-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.quick-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+}
+
+.quick-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+}
+
+.quick-stat-label {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+/* Issue Table */
+.issue-table thead {
+    background: #f8f9fa;
+}
+
+.issue-table thead th {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+    padding: 1rem 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.issue-row {
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.issue-row:hover {
+    background-color: rgba(134, 188, 37, 0.05) !important;
+}
+
+.issue-row td {
+    padding: 0.875rem 0.75rem;
+    vertical-align: middle;
+}
+
+.issue-type-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.issue-key-link {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #0076A8;
+    text-decoration: none;
+}
+
+.issue-key-link:hover {
+    color: #4A90D9;
+    text-decoration: underline;
+}
+
+.issue-summary {
+    font-weight: 500;
+    color: #333;
+}
+
+.issue-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.issue-label {
+    font-size: 0.7rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 20px;
+    background: #e9ecef;
+    color: #495057;
+}
+
+.issue-label-more {
+    font-size: 0.7rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 20px;
+    background: #f8f9fa;
+    color: #868e96;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.story-points-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 0.5rem;
+    border-radius: 6px;
+    background: #e3f2fd;
+    color: #1976d2;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.avatar-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.avatar-sm {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+}
+
+.assignee-name {
+    font-size: 0.875rem;
+    color: #333;
+}
+
+/* Empty State */
+.empty-state {
+    padding: 2rem;
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: #adb5bd;
+}
+</style>
+{% endblock %}

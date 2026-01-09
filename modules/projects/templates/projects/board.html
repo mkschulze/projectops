@@ -1,0 +1,780 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.get_term('board', lang) }} - {{ project.name }} - {{ 'Projekte' if lang == 'de' else 'Projects' }}{% endblock %}
+
+{% block content %}
+<!-- Hero Header -->
+<div class="board-hero mb-4">
+    <div class="container-fluid py-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark mb-3">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}" class="text-white-50">{{ 'Projekte' if lang == 'de' else 'Projects' }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}" class="text-white-50">{{ project.key }}</a></li>
+                <li class="breadcrumb-item active text-white">{{ project.get_term('board', lang) }}</li>
+            </ol>
+        </nav>
+
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="hero-icon">
+                    <i class="bi bi-kanban-fill"></i>
+                </div>
+            </div>
+            <div class="col">
+                <h1 class="text-white mb-1">{{ project.get_term('board', lang) }}</h1>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-white-50">
+                        <i class="bi bi-folder me-1"></i>
+                        {{ project.get_name(lang) }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-auto d-flex gap-2">
+                <!-- View Switcher -->
+                <div class="btn-group view-switcher" role="group">
+                    <a href="{{ url_for('projects.item_list', project_id=project.id) }}" 
+                       class="btn btn-outline-light" title="{{ 'Listenansicht' if lang == 'de' else 'List View' }}">
+                        <i class="bi bi-list-ul"></i>
+                    </a>
+                    <a href="{{ url_for('projects.kanban_board', project_id=project.id) }}" 
+                       class="btn btn-light active" title="{{ project.get_term('board', lang) }}">
+                        <i class="bi bi-kanban"></i>
+                    </a>
+                    <a href="{{ url_for('projects.backlog', project_id=project.id) }}" 
+                       class="btn btn-outline-light" title="{{ project.get_term('backlog', lang) }}">
+                        <i class="bi bi-list-ol"></i>
+                    </a>
+                </div>
+                
+                <!-- Create Issue -->
+                <a href="{{ url_for('projects.item_new', project_id=project.id) }}" class="btn btn-brand">
+                    <i class="bi bi-plus-lg me-1"></i>{{ 'Neues Issue' if lang == 'de' else 'New Issue' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Filters Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body py-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small text-muted fw-medium mb-1">
+                        <i class="bi bi-tag me-1"></i>{{ 'Typ' if lang == 'de' else 'Type' }}
+                    </label>
+                    <select id="filterType" class="form-select form-select-sm">
+                        <option value="">{{ 'Alle' if lang == 'de' else 'All' }}</option>
+                        {% for type in issue_types %}
+                        <option value="{{ type.id }}">{{ type.get_name(lang) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted fw-medium mb-1">
+                        <i class="bi bi-person me-1"></i>{{ 'Bearbeiter' if lang == 'de' else 'Assignee' }}
+                    </label>
+                    <select id="filterAssignee" class="form-select form-select-sm">
+                        <option value="">{{ 'Alle' if lang == 'de' else 'All' }}</option>
+                        <option value="unassigned">{{ 'Nicht zugewiesen' if lang == 'de' else 'Unassigned' }}</option>
+                        {% for member in members %}
+                        <option value="{{ member.user.id }}">{{ member.user.name or member.user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted fw-medium mb-1">
+                        <i class="bi bi-arrow-up-down me-1"></i>{{ 'Priorität' if lang == 'de' else 'Priority' }}
+                    </label>
+                    <select id="filterPriority" class="form-select form-select-sm">
+                        <option value="">{{ 'Alle' if lang == 'de' else 'All' }}</option>
+                        <option value="1">{{ 'Höchste' if lang == 'de' else 'Highest' }}</option>
+                        <option value="2">{{ 'Hoch' if lang == 'de' else 'High' }}</option>
+                        <option value="3">{{ 'Mittel' if lang == 'de' else 'Medium' }}</option>
+                        <option value="4">{{ 'Niedrig' if lang == 'de' else 'Low' }}</option>
+                        <option value="5">{{ 'Niedrigste' if lang == 'de' else 'Lowest' }}</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small text-muted fw-medium mb-1">
+                        <i class="bi bi-search me-1"></i>{{ 'Suche' if lang == 'de' else 'Search' }}
+                    </label>
+                    <input type="text" id="searchIssues" class="form-control form-select-sm" 
+                           placeholder="{{ 'Key oder Titel...' if lang == 'de' else 'Key or title...' }}">
+                </div>
+                <div class="col-md-2 text-end">
+                    <button class="btn btn-sm btn-outline-secondary" id="clearFilters">
+                        <i class="bi bi-x-lg me-1"></i>{{ 'Zurücksetzen' if lang == 'de' else 'Clear' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Board -->
+    <div class="board-container">
+        {% for status in statuses %}
+        <div class="board-column" data-status-id="{{ status.id }}">
+            <div class="board-column-header" style="border-bottom-color: {{ status.color or '#6c757d' }};">
+                <div class="d-flex align-items-center">
+                    <span class="status-dot" style="background-color: {{ status.color or '#6c757d' }};"></span>
+                    <span class="column-title">{{ status.get_name(lang) }}</span>
+                </div>
+                <span class="issue-count">{{ issues_by_status.get(status.id, [])|length }}</span>
+            </div>
+            <div class="board-column-body sortable-column" data-status-id="{{ status.id }}">
+                {% for issue in issues_by_status.get(status.id, []) %}
+                {% set current_status = issue.status %}
+                {% set allowed_targets = current_status.allowed_transitions if current_status and current_status.allowed_transitions else [] %}
+                <div class="issue-card" data-issue-id="{{ issue.id }}" 
+                     data-status-id="{{ issue.status_id }}"
+                     data-allowed-transitions="{{ allowed_targets|tojson|e }}"
+                     data-type="{{ issue.type_id }}" 
+                     data-assignee="{{ issue.assignee_id or 'unassigned' }}"
+                     data-priority="{{ issue.priority }}"
+                     data-href="{{ url_for('projects.item_detail', project_id=project.id, issue_key=issue.key) }}">
+                    <div class="issue-card-priority priority-{{ issue.priority }}"></div>
+                    <div class="issue-card-header">
+                        {% if issue.issue_type %}
+                        <span class="issue-type-icon" style="background-color: {{ issue.issue_type.color or '#666' }}20; color: {{ issue.issue_type.color or '#666' }};" title="{{ issue.issue_type.get_name(lang) }}">
+                            <i class="bi {{ issue.issue_type.icon or 'bi-circle' }}"></i>
+                        </span>
+                        {% endif %}
+                        <span class="issue-key">{{ issue.key }}</span>
+                    </div>
+                    <div class="issue-card-summary">
+                        {{ issue.summary }}
+                    </div>
+                    <div class="issue-card-footer">
+                        <div class="d-flex align-items-center gap-2">
+                            {% if issue.priority <= 2 %}
+                            <span class="priority-icon" title="{{ 'Priorität' if lang == 'de' else 'Priority' }}">
+                                <i class="bi {{ 'bi-chevron-double-up text-danger' if issue.priority == 1 else 'bi-chevron-up text-warning' }}"></i>
+                            </span>
+                            {% endif %}
+                            {% if issue.story_points %}
+                            <span class="story-points">{{ issue.story_points|int if issue.story_points == issue.story_points|int else issue.story_points }}</span>
+                            {% endif %}
+                        </div>
+                        <span class="issue-card-assignee">
+                            {% if issue.assignee %}
+                            <span class="avatar-mini" 
+                                  style="background-color: {{ ['#4A90D9', '#0076A8', '#26890D', '#00A3E0'][loop.index0 % 4] }};"
+                                  title="{{ issue.assignee.name or issue.assignee.username }}">
+                                {{ (issue.assignee.name or issue.assignee.username)[:1]|upper }}
+                            </span>
+                            {% else %}
+                            <span class="unassigned-icon" title="{{ 'Nicht zugewiesen' if lang == 'de' else 'Unassigned' }}">
+                                <i class="bi bi-person-dash"></i>
+                            </span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-column-placeholder">
+                    <i class="bi bi-inbox"></i>
+                    <span>{{ 'Keine Issues' if lang == 'de' else 'No issues' }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="quick-create-form">
+                <input type="text" class="quick-create-input" 
+                       data-status-id="{{ status.id }}"
+                       placeholder="{{ '+ Issue erstellen...' if lang == 'de' else '+ Create issue...' }}">
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Toast for notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    <div id="boardToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong class="me-auto">Board</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body"></div>
+    </div>
+</div>
+
+<style nonce="{{ csp_nonce }}">
+/* Hero Section */
+.board-hero {
+    background: linear-gradient(135deg, #62B5E5 0%, #0076A8 50%, #000000 100%);
+    margin-top: -1rem;
+    margin-left: -15px;
+    margin-right: -15px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.breadcrumb-dark .breadcrumb-item + .breadcrumb-item::before {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.hero-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.75rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-brand {
+    background-color: #4A90D9;
+    border-color: #4A90D9;
+    color: white;
+    font-weight: 500;
+}
+
+.btn-brand:hover {
+    background-color: #75a821;
+    border-color: #75a821;
+    color: white;
+}
+
+.view-switcher .btn.active {
+    background-color: white;
+    color: #000;
+}
+
+/* Board Container */
+.board-container {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    min-height: calc(100vh - 320px);
+}
+
+/* Board Column */
+.board-column {
+    min-width: 300px;
+    max-width: 300px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.board-column-header {
+    padding: 1rem;
+    font-weight: 600;
+    border-bottom: 3px solid;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 12px 12px 0 0;
+    background: white;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.column-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.issue-count {
+    background: rgba(0,0,0,0.08);
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.board-column-body {
+    flex: 1;
+    padding: 0.75rem;
+    overflow-y: auto;
+    min-height: 200px;
+}
+
+/* Issue Cards */
+.issue-card {
+    background: white;
+    border-radius: 10px;
+    padding: 0.875rem;
+    padding-left: 1rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    cursor: grab;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+}
+
+.issue-card:active {
+    cursor: grabbing;
+}
+
+.issue-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.issue-card.sortable-ghost {
+    opacity: 0.4;
+}
+
+.issue-card.sortable-chosen {
+    transform: rotate(2deg);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+/* Transition blocked feedback */
+.sortable-column.transition-blocked {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    border: 2px dashed #dc3545 !important;
+    transition: all 0.3s ease;
+}
+
+.issue-card-priority {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.issue-card-priority.priority-1 { background: linear-gradient(180deg, #dc3545, #c82333); }
+.issue-card-priority.priority-2 { background: linear-gradient(180deg, #fd7e14, #e96a00); }
+.issue-card-priority.priority-3 { background: linear-gradient(180deg, #ffc107, #e0a800); }
+.issue-card-priority.priority-4 { background: linear-gradient(180deg, #20c997, #1a9c75); }
+.issue-card-priority.priority-5 { background: linear-gradient(180deg, #6c757d, #545b62); }
+
+.issue-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.issue-type-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+.issue-key {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.75rem;
+    color: #666;
+    font-weight: 600;
+}
+
+.issue-card-summary {
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+    color: #333;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.issue-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.story-points {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 0.4rem;
+    border-radius: 4px;
+    background: #e3f2fd;
+    color: #1976d2;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.avatar-mini {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+.unassigned-icon {
+    color: #adb5bd;
+    font-size: 1rem;
+}
+
+/* Quick Create */
+.quick-create-form {
+    padding: 0.75rem;
+    border-top: 1px solid #e9ecef;
+    background: white;
+    border-radius: 0 0 12px 12px;
+}
+
+.quick-create-input {
+    width: 100%;
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+}
+
+.quick-create-input:focus {
+    border-style: solid;
+    border-color: #4A90D9;
+    outline: none;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(134, 188, 37, 0.15);
+}
+
+/* Empty Column */
+.empty-column-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    color: #adb5bd;
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+.empty-column-placeholder i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Scrollbar Styling */
+.board-column-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.board-column-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.board-column-body::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+    border-radius: 3px;
+}
+
+.board-column-body::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- SortableJS with SRI -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" integrity="sha384-Ky0s0Uj0zEcvQP7bZKwjNeXEsRD6jBZ7L6v8Kb8GSareN6BO8Py8T/7j/u0bXN6" crossorigin="anonymous"></script>
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    const projectId = {{ project.id }};
+    const moveUrl = "{{ url_for('projects.kanban_move_issue', project_id=project.id) }}";
+    const quickCreateUrl = "{{ url_for('projects.kanban_quick_create', project_id=project.id) }}";
+    
+    const MSG_NO_ISSUES = "{{ 'Keine Issues' if lang == 'de' else 'No issues' }}";
+    const MSG_ISSUE_MOVED = "{{ 'Issue verschoben' if lang == 'de' else 'Issue moved successfully' }}";
+    const MSG_MOVE_FAILED = "{{ 'Verschieben fehlgeschlagen' if lang == 'de' else 'Failed to move issue' }}";
+    const MSG_TRANSITION_BLOCKED = "{{ 'Übergang nicht erlaubt' if lang == 'de' else 'Transition not allowed' }}";
+    const MSG_ISSUE_CREATED = "{{ 'Issue erstellt' if lang == 'de' else 'Issue created' }}";
+    const MSG_CREATE_FAILED = "{{ 'Erstellen fehlgeschlagen' if lang == 'de' else 'Failed to create issue' }}";
+    
+    // Helper to check if transition is allowed
+    function isTransitionAllowed(card, targetStatusId) {
+        const allowedTransitions = card.dataset.allowedTransitions;
+        const currentStatusId = parseInt(card.dataset.statusId);
+        
+        // Same status = always allowed
+        if (currentStatusId === parseInt(targetStatusId)) return true;
+        
+        // Empty allowed_transitions = all transitions allowed
+        if (!allowedTransitions || allowedTransitions === '[]') return true;
+        
+        try {
+            const allowed = JSON.parse(allowedTransitions);
+            return allowed.length === 0 || allowed.includes(parseInt(targetStatusId));
+        } catch {
+            return true;
+        }
+    }
+    
+    // Initialize SortableJS for each column
+    document.querySelectorAll('.sortable-column').forEach(function(column) {
+        new Sortable(column, {
+            group: 'issues',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            filter: '.empty-column-placeholder',
+            
+            // Validate transition before allowing move
+            onMove: function(evt) {
+                const card = evt.dragged;
+                const targetStatusId = evt.to.dataset.statusId;
+                
+                if (!isTransitionAllowed(card, targetStatusId)) {
+                    // Visual feedback for blocked transition
+                    evt.to.classList.add('transition-blocked');
+                    setTimeout(() => evt.to.classList.remove('transition-blocked'), 500);
+                    return false; // Block the move
+                }
+                return true;
+            },
+            
+            onEnd: function(evt) {
+                const issueId = evt.item.dataset.issueId;
+                const newStatusId = evt.to.dataset.statusId;
+                const oldStatusId = evt.from.dataset.statusId;
+                
+                const newPosition = Array.from(evt.to.children)
+                    .filter(el => el.classList.contains('issue-card'))
+                    .indexOf(evt.item);
+                
+                if (newStatusId !== oldStatusId || evt.oldIndex !== evt.newIndex) {
+                    const placeholder = evt.to.querySelector('.empty-column-placeholder');
+                    if (placeholder) {
+                        placeholder.remove();
+                    }
+                    
+                    if (evt.from.querySelectorAll('.issue-card').length === 0) {
+                        const newPlaceholder = document.createElement('div');
+                        newPlaceholder.className = 'empty-column-placeholder';
+                        newPlaceholder.innerHTML = '<i class="bi bi-inbox"></i><span>' + MSG_NO_ISSUES + '</span>';
+                        evt.from.appendChild(newPlaceholder);
+                    }
+                    
+                    const moveHeaders = {
+                        'Content-Type': 'application/json',
+                    };
+                    if (window.csrfToken) {
+                        moveHeaders['X-CSRFToken'] = window.csrfToken;
+                    }
+
+                    fetch(moveUrl, {
+                        method: 'POST',
+                        headers: moveHeaders,
+                        body: JSON.stringify({
+                            issue_id: parseInt(issueId),
+                            status_id: parseInt(newStatusId),
+                            position: newPosition
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast(MSG_ISSUE_MOVED, 'success');
+                            updateColumnCounts();
+                        } else {
+                            showToast(data.error || MSG_MOVE_FAILED, 'danger');
+                            location.reload();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast(MSG_MOVE_FAILED, 'danger');
+                        location.reload();
+                    });
+                }
+            }
+        });
+    });
+    
+    // Quick create functionality
+    document.querySelectorAll('.quick-create-input').forEach(function(input) {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.trim()) {
+                const statusId = this.dataset.statusId;
+                const summary = this.value.trim();
+                
+                const createHeaders = {
+                    'Content-Type': 'application/json',
+                };
+                if (window.csrfToken) {
+                    createHeaders['X-CSRFToken'] = window.csrfToken;
+                }
+
+                fetch(quickCreateUrl, {
+                    method: 'POST',
+                    headers: createHeaders,
+                    body: JSON.stringify({
+                        summary: summary,
+                        status_id: parseInt(statusId)
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(MSG_ISSUE_CREATED + ': ' + data.issue_key, 'success');
+                        location.reload();
+                    } else {
+                        showToast(data.error || MSG_CREATE_FAILED, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast(MSG_CREATE_FAILED, 'danger');
+                });
+                
+                this.value = '';
+            }
+        });
+    });
+    
+    // Filter functionality
+    function applyFilters() {
+        const typeFilter = document.getElementById('filterType').value;
+        const assigneeFilter = document.getElementById('filterAssignee').value;
+        const priorityFilter = document.getElementById('filterPriority').value;
+        const searchText = document.getElementById('searchIssues').value.toLowerCase();
+        
+        document.querySelectorAll('.issue-card').forEach(function(card) {
+            let show = true;
+            
+            if (typeFilter && card.dataset.type !== typeFilter) {
+                show = false;
+            }
+            
+            if (assigneeFilter && card.dataset.assignee !== assigneeFilter) {
+                show = false;
+            }
+            
+            if (priorityFilter && card.dataset.priority !== priorityFilter) {
+                show = false;
+            }
+            
+            if (searchText) {
+                const summary = card.querySelector('.issue-card-summary').textContent.toLowerCase();
+                const key = card.querySelector('.issue-key').textContent.toLowerCase();
+                if (!summary.includes(searchText) && !key.includes(searchText)) {
+                    show = false;
+                }
+            }
+            
+            card.style.display = show ? '' : 'none';
+        });
+        
+        document.querySelectorAll('.sortable-column').forEach(function(column) {
+            const visibleCards = column.querySelectorAll('.issue-card:not([style*="display: none"])');
+            let placeholder = column.querySelector('.empty-column-placeholder');
+            
+            if (visibleCards.length === 0) {
+                if (!placeholder) {
+                    placeholder = document.createElement('div');
+                    placeholder.className = 'empty-column-placeholder';
+                    placeholder.innerHTML = '<i class="bi bi-inbox"></i><span>' + MSG_NO_ISSUES + '</span>';
+                    column.appendChild(placeholder);
+                }
+                placeholder.style.display = '';
+            } else if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+        });
+        
+        updateColumnCounts();
+    }
+    
+    document.getElementById('filterType').addEventListener('change', applyFilters);
+    document.getElementById('filterAssignee').addEventListener('change', applyFilters);
+    document.getElementById('filterPriority').addEventListener('change', applyFilters);
+    document.getElementById('searchIssues').addEventListener('input', applyFilters);
+    
+    document.getElementById('clearFilters').addEventListener('click', function() {
+        document.getElementById('filterType').value = '';
+        document.getElementById('filterAssignee').value = '';
+        document.getElementById('filterPriority').value = '';
+        document.getElementById('searchIssues').value = '';
+        applyFilters();
+    });
+    
+    function updateColumnCounts() {
+        document.querySelectorAll('.board-column').forEach(function(column) {
+            const count = column.querySelectorAll('.issue-card:not([style*="display: none"])').length;
+            column.querySelector('.issue-count').textContent = count;
+        });
+    }
+    
+    function showToast(message, type) {
+        const toast = document.getElementById('boardToast');
+        const toastBody = toast.querySelector('.toast-body');
+        toastBody.textContent = message;
+        
+        toast.className = 'toast';
+        if (type === 'success') {
+            toast.classList.add('bg-success', 'text-white');
+        } else if (type === 'danger') {
+            toast.classList.add('bg-danger', 'text-white');
+        }
+        
+        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+        bsToast.show();
+    }
+    
+    // Click handler for issue cards - with proper drag detection
+    let dragStartTime = 0;
+    let dragStartPos = { x: 0, y: 0 };
+    const DRAG_THRESHOLD = 5; // pixels
+    const CLICK_THRESHOLD = 200; // milliseconds
+    
+    document.querySelectorAll('.issue-card').forEach(function(card) {
+        card.addEventListener('mousedown', function(e) {
+            dragStartTime = Date.now();
+            dragStartPos = { x: e.clientX, y: e.clientY };
+        });
+        
+        card.addEventListener('click', function(e) {
+            // Ignore if clicking a link
+            if (e.target.closest('a')) return;
+            
+            // Calculate time and distance since mousedown
+            const timeDiff = Date.now() - dragStartTime;
+            const distX = Math.abs(e.clientX - dragStartPos.x);
+            const distY = Math.abs(e.clientY - dragStartPos.y);
+            
+            // Only navigate if it was a quick click without significant movement
+            if (timeDiff < CLICK_THRESHOLD && distX < DRAG_THRESHOLD && distY < DRAG_THRESHOLD) {
+                const href = this.dataset.href;
+                if (href) {
+                    window.location.href = href;
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

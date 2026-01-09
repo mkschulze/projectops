@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('week_view') }} - KW {{ week }} {{ year }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-calendar-week me-2"></i>{{ t('calendar_week') }} {{ week }}, {{ year }}</h1>
+    
+    <!-- View Switcher -->
+    <div class="btn-group">
+        <a href="{{ url_for('main.calendar_year_view', year=year) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-calendar3"></i> {{ t('year_view') }}
+        </a>
+        <a href="{{ url_for('main.calendar_view', year=year, month=week_start.month) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-calendar-month"></i> {{ t('month_view') }}
+        </a>
+        <a href="{{ url_for('main.calendar_week_view', year=year, week=week) }}" class="btn btn-success">
+            <i class="bi bi-calendar-week"></i> {{ t('week_view') }}
+        </a>
+    </div>
+</div>
+
+<!-- Week Navigation -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('main.calendar_week_view', year=prev_year, week=prev_week) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-chevron-left"></i> {{ t('calendar_week') }} {{ prev_week }}
+            </a>
+            <div class="text-center">
+                <h3 class="mb-0">{{ t('calendar_week') }} {{ week }}</h3>
+                <small class="text-muted">
+                    {{ week_start.strftime('%d.%m.') }} - {{ week_end.strftime('%d.%m.%Y') }}
+                </small>
+            </div>
+            <a href="{{ url_for('main.calendar_week_view', year=next_year, week=next_week) }}" class="btn btn-outline-secondary">
+                {{ t('calendar_week') }} {{ next_week }} <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Week Grid -->
+<div class="row g-3">
+    {% for day in week_days %}
+    <div class="col-md-6 col-lg">
+        <div class="card h-100 day-card {% if day.is_today %}border-success border-2{% endif %} {% if day.is_weekend %}bg-light{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center 
+                        {% if day.is_today %}bg-success text-white{% elif day.is_weekend %}bg-secondary text-white{% endif %}">
+                <div>
+                    <div class="fw-bold">{{ day.weekday }}</div>
+                    <small>{{ day.date.strftime('%d.%m.%Y') }}</small>
+                </div>
+                {% if day.tasks %}
+                <span class="badge {% if day.is_today %}bg-white text-success{% else %}bg-primary{% endif %}">
+                    {{ day.tasks|length }}
+                </span>
+                {% endif %}
+            </div>
+            <div class="card-body p-2" style="min-height: 200px;">
+                {% if day.tasks %}
+                <div class="task-list">
+                    {% for task in day.tasks %}
+                    <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" 
+                       class="task-item d-block mb-2 p-2 rounded text-decoration-none
+                              {% if task.status == 'completed' %}bg-success-subtle
+                              {% elif task.is_overdue %}bg-danger-subtle
+                              {% elif task.status == 'in_review' %}bg-warning-subtle
+                              {% else %}bg-light{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="text-truncate flex-grow-1">
+                                <strong class="d-block text-dark">{{ task.entity.short_name or task.entity.name }}</strong>
+                                <small class="text-muted">{{ task.title }}</small>
+                            </div>
+                            <span class="badge ms-2
+                                {% if task.status == 'completed' %}bg-success
+                                {% elif task.status == 'in_review' %}bg-warning text-dark
+                                {% elif task.is_overdue %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {% if task.status == 'completed' %}<i class="bi bi-check"></i>
+                                {% elif task.status == 'in_review' %}<i class="bi bi-hourglass-split"></i>
+                                {% elif task.is_overdue %}<i class="bi bi-exclamation"></i>
+                                {% else %}<i class="bi bi-circle"></i>{% endif %}
+                            </span>
+                        </div>
+                        {% if task.owner %}
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-person"></i> {{ task.owner.name }}
+                        </small>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+                    <small>{{ t('no_tasks') }}</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Legend -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="card-title mb-3">{{ t('legend') }}</h6>
+        <div class="d-flex flex-wrap gap-3">
+            <span><span class="badge bg-danger">&nbsp;&nbsp;</span> {{ t('status_overdue') }}</span>
+            <span><span class="badge bg-warning text-dark">&nbsp;&nbsp;</span> {{ t('status_in_review') }}</span>
+            <span><span class="badge bg-success">&nbsp;&nbsp;</span> {{ t('status_completed') }}</span>
+            <span><span class="badge bg-secondary">&nbsp;&nbsp;</span> {{ t('status_draft') }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Navigation to other weeks -->
+<div class="card mt-3">
+    <div class="card-body">
+        <h6 class="card-title mb-3">{{ t('quick_navigation') }}</h6>
+        <div class="d-flex flex-wrap gap-2">
+            {% for w in range(1, 53) %}
+            <a href="{{ url_for('main.calendar_week_view', year=year, week=w) }}" 
+               class="btn btn-sm {% if w == week %}btn-success{% elif w == today.isocalendar()[1] and year == today.year %}btn-outline-success{% else %}btn-outline-secondary{% endif %}"
+               title="{{ t('calendar_week') }} {{ w }}">
+                {{ w }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    .day-card {
+        transition: transform 0.2s;
+    }
+    
+    .day-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .task-item {
+        border-left: 3px solid transparent;
+        transition: all 0.2s;
+    }
+    
+    .task-item:hover {
+        transform: translateX(3px);
+    }
+    
+    .task-item.bg-danger-subtle {
+        border-left-color: var(--bs-danger);
+    }
+    
+    .task-item.bg-warning-subtle {
+        border-left-color: var(--bs-warning);
+    }
+    
+    .task-item.bg-success-subtle {
+        border-left-color: var(--bs-success);
+    }
+    
+    .task-item.bg-light {
+        border-left-color: var(--bs-secondary);
+    }
+    
+    @media (max-width: 992px) {
+        .day-card .card-body {
+            min-height: 100px !important;
+        }
+    }
+</style>
+{% endblock %}

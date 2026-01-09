@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Schätzung' if lang == 'de' else 'Estimation' }} - {{ project.name }}{% endblock %}
+
+{% block content %}
+<!-- Hero Header -->
+<div class="estimation-hero mb-4">
+    <div class="container-fluid py-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark mb-3">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}" class="text-white-50">{{ 'Projekte' if lang == 'de' else 'Projects' }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}" class="text-white-50">{{ project.key }}</a></li>
+                <li class="breadcrumb-item active text-white">{{ 'Schätzung' if lang == 'de' else 'Estimation' }}</li>
+            </ol>
+        </nav>
+
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="hero-icon">
+                    <i class="bi bi-rulers"></i>
+                </div>
+            </div>
+            <div class="col">
+                <h1 class="text-white mb-1">{{ 'Schätzung' if lang == 'de' else 'Estimation' }}</h1>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-white-50">
+                        <i class="bi bi-folder me-1"></i>
+                        {{ project.get_name(lang) }}
+                    </span>
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-question-circle me-1"></i>
+                        {{ unestimated_issues|length }} {{ 'ungeschätzt' if lang == 'de' else 'unestimated' }}
+                    </span>
+                    <span class="badge bg-white bg-opacity-25 text-white">
+                        {{ scale_config['name'][lang] }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-auto d-flex gap-2">
+                <a href="{{ url_for('projects.project_estimation_settings', project_id=project.id) }}" 
+                   class="btn btn-outline-light">
+                    <i class="bi bi-gear me-1"></i>{{ 'Einstellungen' if lang == 'de' else 'Settings' }}
+                </a>
+                <a href="{{ url_for('projects.backlog', project_id=project.id) }}" class="btn btn-outline-light">
+                    <i class="bi bi-list-ol me-1"></i>{{ project.get_term('backlog', lang) }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Main Content: Unestimated Issues -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0" style="color: #212529;">
+                        <i class="bi bi-question-circle text-warning me-2"></i>
+                        {{ 'Ungeschätzte Issues' if lang == 'de' else 'Unestimated Issues' }}
+                        <span class="badge bg-warning text-dark ms-2">{{ unestimated_issues|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if unestimated_issues %}
+                    <div class="estimation-list">
+                        {% for issue in unestimated_issues %}
+                        <div class="estimation-item p-3 border-bottom" data-issue-id="{{ issue.id }}">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        {% if issue.issue_type %}
+                                        <span class="issue-type-badge me-2" style="background: {{ issue.issue_type.color }}20; color: {{ issue.issue_type.color }};">
+                                            <i class="bi {{ issue.issue_type.icon }}"></i>
+                                        </span>
+                                        {% endif %}
+                                        <div>
+                                            <a href="{{ url_for('projects.item_detail', project_id=project.id, issue_key=issue.key) }}" 
+                                               class="fw-medium text-decoration-none">
+                                                {{ issue.key }}
+                                            </a>
+                                            <span class="text-muted mx-1">—</span>
+                                            <span class="issue-summary">{{ issue.summary }}</span>
+                                        </div>
+                                    </div>
+                                    {% if issue.description %}
+                                    <p class="text-muted small mb-0 mt-1 text-truncate" style="max-width: 400px;">
+                                        {{ issue.description[:100] }}{% if issue.description|length > 100 %}...{% endif %}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="sizing-buttons d-flex flex-wrap gap-2 justify-content-end">
+                                        {% for value in scale_config['values'] %}
+                                        <button type="button" 
+                                                class="btn btn-outline-secondary btn-sizing"
+                                                data-points="{{ value.points }}"
+                                                data-label="{{ value.label }}"
+                                                title="{{ value.description[lang] if value.description else value.label }}">
+                                            {{ value.label }}
+                                        </button>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="empty-state">
+                            <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">{{ 'Alle Issues geschätzt!' if lang == 'de' else 'All issues estimated!' }}</h5>
+                            <p class="text-muted">{{ 'Es gibt keine ungeschätzten Issues in diesem Projekt.' if lang == 'de' else 'There are no unestimated issues in this project.' }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar: Reference & Scale -->
+        <div class="col-lg-4">
+            <!-- Scale Reference -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0" style="color: #212529;">
+                        <i class="bi bi-rulers text-primary me-2"></i>
+                        {{ 'Skala' if lang == 'de' else 'Scale' }}: {{ scale_config['name'][lang] }}
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if scale_config['hint'] %}
+                    <div class="alert alert-info m-3 mb-0 py-2 small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        {{ scale_config['hint'][lang] }}
+                    </div>
+                    {% endif %}
+                    <div class="list-group list-group-flush">
+                        {% for value in scale_config['values'] %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+                            <div>
+                                <span class="badge bg-primary me-2">{{ value.label }}</span>
+                                <span class="small text-muted">{{ value.description[lang] if value.description else '' }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recently Estimated -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0" style="color: #212529;">
+                        <i class="bi bi-clock-history text-success me-2"></i>
+                        {{ 'Zuletzt geschätzt' if lang == 'de' else 'Recently Estimated' }}
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if estimated_issues %}
+                    <div class="list-group list-group-flush">
+                        {% for issue in estimated_issues %}
+                        <a href="{{ url_for('projects.item_detail', project_id=project.id, issue_key=issue.key) }}" 
+                           class="list-group-item list-group-item-action py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-truncate me-2">
+                                    <span class="fw-medium text-primary">{{ issue.key }}</span>
+                                    <span class="text-muted ms-1">{{ issue.summary[:30] }}{% if issue.summary|length > 30 %}...{% endif %}</span>
+                                </div>
+                                <span class="badge bg-success">{{ issue.story_points|int if issue.story_points == issue.story_points|int else issue.story_points }}</span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted small mb-0 mt-2">{{ 'Noch keine geschätzten Issues' if lang == 'de' else 'No estimated issues yet' }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style nonce="{{ csp_nonce }}">
+.estimation-hero {
+    background: linear-gradient(135deg, #0076A8 0%, #004165 100%);
+    margin: -1.5rem -1.5rem 0;
+    padding: 0 1.5rem;
+}
+
+.hero-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: white;
+}
+
+.breadcrumb-dark .breadcrumb-item + .breadcrumb-item::before {
+    color: rgba(255,255,255,0.5);
+}
+
+.estimation-item {
+    transition: background-color 0.2s;
+}
+
+.estimation-item:hover {
+    background-color: #f8f9fa;
+}
+
+.estimation-item.sizing-done {
+    animation: fadeOutSlide 0.5s ease forwards;
+}
+
+@keyframes fadeOutSlide {
+    0% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(50px); height: 0; padding: 0; margin: 0; overflow: hidden; }
+}
+
+.issue-type-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+}
+
+.btn-sizing {
+    min-width: 42px;
+    padding: 0.375rem 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-sizing:hover {
+    transform: scale(1.1);
+    z-index: 1;
+}
+
+.btn-sizing.active,
+.btn-sizing:focus {
+    background-color: #4A90D9;
+    border-color: #4A90D9;
+    color: white;
+}
+
+.empty-state {
+    padding: 2rem;
+}
+</style>
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle sizing button clicks
+    document.querySelectorAll('.btn-sizing').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const item = this.closest('.estimation-item');
+            const issueId = item.dataset.issueId;
+            const points = this.dataset.points;
+            const label = this.dataset.label;
+            
+            // Visual feedback
+            this.classList.add('active');
+            
+            try {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                };
+                if (window.csrfToken) {
+                    headers['X-CSRFToken'] = window.csrfToken;
+                }
+                
+                const response = await fetch('{{ url_for("projects.estimation_update", project_id=project.id) }}', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        issue_id: issueId,
+                        story_points: points
+                    })
+                });
+                
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    throw new Error('Server returned non-JSON response');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Animate out
+                    item.classList.add('sizing-done');
+                    
+                    // Update counter
+                    const counter = document.querySelector('.badge.bg-warning');
+                    if (counter) {
+                        const current = parseInt(counter.textContent);
+                        counter.textContent = (current - 1) + ' {{ "ungeschätzt" if lang == "de" else "unestimated" }}';
+                    }
+                    
+                    // Remove after animation
+                    setTimeout(() => {
+                        item.remove();
+                        
+                        // Check if list is empty
+                        const list = document.querySelector('.estimation-list');
+                        if (list && list.children.length === 0) {
+                            location.reload();
+                        }
+                    }, 500);
+                    
+                    // Show toast
+                    showToast('{{ "Issue geschätzt:" if lang == "de" else "Issue estimated:" }} ' + data.issue_key + ' = ' + label, 'success');
+                } else {
+                    this.classList.remove('active');
+                    showToast(data.error || '{{ "Fehler beim Speichern" if lang == "de" else "Error saving" }}', 'danger');
+                }
+            } catch (err) {
+                this.classList.remove('active');
+                showToast('{{ "Netzwerkfehler" if lang == "de" else "Network error" }}', 'danger');
+                console.error(err);
+            }
+        });
+    });
+    
+    function showToast(message, type) {
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} position-fixed`;
+        toast.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 250px; animation: fadeIn 0.3s;';
+        toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.3s forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,2897 @@
+# Memory Bank Update Prompt Template
+
+You are updating the Memory Bank documentation for Deloitte ProjectOps after a new release.
+
+## Release Information
+
+**New Version:** 1.19.0
+**Release Title:** Phase 4 Blueprint Refactoring
+**Date:** 2026-01-03
+**Previous Version:** 1.19.0
+
+## Changes Since Last Release
+
+### Git Commits
+```
+7c5e8fd release: v1.18.0 - Phase 3 Service Layer Tests
+f09f4d0 release: v1.17.0 - Separated Memory Bank Check Script
+9a94aae feat(release): Separate Memory Bank check from release script
+b3e57d6 Release v1.16.3 - Version bump to validate 3-phase Memory Bank workflow
+eaee2df feat(release): Enhanced Memory Bank workflow with full file display
+e9ced5c feat(release): Add extra strong Memory Bank verification
+8c866df release: v1.16.0 - Test Coverage Phase 2
+c381e7c docs: Update Memory Bank for v1.16.0 release
+e5f68ad feat(tests): Phase 2 - Add 69 middleware and module tests
+58a7154 release: v1.15.0 - Test Coverage Phase 1
+b89ef63 docs: Update Memory Bank for v1.15.0 release
+cbc9a8f feat(tests): Phase 1 - Add .coveragerc and 43 model tests
+a5132ab release: v1.14.1 - Release Script Enhancement
+5500c00 chore: add mandatory Memory Bank verification step to release script
+a48afe2 release: v1.14.0 - Test Coverage Expansion (424 tests, 43% coverage)
+32c132b docs: expand AI reminder to include ALL Memory Bank docs
+e2ac5f0 docs: synchronize Memory Bank with v1.13.0 release
+45080ea chore: Update AI reminder - Memory Bank must be in same commit as release
+5846a91 chore: Add AI reminder to update Memory Bank after release
+1d617d5 docs: Update Memory Bank for v1.13.0 Unit Test release
+```
+
+### Changed Files
+```
+M	CHANGELOG.md
+M	README.md
+M	VERSION
+M	config.py
+M	docs/activeContext.md
+M	docs/progress.md
+M	docs/projectbrief.md
+M	docs/systemPatterns.md
+M	docs/techContext.md
+M	docs/technicalConcept.md
+A	scripts/check_memory_bank.py
+M	scripts/memory_bank_update_prompt.txt
+M	scripts/release.py
+M	services.py
+A	tests/unit/test_phase2_middleware_modules.py
+A	tests/unit/test_phase3_services.py
+```
+
+### Git Diff Summary
+```
+CHANGELOG.md                                 |  152 +++-
+ README.md                                    |    4 +-
+ VERSION                                      |    2 +-
+ config.py                                    |    2 +-
+ docs/activeContext.md                        |   66 +-
+ docs/progress.md                             |  108 ++-
+ docs/projectbrief.md                         |    2 +-
+ docs/systemPatterns.md                       |   12 +-
+ docs/techContext.md                          |   15 +-
+ docs/technicalConcept.md                     |   82 +-
+ scripts/check_memory_bank.py                 |  312 +++++++
+ scripts/memory_bank_update_prompt.txt        |  746 +++++++++++-----
+ scripts/release.py                           |  182 ++--
+ services.py                                  |    8 +-
+ tests/unit/test_phase2_middleware_modules.py | 1238 ++++++++++++++++++++++++++
+ tests/unit/test_phase3_services.py           |  692 ++++++++++++++
+ 16 files changed, 3279 insertions(+), 344 deletions(-)
+```
+
+## Current Memory Bank Files
+
+### docs/activeContext.md
+```markdown
+# Active Context
+
+> Current session state for Deloitte ProjectOps development
+> 
+> **Purpose:** This file captures the active working context so development can continue seamlessly after context resets.
+
+---
+
+## Session Information
+
+**Date:** 2026-01-03 (Session 19)  
+**Last Action:** Phase 4 Blueprint Refactoring v1.19.0  
+**Status:** MVP Complete + Phase A-J + PM-0 bis PM-11 + Multi-Tenancy + Unit Tests
+**Version:** 1.19.0
+
+---
+
+## Current State
+
+### ✅ What Was Accomplished (Session 19)
+
+1. **Phase 4 Blueprint Refactoring v1.19.0** (Complete)
+
+   #### New Blueprint Architecture (`routes/` package)
+   - **`routes/__init__.py`** - Blueprint exports (auth_bp, main_bp, tasks_bp, admin_bp, api_bp)
+   - **`routes/auth.py`** - Authentication routes: login, logout, tenant selection (5 routes)
+   - **`routes/main.py`** - Main app routes: dashboard, calendar, notifications, profile (15 routes)
+   - **`routes/tasks.py`** - Task management: CRUD, status, evidence, comments (17 routes)
+   - **`routes/admin.py`** - Admin routes: users, entities, teams, categories, modules (~20 routes)
+   - **`routes/api.py`** - API routes: bulk operations, dashboard charts, presets (~15 routes)
+
+   #### Integration Tests: `test_blueprints.py` (28 tests)
+   - **TestAuthBlueprint** (4 tests) - login page, auth flow, logout redirect
+   - **TestMainBlueprint** (11 tests) - dashboard, calendar, notifications, profile
+   - **TestTasksBlueprint** (5 tests) - task list, detail, create, archive views
+   - **TestAdminBlueprint** (6 tests) - admin dashboard, users, entities, teams
+   - **TestApiBlueprint** (5 tests) - bulk operations, dashboard charts, presets
+   - **TestBlueprintUrlGeneration** (5 tests) - URL generation for all blueprints
+
+   #### Test Results
+   - **Total tests**: 626 passed, 12 skipped, 9 xfailed
+   - **Routes coverage**: 33% overall (auth 57%, main 64%, tasks 21%, admin 25%, api 26%)
+   - **7 registered blueprints**: admin, admin_tenants, api, auth, main, projects, tasks
+
+   #### Key Changes
+   - Updated `extensions.py`: `login_manager.login_view = 'auth.login'`
+   - Updated `app.py`: `create_app()` registers all 5 route blueprints
+   - Legacy routes in app.py superseded by blueprint routes (gradual removal planned)
+
+### ✅ What Was Accomplished (Session 18)
+
+1. **Phase 3 Service Layer Tests v1.18.0** (Complete)
+
+   #### New Test File: `test_phase3_services.py` (62 tests)
+   - **TestNotificationServiceCreate** (4 tests) - basic, with message, entity reference, actor
+   - **TestNotificationServiceNotifyUsers** (4 tests) - single, multiple, deduplication, skip None
+   - **TestNotificationServiceGetUnread** (3 tests) - zero, with notifications, excludes read
+   - **TestExportServiceExcel** (6 tests) - empty, bytes, German/English, multiple tasks, XLSX format
+   - **TestCalendarServiceToken** (5 tests) - returns string, length, uniqueness, different users, hex chars
+   - **TestCalendarServiceIcal** (7 tests) - empty feed, with task, title, skip no due date, languages, user name
+   - **TestEmailServiceInit** (3 tests) - without app, with app, init_app method
+   - **TestEmailServiceIsEnabled** (3 tests) - false without app, false by default, true when configured
+   - **TestEmailServiceProvider** (4 tests) - default smtp, without app, sendgrid, ses
+   - **TestEmailServiceSendEmail** (3 tests) - disabled logs, generates text, via SMTP
+   - **TestRecurrenceServicePeriodDates** (16 tests) - monthly, quarterly, semi-annual, annual frequencies
+   - **TestRecurrenceServiceEdgeCases** (4 tests) - February handling, leap year, negative/zero offset
+
+   #### Coverage Improvement
+   - **services.py**: 16% → 37% (+21 percentage points)
+   - **Total tests**: 548 → 598 (+50 net, 62 new tests)
+   - Phase 3 target was +12%, achieved **+21%** - exceeded goal
+
+   #### Bug Fix
+   - Fixed `CalendarService.generate_ical_feed()` calling `.date()` on date object
+   - Added `date` import to services.py
+   - Now handles both `date` and `datetime` objects correctly
+
+2. **Separated Memory Bank Check Script v1.17.0** (Previous Session)
+
+2. **Release Script Enhancement v1.16.2** (Complete)
+
+   #### 3-Phase Memory Bank Workflow
+   - PHASE 1: Script displays COMPLETE content of all 7 Memory Bank files
+   - PHASE 2: Pauses for manual updates with specific instructions
+   - PHASE 3: Verifies all updates were made before allowing release
+   - Forces AI to actually read each file before updating
+   - Blocks release if any required file is missing version update
+
+2. **Release Script Enhancement v1.16.1** (Complete)
+
+   #### Extra Strong Memory Bank Verification
+   - Individual file confirmation for each of 7 Memory Bank files
+   - Final phrase confirmation: "I have read and updated all memory bank files"
+   - Blocks release if any confirmation fails
+   - Prevents AI from auto-confirming without actually reading each file
+
+2. **Test Coverage Phase 2 v1.16.0** (Complete)
+
+   #### Phase 2 Implementation
+   - Added 69 comprehensive middleware and module tests
+   - Total tests: 467 → 536 (+69)
+   - middleware/tenant.py coverage: 28% → 98% (+70%)
+   - modules/core/__init__.py: 89% → 100%
+   - modules/__init__.py: 54% → 88% (+34%)
+
+2. **Test Coverage Phase 1 v1.15.0** (Complete)
+
+   #### Phase 1 Implementation
+   - Created `.coveragerc` to exclude scripts/, migrations/, tests/, demo files
+   - Added 43 new tests for User, Team, TaskReviewer, UserEntity models
+   - Total tests: 424 → 467 (+43)
+   - models.py coverage: 63% → 70% (+7%)
+   
+   #### New Test File: `test_phase1_models.py`
+   - TestUserTenantMethods (13 tests)
+   - TestUserCalendarToken (3 tests)
+   - TestUserTeamMethods (1 test)
+   - TestTeamModel (13 tests)
+   - TestTaskReviewerModel (6 tests)
+   - TestUserEntityModel (5 tests)
+   - TestEntityAccessLevelEnum (2 tests)
+   
+   #### Infrastructure Updates
+   - Updated conftest.py cleanup to include team_members, Entity, Task tables
+   - Added entity and task fixtures for Task model testing
+
+2. **Test Coverage Expansion v1.14.0** (Complete)
+
+   #### Test Suite Expansion
+   - Expanded from 125 to 424 tests (+299 tests)
+   - Code coverage increased from 34% to 43% (+9%)
+   
+   #### New Test Files
+   - `test_task_model.py` - 56 tests for Task, User, Tenant, Notification models
+   - `test_project_methods.py` - 42 tests for Project model getters
+   - `test_all_services.py` - 36 tests for all service classes
+   - `test_middleware_advanced.py` - 18 tests for middleware functions
+   - `test_middleware.py` - 35 tests for tenant middleware
+   - `test_models_advanced.py` - Extended model tests
+   - `test_project_models_advanced.py` - Project model edge cases
+   - `test_services_advanced.py` - Service method testing
+   - `test_modules.py` - Module system tests
+   
+   #### Infrastructure Improvements
+   - Fixed database isolation issues in `conftest.py`
+   - Added autouse `clean_db_tables` fixture for proper test cleanup
+   - Resolved intermittent test failures from database state leaking
+   
+   #### Test Coverage Plan
+   - Created `docs/testCoveragePlan.md` with roadmap to 100% coverage
+   - 5-phase implementation plan with time estimates
+   - Target: ~920 tests for full coverage
+
+### ✅ Previously Completed (Session 15)
+
+1. **Unit Test Infrastructure v1.13.0** (Complete)
+   - Neutral URL paths: `/sprints/` → `/iterations/`, `/issues/` → `/items/`
+   - Dynamic terminology per methodology
+   - METHODOLOGY_CONFIG with issue/issue_plural keys
+
+---
+
+## Project State
+
+### Database Tables
+
+```
+# Multi-Tenancy
+tenant                ✅ Client/organization separation
+tenant_membership     ✅ Per-tenant user roles
+tenant_api_key        ✅ API access per tenant
+
+# Core
+user                  ✅ Extended with roles, email preferences, calendar token
+audit_log             ✅ With action types
+entity                ✅ With group hierarchy + tenant_id
+category              ✅ Task categories (renamed from tax_type)
+task_template         ✅ Reusable templates
+task                  ✅ Core tasks with status, teams, preset_id + tenant_id
+task_reviewer         ✅ Multi-reviewer tracking
+task_evidence         ✅ Files and links
+comment               ✅ Discussion threads
+task_preset           ✅ Extended with recurrence fields
+reference_application ✅ Anträge library
+entity_user_access    ✅ Association table
+team                  ✅ User grouping
+team_members          ✅ Team-User many-to-many
+notification          ✅ In-app notifications
+user_entity           ✅ Entity access with levels
+```
+
+### Key Models
+
+| Model | Purpose |
+|-------|---------|
+| `Tenant` | Multi-tenant client separation |
+| `TenantMembership` | Per-tenant user roles (admin, manager, member, viewer) |
+| `TenantApiKey` | API access tokens per tenant |
+| `User` | User accounts with roles, preferences |
+| `Project` | Projects with methodology configuration |
+| `Issue` | Issue/task tracking with workflows |
+| `Sprint` | Iterations/phases for time-boxed work |
+| `Task` | Calendar tasks with workflow, teams, recurrence |
+| `Team` | User grouping with members |
+| `Entity` | Legal entities with tenant scoping |
+| `Notification` | In-app notification system |
+
+### Routes (app.py ~3900 lines)
+
+| Category | Routes | Description |
+|----------|--------|-------------|
+| Auth | 3 | login, logout, set_language |
+| Dashboard | 1 | Main dashboard |
+| Tasks | 12 | CRUD, status, evidence, comments |
+| Calendar | 3 | Month, year, week views |
+| Admin | 25+ | Users, entities, categories, teams, presets, tenants |
+| Tenants | 8 | CRUD, members, API keys, compliance export |
+| CLI | 6 | initdb, createadmin, seed, loadpresets, due reminders, recurring tasks |
+
+---
+
+## Multi-Reviewer Workflow
+
+### How It Works
+
+1. **Assignment:** When creating/editing a task, select multiple reviewers via multi-select dropdown
+2. **Tracking:** Each reviewer has their own `TaskReviewer` record with approval status
+3. **Review:** When task is "in_review", each reviewer sees their own approval panel
+4. **Approval:** Clicking "Approve" marks that reviewer as approved with timestamp
+5. **Rejection:** Clicking "Reject" immediately rejects the entire task
+6. **Completion:** When ALL reviewers approve, task auto-transitions to "approved"
+
+### Key Methods (Task model)
+
+```python
+task.set_reviewers([user_ids])      # Assign multiple reviewers
+task.is_reviewer(user)               # Check if user is a reviewer
+task.get_reviewer_status(user)       # Get TaskReviewer record
+task.approve_by_reviewer(user, note) # Mark user as approved
+task.reject_by_reviewer(user, note)  # Mark user as rejected
+task.all_reviewers_approved()        # Check if all approved
+task.any_reviewer_rejected()         # Check if any rejected
+task.get_approval_count()            # Returns (approved, total) tuple
+```
+
+---
+
+## Team Management
+
+### How It Works
+
+1. **Create Teams:** Admins can create teams with name, description, color, and optional manager
+2. **Assign Members:** Multi-select users to add as team members
+3. **Task Assignment:** Tasks can be assigned to:
+   - Individual owner (owner_id) OR owner team (owner_team_id)
+   - Individual reviewers (TaskReviewer) AND/OR reviewer team (reviewer_team_id)
+4. **Access Control:** `is_reviewer()` checks both direct assignment AND team membership
+
+### Key Methods (Task model)
+
+```python
+task.owner_team              # Get owner Team object
+task.reviewer_team           # Get reviewer Team object
+task.is_reviewer(user)       # Check direct OR team membership
+task.is_reviewer_via_team(user)  # Check team membership only
+task.get_owner_display()     # Returns user or team name
+task.is_assigned_to_user(user)   # Check any assignment
+task.get_all_assigned_users()    # All users via direct + teams
+```
+
+### Key Methods (Team model)
+
+```python
+team.add_member(user)        # Add user to team
+team.remove_member(user)     # Remove user from team
+team.is_member(user)         # Check membership
+team.get_member_count()      # Count members
+```
+
+---
+
+## File Structure
+
+```
+deloitte-projectops/
+├── app.py                  # ~3900 lines - All routes + CLI commands
+├── models.py               # ~1200 lines - All models incl. Multi-Tenancy
+├── services.py             # ~650 lines - Business logic services
+├── config.py               # Configuration
+├── translations.py         # i18n (DE/EN)
+│
+├── admin/                  # Admin blueprints
+│   └── tenants.py          # Tenant management routes
+│
+├── middleware/             # Request middleware
+│   └── tenant.py           # Tenant context middleware
+│
+├── modules/                # Feature modules
+│   ├── projects/           # Project management module
+│   └── tasks/              # Tasks module
+│
+├── scripts/                # Automation scripts
+│   ├── release.py          # Release automation
+│   ├── update_memory_bank.py  # AI-powered doc updates
+│   └── create_full_demo_data.py
+│
+├── templates/
+│   ├── base.html           # Master layout with tenant switcher
+│   ├── select_tenant.html  # Tenant selection page
+│   ├── index.html          # Landing page (ProjectOps branding)
+│   ├── admin/
+│   │   └── tenants/        # Tenant management UI
+│   └── ...
+│
+├── migrations/versions/
+│   ├── mt001_add_multi_tenancy.py
+│   └── ...
+│
+└── docs/                   # Memory Bank
+    ├── progress.md
+    ├── activeContext.md
+    ├── multiTenancyDesign.md  # NEW: Multi-tenancy architecture
+    └── ...
+```
+
+---
+
+## Test Credentials
+
+| Email | Password | Role |
+|-------|----------|------|
+| admin@deloitte.de | password | admin (Super-Admin) |
+| manager@deloitte.de | password | manager |
+| reviewer@deloitte.de | password | reviewer |
+| preparer@deloitte.de | password | preparer |
+
+---
+
+## CLI Commands
+
+| Command | Purpose |
+|---------|---------|
+| `flask initdb` | Initialize database tables |
+| `flask createadmin` | Create admin user |
+| `flask seed` | Seed sample data |
+| `flask loadpresets` | Load presets from JSON files |
+| `flask send_due_reminders --days=7` | Send reminder emails |
+| `flask generate-recurring-tasks --year --dry-run` | Generate tasks from presets |
+
+---
+
+## App URLs
+
+| URL | Purpose |
+|-----|---------|
+| `/` | Landing page (ProjectOps branding) |
+| `/login` | Login form |
+| `/select-tenant` | Tenant selection for multi-tenant users |
+| `/dashboard` | Main dashboard with KPIs + charts |
+| `/tasks` | Task list with filters + bulk operations |
+| `/calendar` | Month calendar |
+| `/calendar/year` | Year calendar |
+| `/projects` | Project Management module |
+| `/projects/<key>/board` | Kanban board |
+| `/projects/<key>/iterations` | Iterations/Sprints |
+| `/admin` | Admin dashboard |
+| `/admin/tenants` | **NEW:** Tenant management (Super-Admin) |
+| `/admin/tenants/<id>` | Tenant detail with members, API keys |
+| `/admin/tenants/<id>/export` | Compliance export (JSON/Excel) |
+| `/admin/entities` | Entity management |
+| `/admin/categories` | Category management (renamed from tax-types) |
+| `/admin/teams` | Team management |
+
+---
+
+## Next Steps (If Continuing Development)
+
+### Future Considerations
+1. OIDC/Entra ID SSO integration
+2. MS Teams notifications via webhooks
+3. Advanced analytics dashboard
+4. Template builder UI
+5. Mobile-responsive improvements
+
+---
+
+## Blockers
+
+None currently. All features through v1.12.0 are complete and functional.
+
+---
+
+## Technical Notes
+
+- **Multi-Tenancy:** All queries must be scoped by `tenant_id` for data isolation
+- **Tenant Middleware:** `middleware/tenant.py` handles tenant context from session
+- **Release Script:** `python scripts/release.py` automates version bumps, tags, and docs
+- **Memory Bank Updates:** Use generated prompt in `scripts/memory_bank_update_prompt.txt`
+- **SortableJS:** CDN für Kanban Board Drag & Drop (Version 1.15.0)
+- **marked.js:** CDN für Markdown-Rendering in Issue-Beschreibungen
+
+---
+
+*Last updated: 2026-01-03 Session 15*
+
+```
+
+### docs/progress.md
+```markdown
+# Progress Tracker
+
+> Development progress for Deloitte ProjectOps
+
+## Current Status: ✅ MVP Complete + Phases A-J + PM-0 bis PM-11 + Multi-Tenancy + Unit Tests
+
+**Last Updated:** 2026-01-03 (Session 19)  
+**Version:** 1.19.0
+
+---
+
+## Recent Releases
+
+### v1.19.0 - Phase 4 Blueprint Refactoring (2026-01-03)
+
+**Status: ✅ Complete**
+
+- **New Blueprint Architecture** (`routes/` package):
+  - `routes/__init__.py` - Blueprint exports (auth_bp, main_bp, tasks_bp, admin_bp, api_bp)
+  - `routes/auth.py` - Login, logout, tenant selection (5 routes)
+  - `routes/main.py` - Dashboard, calendar, notifications, profile (15 routes)
+  - `routes/tasks.py` - Task CRUD, status, evidence, comments (17 routes)
+  - `routes/admin.py` - User, entity, team, category, module management (~20 routes)
+  - `routes/api.py` - Bulk operations, dashboard charts, presets (~15 routes)
+
+- **Integration Tests** (`test_blueprints.py`):
+  - 28 tests covering all 5 route blueprints
+  - TestAuthBlueprint, TestMainBlueprint, TestTasksBlueprint, TestAdminBlueprint, TestApiBlueprint
+
+- **Key Changes**:
+  - Updated `extensions.py`: login_view = 'auth.login'
+  - Updated `app.py`: registers all 5 route blueprints
+  - 7 registered blueprints: admin, admin_tenants, api, auth, main, projects, tasks
+
+- **Test Results**:
+  - Total tests: 626 passed, 12 skipped, 9 xfailed
+  - Routes coverage: 33% overall
+
+### v1.18.0 - Phase 3 Service Layer Tests (2026-01-03)
+
+**Status: ✅ Complete**
+
+- **62 New Service Tests** (`test_phase3_services.py`):
+  - NotificationService: create, notify_users, get_unread_count (11 tests)
+  - ExportService: export_tasks_to_excel with mocked data (6 tests)
+  - CalendarService: generate_user_token, generate_ical_feed (12 tests)
+  - EmailService: init, is_enabled, provider, send_email via SMTP (12 tests)
+  - RecurrenceService: get_period_dates for all frequencies (21 tests)
+
+- **Coverage Improvement**:
+  - services.py: 16% → 37% (+21 percentage points)
+  - Total tests: 548 → 598 (+50 net)
+  - Phase 3 target was +12%, achieved +21% - exceeded goal
+
+- **Bug Fix**:
+  - Fixed CalendarService.generate_ical_feed() calling .date() on date object
+  - Added `date` import to services.py for proper type checking
+
+### v1.17.0 - Separated Memory Bank Check Script (2026-01-03)
+
+**Status: ✅ Complete**
+
+- **New `scripts/check_memory_bank.py`**:
+  - Standalone script for reading all Memory Bank files before release
+  - `--for-release X.Y.Z`: Displays all files with update instructions
+  - `--verify X.Y.Z`: Verifies all files have correct version
+  - `--brief`: Quick version status check across all files
+
+- **Simplified `scripts/release.py`**:
+  - Removed file display logic (moved to check_memory_bank.py)
+  - Now only verifies and commits, cleaner separation of concerns
+
+- **New 4-Step Release Workflow**:
+  1. `check_memory_bank.py --for-release X.Y.Z` → Read files
+  2. AI updates all relevant content (not just versions)
+  3. `check_memory_bank.py --verify X.Y.Z` → Verify updates
+  4. `release.py --version X.Y.Z` → Commit and tag
+
+### v1.16.3 - Version Bump Release (2026-01-03)
+
+**Status: ✅ Complete**
+
+- Version bump to validate 3-phase Memory Bank workflow
+- Confirms release script correctly enforces reading all Memory Bank files before release
+
+### v1.16.2 - Release Script 3-Phase Workflow (2026-01-03)
+
+**Status: ✅ Complete**
+
+- **3-Phase Memory Bank Workflow**:
+  - PHASE 1: Displays COMPLETE content of all 7 Memory Bank files
+  - PHASE 2: Pauses for manual updates with specific instructions per file
+  - PHASE 3: Verifies all updates were made (version, CHANGELOG, etc.)
+  - Blocks release if any verification fails
+
+- **Key Improvement**: Forces AI to read entire file content before making updates, preventing incomplete or missed updates
+
+### v1.16.1 - Release Script Enhancement (2026-01-03)
+
+**Status: ✅ Complete**
+
+- **Extra Strong Memory Bank Verification**:
+  - Individual 'y' confirmation required for each of 7 Memory Bank files
+  - Final phrase confirmation: "I have read and updated all memory bank files"
+  - Blocks release if any confirmation fails
+  - Prevents AI from auto-confirming verification without actually reading files
+
+- **Files**:
+  - docs/activeContext.md - Session info, current state
+  - docs/progress.md - Release history, feature tracking
+  - docs/techContext.md - Tech stack, dependencies
+  - docs/systemPatterns.md - Architecture, patterns
+  - docs/productContext.md - User personas, features
+  - docs/projectbrief.md - Core requirements
+  - docs/technicalConcept.md - High-level architecture
+
+### v1.16.0 - Test Coverage Phase 2 (2026-01-03)
+
+**Status: ✅ Complete**
+
+- **69 Middleware & Module Tests** (`test_phase2_middleware_modules.py`):
+  - TestLoadTenantContextLogic (8 tests) - auth, superadmin, regular user scenarios
+  - TestTenantRequiredDecoratorExecution (6 tests) - redirect behavior
+  - TestTenantAdminRequiredDecoratorExecution (5 tests) - admin role checks
+  - TestTenantManagerRequiredDecoratorExecution (6 tests) - manager role checks
+  - TestSuperadminRequiredDecoratorExecution (3 tests) - superadmin access
+  - TestCanEditInTenant (5 tests) - edit permissions
+  - TestCanManageInTenant (5 tests) - manage permissions
+  - TestIsTenantAdmin (4 tests) - admin status
+  - TestScopeQueryToTenant (3 tests) - query scoping
+  - TestModuleRegistryMethods (8 tests) - module registration
+  - TestBaseModuleMethods (8 tests) - base module class
+  - TestCoreModuleDetails (3 tests) - core module
+
+- **Coverage Improvements**:
+  - middleware/tenant.py: 28% → 98% (+70%)
+  - modules/core/__init__.py: 89% → 100%
+  - modules/__init__.py: 54% → 88% (+34%)
+
+- **Metrics**:
+  - Total tests: 467 → 536 (+69)
+
+### v1.15.0 - Test Coverage Phase 1 (2026-01-03)
+
+**Status: ✅ Complete**
+
+- **Coverage Infrastructure**:
+  - Created `.coveragerc` to exclude scripts/, migrations/, tests/, demo files
+  - Proper coverage configuration for meaningful metrics
+
+- **43 New Model Tests** (`test_phase1_models.py`):
+  - TestUserTenantMethods (13 tests) - tenant access, roles, switching
+  - TestUserCalendarToken (3 tests) - token creation, regeneration
+  - TestUserTeamMethods (1 test) - team retrieval
+  - TestTeamModel (13 tests) - member management, multilingual names
+  - TestTaskReviewerModel (6 tests) - approve, reject, reset workflows
+  - TestUserEntityModel (5 tests) - entity permission levels
+  - TestEntityAccessLevelEnum (2 tests) - enum values and choices
+
+- **Test Fixture Improvements**:
+  - Added entity and task fixtures for Task model testing
+  - Updated cleanup to include team_members, Entity, Task tables
+
+- **Metrics**:
+  - Total tests: 424 → 467 (+43)
+  - models.py coverage: 63% → 70% (+7%)
+
+### v1.14.1 - Release Script Enhancement (2026-01-03)
+
+**Status: ✅ Complete**
+
+- **Mandatory Memory Bank Verification**:
+  - Added verification step requiring explicit confirmation before releases
+  - AI must type 'yes' to confirm all Memory Bank files were read
+  - Lists all 7 Memory Bank files with descriptions
+  - Blocks release if verification not confirmed
+
+### v1.14.0 - Test Coverage Expansion (2026-01-03)
+
+**Status: ✅ Complete**
+
+- **Comprehensive Unit Test Suite**:
+  - Expanded from 125 to 424 tests (+299 tests)
+  - Code coverage increased from 34% to 43% (+9%)
+  - Test Coverage Plan documented in `docs/testCoveragePlan.md`
+
+- **New Test Files**:
+  - `test_task_model.py` - 56 tests for Task, User, Tenant, Notification models
+  - `test_project_methods.py` - 42 tests for Project model getters
+  - `test_all_services.py` - 36 tests for all service classes
+  - `test_middleware_advanced.py` - 18 tests for middleware functions
+  - `test_middleware.py` - 35 tests for tenant middleware
+  - `test_models_advanced.py` - Extended model tests
+  - `test_project_models_advanced.py` - Project model edge cases
+  - `test_services_advanced.py` - Service method testing
+  - `test_modules.py` - Module system tests
+
+- **Infrastructure Improvements**:
+  - Fixed database isolation issues in `conftest.py`
+  - Added autouse `clean_db_tables` fixture for proper test cleanup
+  - Resolved test failures from database state leaking
+
+### v1.13.0 - Unit Test Infrastructure (2026-01-03)
+
+**Status: ✅ Complete**
+
+- **Test Framework Setup**:
+  - `pytest.ini` with markers (unit, integration, slow, api, models, services)
+  - `tests/conftest.py` with fixtures (app, db, user, tenant, project, sprint, issue)
+  - `tests/factories.py` with Factory Boy factories for test data
+  - pipenv dev dependencies (pytest, pytest-cov, pytest-flask, factory-boy)
+
+- **125 Unit Tests (34% Coverage)**:
+  - User model tests (9): creation, password, roles, authentication
+  - Project/Sprint/Issue models (18): CRUD, relationships, methodology
+  - Tenant/Membership models (14): creation, roles, members
+  - Notification model (9): types, preferences
+  - Services tests (13): NotificationService, CalendarService, etc.
+  - Translations tests (10): DE/EN support
+  - Config tests (10): Config classes
+  - Extensions tests (8): Flask extensions
+  - Methodology/Estimation tests (17): scales, terminology
+  - Sprint/Board tests (17): status, priority, labels, time tracking
+
+- **Bug Fixes**:
+  - Waterfall projects now default to Personentage (PT) scale
+  - Template fix in settings/estimation.html
+  - Reset estimation_scale when methodology changes
+
+- **UI Improvements**:
+  - Estimation scale settings UI for projects
+  - Dashboard improvements with project insights and trends
+  - README badges for tests and coverage
+
+### v1.12.0 - Multi-Tenancy: Enterprise Client Separation (2026-01-03)
+
+**Status: ✅ Complete**
+
+- **Tenant Model & Infrastructure**:
+  - `Tenant` model with slug, name, logo (base64), is_active, is_archived
+  - `TenantMembership` for per-tenant roles (admin, manager, member, viewer)
+  - `TenantApiKey` for API access per tenant
+  - `tenant_id` column on all major tables
+
+- **Super-Admin Tenant Management** (`/admin/tenants/`):
+  - Modern Deloitte-styled UI with gradient headers
+  - Tenant list with stats overview
+  - Tenant detail with members, API keys, quick actions
+  - Full CRUD: create, edit, archive, restore, delete
+  - "Enter Tenant" to switch context
+
+- **Tenant Selection** (`/select-tenant`):
+  - Multi-tenant users can switch between clients
+  - Card-based UI with Super-Admin access
+
+- **Compliance Export**:
+  - JSON and Excel export (10 sheets)
+  - Full audit trail documentation
+
+- **Release Automation** (`scripts/release.py`):
+  - Automated version updates across all files
+  - CHANGELOG.md section generation
+  - Memory Bank prompt generation for AI updates
+  - Git commit and tag creation
+  - Push to remote
+
+- **GitHub Repository Rename**:
+  - `deloitte-taxops-calendar` → `deloitte-projectops`
+  - All documentation URLs updated
+
+- **Landing Page Update**:
+  - ProjectOps branding with rocket icon
+  - Features: Projects, Kanban, Iterations, Multi-Tenancy
+
+- **Demo Data Scripts**: 
+  - Full demo data for all tenants
+  - Issues, Sprints, Tasks, Teams, Entities
+
+### v1.11.0 - PM-11: Methodology-Agnostic Terminology
+
+- **Neutrale URL-Pfade**:
+  - `/sprints/` → `/iterations/` (neutral für alle Methodologien)
+  - `/issues/` → `/items/` (neutral für alle Methodologien)
+  - Template-Ordner entsprechend umbenannt
+  - Alle `url_for()`-Aufrufe aktualisiert
+- **Dynamische Terminologie im gesamten UI**:
+  - Sprint → Phase (Waterfall), Zyklus (Kanban), Iteration (Custom)
+  - Issue → Aktivität (Waterfall), Aufgabe (Kanban), Eintrag (Custom)
+  - Story Points → Aufwand (PT) für Waterfall
+  - Burndown Chart → Fortschrittsdiagramm für Waterfall
+  - Velocity → Durchsatz für Waterfall/Kanban
+- **METHODOLOGY_CONFIG erweitert**:
+  - `issue` / `issue_plural` Keys für alle 4 Methodologien
+  - Deutsche und englische Übersetzungen
+- **Templates aktualisiert**:
+  - Projektübersicht: Dynamische Action-Cards und Stat-Labels
+  - Iteration-Report: Dynamische Chart-Titel und Labels
+  - Item-Formular: Dynamische Placeholders und Tipps
+  - Iteration-Formular: Timeline-Vorschau mit existierenden Iterationen
+  - Dropdown-Menü: Dynamische Typ-Bezeichnung
+- **Helper-Methoden auf Project Model**:
+  - `get_term(key, lang)`: 3-stufige Fallback-Kette (Projekt → Methodik → Scrum)
+  - `has_feature(feature)`: Prüfung ob Feature für Methodik aktiviert
+
+### v1.10.0 - PM-10: Workflow Transitions
+
+- **Konfigurierbare Status-Übergänge**:
+  - Tab-Ansicht in Workflow Settings: "Status" und "Übergänge"
+  - Interaktive Transition-Matrix zum Aktivieren/Deaktivieren
+  - Visuelle Legende (grün = erlaubt, grau = nicht erlaubt)
+- **API Endpoint**: `POST /settings/workflow/transitions`
+- **Frontend Validation**:
+  - Issue-Detail zeigt nur erlaubte Status-Transitions
+  - Kanban-Board blockiert ungültige Drops mit visuellem Feedback
+- **Backend Validation**: `can_transition_to()` Check in kanban_move_issue
+
+### v1.9.0 - PM-8: Quick Search
+
+- **Global Quick Search** (⌘K / Ctrl+K):
+  - Globale Issue-Suche über alle zugänglichen Projekte
+  - Suche nach Issue-Key, Titel, Beschreibung
+  - Live-Typeahead ab 2 Zeichen
+  - Keyboard-Navigation (↑↓ + Enter)
+  - Recent Issues beim Öffnen
+- **Search API Endpoints**:
+  - `GET /projects/api/search?q=...` - Globale Issue-Suche
+  - `GET /projects/api/search/recent` - Zuletzt bearbeitete Issues
+- **UI Enhancements**: Search-Button in Navbar, Modal Design, Issue-Type Icons
+
+### v1.8.0 - PM-6: Issue Details Enhancement
+
+- **Activity Log für Issues**: Vollständige Aktivitätsverfolgung
+  - IssueActivity Model mit activity_type (created, status_change, comment, attachment, link, worklog, reviewer_added, reviewer_removed, approved, rejected)
+  - log_activity() Helper-Funktion
+  - Icons und formatierte Texte für Aktivitäten
+- **Approval Workflow Verbesserungen**:
+  - Genehmigung/Ablehnung nur im Status "In Prüfung"
+  - UI-Hinweis und deaktivierte Buttons wenn nicht im Review-Status
+  - Automatischer Status "Done" bei vollständiger Genehmigung
+  - Ablehnungsgrund im Activity Log
+- **Projekt Activity Log**: Echte Aktivitäten von allen Issues auf Projektdetailseite
+- **Modul-Zugriffskontrolle**: Nur Benutzer mit projects-Modul als Reviewer/Mitglieder
+- **Bug-Fix**: `user.username` → `user.name`
+
+### v1.7.0 - PM-5: Sprint Reports & Analytics
+
+- **Sprint Report Route** mit Burndown und Velocity Charts
+- **Velocity Calculation** für Sprint-Planung
+- **Bug-Fixes**: issue.type → issue.issue_type, resolved_at → resolution_date
+
+### v1.6.0 - UI Redesign: Deloitte Design System
+
+- **Projekt Detail Seite**: Hero-Header, Stat-Cards, Action-Cards, Team-Sidebar
+- **Issue-Liste**: Blauer Gradient-Hero, Quick-Stats, gestylte Tabelle
+- **Sprint-Übersicht**: Teal Gradient-Hero, aktiver Sprint als große Card
+- **Backlog**: Grüner Gradient-Hero, schwebende Bulk-Actions-Leiste
+- **Kanban Board**: Light-Blue Gradient-Hero, moderne Spalten, Hover-Animationen
+- **Bug-Fix**: Backlog Links (`issue.key` statt `issue.issue_key`)
+
+---
+
+## Existing Features (From Template)
+
+### ✅ Completed (Inherited)
+
+- [x] Flask application factory pattern
+- [x] SQLAlchemy integration with SQLite
+- [x] User model with password hashing
+- [x] Flask-Login authentication
+- [x] Admin role decorator (`@admin_required`)
+- [x] AuditLog model for activity tracking
+- [x] Bootstrap 5 base template with Deloitte branding
+- [x] Complete Deloitte 2024 color palette CSS variables
+- [x] Internationalization (DE/EN) with session storage
+- [x] Login/logout functionality
+- [x] Flash message system
+- [x] Error pages (404, 500)
+- [x] Responsive navbar with language switcher
+- [x] Admin dashboard (basic)
+- [x] Admin users list (read-only)
+- [x] CLI commands (`flask initdb`, `flask createadmin`)
+
+---
+
+## MVP Checklist
+
+### Phase 1: Foundation ✅
+
+- [x] Memory Bank documentation created
+- [x] Install Flask-Migrate for Alembic
+- [x] Install openpyxl for Excel processing
+- [x] Install python-dateutil for date handling
+- [x] Initialize migrations (`flask db init`)
+- [ ] Restructure to blueprints (deferred)
+
+### Phase 2: Core Models ✅
+
+- [x] Entity model (with self-referential groups)
+- [x] TaxType model
+- [x] TaskTemplate model
+- [x] Task model with status enum
+- [x] TaskEvidence model (file + link types)
+- [x] Comment model
+- [x] ReferenceApplication model (Anträge)
+- [x] TaskPreset model (predefined task templates)
+- [x] **TaskReviewer model (multi-reviewer support)**
+- [x] **Team model (user grouping)**
+- [x] UserRole enum (admin, manager, reviewer, preparer, readonly)
+- [x] TaskStatus enum (draft, submitted, in_review, approved, completed, rejected)
+- [x] Entity-User access association table
+- [x] team_members association table
+- [x] Create migration for all models
+- [x] Apply migration (`flask db upgrade`)
+
+### Phase 3: User & Entity Management ✅
+
+- [x] User CRUD (admin) - create/edit forms
+- [x] Extended user roles (manager, reviewer, preparer, readonly)
+- [x] Entity CRUD (admin) - full CRUD with parent selection
+- [x] TaxType CRUD (admin) - full CRUD
+- [x] **Team Management (admin) - full CRUD with member assignment**
+- [ ] User-Entity permission scoping (deferred)
+
+### Phase 4: Task Presets ✅
+
+- [x] TaskPreset model for predefined tasks
+- [x] JSON data files (steuerarten_aufgaben.json, Antraege.json)
+- [x] Admin preset management (list, create, edit, delete)
+- [x] `flask loadpresets` CLI command
+- [x] Preset selection in task creation form
+- [x] Auto-fill form from preset data
+
+### Phase 5: Task Management ✅
+
+- [x] Task list view with filters
+- [x] Task detail view with tabs (overview, evidence, comments, audit)
+- [x] Status change functionality
+- [x] Status badge CSS classes (Deloitte colors)
+- [x] Evidence upload (file upload with unique names)
+- [x] Evidence link addition
+- [x] Evidence preview modal (PDF, images, text)
+- [x] Evidence download
+- [x] Comment thread (add/delete)
+- [x] Audit log display (color-coded by action type)
+
+### Phase 6: Multi-Reviewer Approval ✅
+
+- [x] TaskReviewer model with approval tracking
+- [x] Multi-select reviewer field in task form
+- [x] Individual reviewer approval/rejection
+- [x] Approval progress bar
+- [x] Auto-transition to approved when all approve
+- [x] Auto-transition to rejected if any rejects
+- [x] Reviewer-specific action buttons
+- [x] Per-reviewer approval timestamps and notes
+
+### Phase 6b: Team Management ✅
+
+- [x] Team model with name, description, color, manager
+- [x] team_members many-to-many association table
+- [x] Task.owner_team_id for team-based ownership
+- [x] Task.reviewer_team_id for team-based review
+- [x] Team admin CRUD (list, create, edit, delete)
+- [x] Multi-select member assignment
+- [x] Team selection in task create/edit forms
+- [x] Team display in task detail view
+- [x] is_reviewer() checks team membership
+- [x] Navigation link in admin menu
+
+### Phase 7: Calendar & Dashboard ✅
+
+- [x] Calendar month view
+- [x] Calendar year view
+- [x] Calendar status colors
+- [x] Task preview popovers on hover
+- [x] Task click opens detail
+- [x] Dashboard KPI cards
+- [x] "My Tasks" panel
+- [x] Due soon / Overdue automatic marking (via Task properties)
+
+### Phase 8: Reports & Export ✅
+
+- [x] Task list Excel export
+- [x] Task PDF export (weasyprint)
+- [x] Status summary report (multi-sheet Excel)
+- [x] Filtering preserved in exports
+
+---
+
+## Phase 2 Backlog (Post-MVP) — Feature Roadmap
+
+### Phase A: In-App Notifications (WebSocket) ✅
+- [x] Flask-SocketIO + eventlet dependencies
+- [x] Notification model with NotificationType enum
+- [x] NotificationService with helper methods
+- [x] WebSocket events (connect, disconnect, emit)
+- [x] Notification API routes
+- [x] Notification triggers in task/comment routes
+- [x] Navbar notification bell with dropdown
+- [x] Real-time WebSocket JavaScript client
+- [x] Translations (DE/EN)
+- [x] Database migration
+
+### Phase B: Bulk Operations ✅
+- [x] Bulk selection UI (checkboxes in task list)
+- [x] "Select all" toggle
+- [x] Bulk status change
+- [x] Bulk reassign owner
+- [x] Bulk delete (hard delete with related records)
+- [x] Confirmation modals
+- [x] Loading spinners during operations
+- [x] Success/error handling
+
+### Phase C: Excel/PDF Export ✅
+- [x] Task list Excel export with filters
+- [x] Task detail PDF export (weasyprint)
+- [x] Status summary report (Excel with charts)
+- [x] Export buttons in UI (dropdown in task list, button in task detail)
+- [x] Deloitte branding in exports (colors, logo)
+
+### Phase D: Calendar Sync (iCal) ✅
+- [x] iCal feed endpoint per user (`/calendar/feed/<token>.ics`)
+- [x] Task deadlines as calendar events with alarms
+- [x] Secure token-based subscription URL generation
+- [x] User settings for calendar sync (subscription page)
+- [x] Instructions for Outlook, Google Calendar, Apple Calendar
+- [x] Token regeneration for security
+
+### Phase E: E-Mail Notifications ✅
+- [x] Email service abstraction (SMTP/SendGrid/SES providers)
+- [x] Email configuration in config.py
+- [x] HTML email templates with Deloitte branding (inline CSS)
+- [x] Task assignment email notification
+- [x] Status change email notification
+- [x] Due reminder email (via CLI command)
+- [x] New comment email notification
+- [x] User email preferences (profile_notifications.html)
+- [x] Master toggle + per-notification-type settings
+- [x] CLI command: `flask send_due_reminders --days=7`
+- [x] Database migration for User email preferences
+
+### Phase F: Dashboard Extensions (Chart.js) ✅
+- [x] Chart.js integration (CDN)
+- [x] Tasks by status doughnut chart (pie chart with cutout)
+- [x] Tasks by month stacked bar chart (with year selector)
+- [x] Team workload horizontal bar chart
+- [x] API endpoints for chart data
+- [x] Responsive chart containers
+
+### Phase G: Entity Scoping ✅
+- [x] UserEntity model with access levels (view, edit, manage)
+- [x] EntityAccessLevel enum
+- [x] Entity-based task filtering in dashboard and task list
+- [x] Entity hierarchy access inheritance (inherit_to_children flag)
+- [x] User.get_accessible_entities() and get_accessible_entity_ids() methods
+- [x] User.can_access_entity() and get_entity_access_level() methods
+- [x] Admin UI: User entity permissions (/admin/users/<id>/entities)
+- [x] Admin UI: Entity user permissions (/admin/entities/<id>/users)
+- [x] Links in admin users and entities lists
+- [x] Auto-access for admins and managers (bypass permissions)
+- [x] Database migration for user_entity table
+
+### Phase H: Recurring Tasks (RRULE) ✅
+- [x] TaskPreset extended with recurrence fields (is_recurring, frequency, rrule, day_offset, end_date)
+- [x] Task model extended with preset_id and is_recurring_instance
+- [x] RECURRENCE_FREQUENCIES constant (monthly, quarterly, semi_annual, annual, custom)
+- [x] RecurrenceService with get_period_dates(), generate_tasks_from_preset(), parse_rrule()
+- [x] CLI command: `flask generate-recurring-tasks --year --preset-id --entity-id --dry-run --force`
+- [x] Admin preset form with recurrence configuration UI
+- [x] Frequency selector, day offset, RRULE input, default entity/owner
+- [x] Task detail shows recurring badge with preset reference
+- [x] Database migration for recurrence fields
+
+### Phase I: Archival & Soft-Delete ✅
+- [x] Soft-delete for tasks (is_archived, archived_at, archived_by_id, archive_reason)
+- [x] Task model extended with archive() and restore() methods
+- [x] Archive/Restore routes (single and bulk)
+- [x] Archived tasks hidden from dashboard, task list, calendar views
+- [x] Archive view page with filters and pagination (/tasks/archive)
+- [x] Archive button in task detail with reason modal
+- [x] Restore button for archived tasks (admin/manager only)
+- [x] Bulk archive functionality in task list
+- [x] Bulk restore functionality in archive view
+- [x] Navigation dropdown for tasks with archive link
+- [x] Archived banner on task detail page
+- [x] Translations for archive features (DE/EN)
+- [x] Database migration for archive fields
+
+### 🆕 Projektmanagement-Modul (Jira-ähnlich)
+
+> **Detaillierter Plan:** [docs/projectManagementModule.md](projectManagementModule.md)
+
+#### Phase PM-0: Infrastruktur ✅
+- [x] Blueprint-Refactoring (extensions.py, modules/)
+- [x] ModuleRegistry Pattern
+- [x] Module & UserModule Models
+- [x] Admin Modul-Verwaltung (/admin/modules)
+- [x] User Module-Zuweisungen (/admin/users/<id>/modules)
+- [x] flask sync-modules CLI command
+- [ ] Dynamische Navigation (deferred)
+
+#### Phase PM-1: Projekt-Basis ✅
+- [x] Project Model mit Key (TAX, AUD)
+- [x] ProjectMember für Mitgliedschaft
+- [x] ProjectRole enum (admin, lead, member, viewer)
+- [x] Projekt-CRUD Routes & Templates
+- [x] Mitglieder-Verwaltung
+- [x] Projekt-Archivierung
+- [x] Sample Projects Script (scripts/create_sample_projects.py)
+- [x] 3 Demo-Projekte: TAX, AUD, INT
+
+#### Phase PM-2: Issue-Management ✅ (Flexibler Ansatz)
+- [x] **Flexible Architektur** für verschiedene Methodologien
+- [x] ProjectMethodology enum (scrum, kanban, waterfall, custom)
+- [x] StatusCategory enum (todo, in_progress, done)
+- [x] Project.methodology und Project.terminology Felder
+- [x] Project.get_term() für lokalisierte/überschriebene Terminologie
+- [x] **IssueType Model** (konfigurierbar pro Projekt)
+  - name, name_en, icon, color
+  - hierarchy_level (0=Epic, 1=Story, 2=Task, 3=SubTask)
+  - can_have_children, is_subtask, is_default
+- [x] **IssueStatus Model** (konfigurierbar pro Projekt)
+  - name, name_en, category, color
+  - is_initial, is_final, allowed_transitions
+- [x] **Issue Model** mit Auto-Key (TAX-1, TAX-2)
+  - Vollständige Jira-ähnliche Felder
+  - priority, story_points, time_tracking
+  - parent_id für Hierarchie
+  - labels, custom_fields (JSON)
+- [x] **Sprint Model** für Scrum-Projekte
+- [x] create_default_issue_types() pro Methodologie
+- [x] create_default_issue_statuses() pro Methodologie
+- [x] Issue-CRUD Routes (list, new, edit, detail, delete)
+- [x] Status-Transition Route
+- [x] Issue Types & Statuses Admin-Seiten
+- [x] Templates: list.html, form.html, detail.html
+- [x] Settings: issue_types.html, issue_statuses.html
+- [x] Alembic Migration (pm2_issue_system)
+
+#### Phase PM-3: Kanban Board ✅
+- [x] Kanban Board Route (kanban_board) mit Status als Spalten
+- [x] Move-API (kanban_move_issue) für Status-Änderungen
+- [x] Quick-Create API (kanban_quick_create) für Inline-Erstellung
+- [x] board.html Template mit responsivem Spalten-Layout
+- [x] SortableJS Drag & Drop zwischen Spalten
+- [x] Issue-Cards mit Typ-Icon, Key, Summary, Priorität, Bearbeiter
+- [x] Priorität-Indikatoren (farbige Leiste links)
+- [x] Filter (Typ, Bearbeiter, Priorität, Suche)
+- [x] View-Switcher (Liste/Board) in beiden Views
+- [x] _macros.html für wiederverwendbare Template-Komponenten
+- [x] Toast-Benachrichtigungen für Move/Create-Aktionen
+- [x] Leere-Spalten-Placeholder
+
+#### Phase PM-4: Backlog ✅
+- [x] Backlog Route mit Filter (Typ, Status, Bearbeiter, Priorität, Suche)
+- [x] Reorder-API für Drag & Drop Reihenfolge
+- [x] Bulk-Action-API (Status, Zuweisung, Priorität, Archivieren, Löschen)
+- [x] backlog.html Template mit SortableJS Drag & Drop
+- [x] Checkbox-Selection für Bulk-Aktionen
+- [x] Bulk-Actions-Toolbar (sticky am oberen Rand)
+- [x] View-Switcher (Liste/Board/Backlog) in allen Views
+- [x] Navigation Links in Project Detail
+- [x] Delete-Bestätigungs-Modal
+- [x] Toast-Benachrichtigungen für Aktionen
+
+#### Phase PM-5: Sprint-Management
+- [ ] Sprint Model (name, goal, dates)
+- [ ] Sprint starten/beenden
+- [ ] Sprint-Board
+
+#### Phase PM-6 bis PM-10: Erweitert
+- [ ] Kommentare, Attachments, Links
+- [ ] Epics & Progress-Tracking
+- [ ] Suche & Filter
+- [ ] Charts (Burndown, Velocity)
+- [ ] Konfigurierbare Workflows
+
+### Phase J: Template Builder UI ✅
+**Full Form Builder (Option C) implementation**
+
+#### C1: Enhanced Preset Form ✅
+- [x] Live preview panel showing task card with current form values
+- [x] Recurrence wizard with visual calendar date preview
+- [x] Tax type search dropdown with filtering
+- [x] Due date calculator showing next occurrences
+
+#### C2: Visual Category Tree ✅
+- [x] 3 views: Tree (grouped by tax type), Card (grid), Table (classic)
+- [x] Drag & drop reordering (SortableJS)
+- [x] Bulk selection with floating action bar
+- [x] Quick edit slide-out panel
+- [x] JSON export (includes custom fields)
+- [x] View persistence in localStorage
+
+#### C3: Custom Fields ✅
+- [x] PresetCustomField model (name, labels, type, required, options, conditions)
+- [x] TaskCustomFieldValue model for storing values
+- [x] CustomFieldType enum (text, textarea, number, date, select, checkbox)
+- [x] Custom Fields UI section in preset form
+- [x] Modal dialog for field creation/editing
+- [x] API endpoints for CRUD operations
+- [x] Template variables support ({{year}}, {{entity}}, etc.)
+
+#### C4: Import/Export Enhancement ✅
+- [x] Enhanced JSON export includes custom fields
+- [x] JSON import handles enhanced format with custom fields
+- [x] Import counts imported fields in message
+- [x] Conditional visibility fields (condition_field, condition_operator, condition_value)
+
+### Future Considerations
+- [ ] OIDC/Entra ID integration
+- [ ] Role mapping from Azure AD groups
+- [ ] Virus scanning for uploads
+- [ ] MS Teams notifications
+
+---
+
+## Session Log
+
+### 2025-12-28 — Session 1: Initial Setup
+
+**Completed:**
+- Reviewed existing Flask template codebase
+- Created Memory Bank documentation structure
+- Installed new dependencies (flask-migrate, openpyxl, python-dateutil)
+- Created all ProjectOps models
+- Added enums: TaskStatus, UserRole, EvidenceType, RecurrenceType
+- Extended User model with new roles and relationships
+- Initialized Alembic migrations
+- Generated and applied first migration
+
+### 2025-12-28 — Session 2: Core Features
+
+**Completed:**
+- Entity CRUD admin interface
+- TaxType CRUD admin interface  
+- User CRUD admin interface
+- Main dashboard with KPI cards
+- Task list view with filters
+- Task detail view with 4 tabs
+- Status change functionality
+- Calendar month view
+- Updated navigation
+- Seed command with sample data
+
+### 2025-12-28 — Session 3: Advanced Features
+
+**Completed:**
+- **Evidence Upload System:**
+  - File upload route with secure filename handling
+  - Link addition route
+  - File preview modal (PDF, images, text inline)
+  - Download route with proper MIME types
+  - Evidence deletion
+
+- **Comments System:**
+  - Add comment route
+  - Delete comment route (owner/admin only)
+  - User avatars and timestamps
+
+- **Audit Log Enhancement:**
+  - Color-coded action badges
+  - Icons for different action types
+  - Entity-scoped logging for evidence/comments
+
+- **UI Improvements:**
+  - Navbar with "ProjectOps" app name
+  - Green separator between logo and title
+  - Calendar preview popovers on month/year views
+  - Task list preview column with hover popovers
+
+- **Task Presets System:**
+  - TaskPreset model
+  - Admin management interface
+  - JSON data import (loadpresets command)
+  - Preset selection in task form
+
+- **Multi-Reviewer Approval System:**
+  - TaskReviewer model with approval tracking
+  - Multi-select reviewer field
+  - Individual approval/rejection workflow
+  - Approval progress bars
+  - Auto-transition logic
+  - Updated permission checks
+
+- **Documentation:**
+  - Updated Memory Bank docs
+  - Comprehensive README.md for GitHub
+
+### 2025-12-28 — Session 4: Team Management
+
+**Completed:**
+- **Team Model & Database:**
+  - Created Team model with name, description, color, manager
+  - Created team_members association table (many-to-many)
+  - Added owner_team_id and reviewer_team_id to Task model
+  - Generated and applied migration
+
+- **Admin Team Management:**
+  - Team list view with color indicators
+  - Team create/edit form with multi-select members
+  - Team soft-delete (deactivation)
+  - Added Teams link to admin navigation menu
+
+- **Task-Team Integration:**
+  - Task form with owner team and reviewer team selection
+  - Task detail shows team assignments
+  - is_reviewer() checks team membership for access control
+
+### 2025-12-31 — Session 6: Recurring Tasks (Phase H)
+
+**Completed:**
+- **TaskPreset Model Extended:**
+  - Added is_recurring, recurrence_frequency, recurrence_rrule fields
+  - Added recurrence_day_offset (day of period when task is due)
+  - Added recurrence_end_date for optional end date
+  - Added last_generated_date for tracking
+  - Added default_owner_id and default_entity_id with relationships
+  - RECURRENCE_FREQUENCIES constant with labels (DE/EN)
+
+- **Task Model Extended:**
+  - Added preset_id foreign key to task_preset
+  - Added is_recurring_instance boolean flag
+  - Added preset relationship with backref 'generated_tasks'
+
+- **RecurrenceService:**
+  - get_period_dates(frequency, year, day_offset) - generates period labels and due dates
+  - generate_tasks_from_preset(preset, year, entities, owner_id, force) - creates task instances
+  - generate_all_recurring_tasks(year, dry_run) - batch generation from all presets
+  - parse_rrule(rrule_string, start_date, count) - RRULE parsing via python-dateutil
+
+- **CLI Command:**
+  - `flask generate-recurring-tasks` with --year, --preset-id, --entity-id, --dry-run, --force options
+  - Dry-run shows what would be created without changes
+  - Supports single preset or all recurring presets
+
+- **Admin UI:**
+  - Preset form extended with recurrence settings card
+  - Toggle to enable recurring generation
+  - Frequency dropdown (monthly, quarterly, semi-annual, annual, custom RRULE)
+  - Day offset input, RRULE field for custom patterns
+  - Default entity and owner selection
+  - End date picker
+  - Shows last generated date and task count
+
+- **Task Detail:**
+  - Shows "Recurring" badge for is_recurring_instance tasks
+  - Links to source preset on hover
+
+- **Database Migration:**
+  - c3d4e5f6g7h8_add_recurring_task_fields.py applied
+
+---
+
+## Known Issues
+
+| Issue | Severity | Status |
+|-------|----------|--------|
+| None currently | — | — |
+
+---
+
+## Files Modified (Session 3 & 4)
+
+### Models
+- `models.py` — Added TaskReviewer model, Task multi-reviewer methods, Team model, team_members table, Task team fields
+
+### Routes (app.py)
+- `task_upload_evidence` — File upload handler
+- `task_add_link` — Link addition handler
+- `task_preview_evidence` — Inline file preview
+- `task_download_evidence` — File download
+- `task_delete_evidence` — Evidence deletion
+- `task_add_comment` — Comment creation
+- `task_delete_comment` — Comment deletion
+- `task_reviewer_action` — Individual reviewer approve/reject
+- `admin_teams` — Team list view
+- `admin_team_new` — Team creation
+- `admin_team_edit` — Team editing with member management
+- `admin_team_delete` — Team soft-delete
+- Updated `task_create` / `task_edit` for multi-reviewer and teams
+
+### Templates
+- `templates/tasks/form.html` — Multi-select reviewers, team selection
+- `templates/tasks/detail.html` — Evidence upload, comments, multi-reviewer display, team display
+- `templates/tasks/list.html` — Preview column with popovers
+- `templates/calendar.html` — Task preview popovers
+- `templates/calendar_year.html` — Task preview popovers
+- `templates/base.html` — App name in navbar, Teams link in admin menu
+- `templates/admin/presets.html` — Task preset management
+- `templates/admin/preset_form.html` — Preset create/edit
+- `templates/admin/teams.html` — Team list view (NEW)
+- `templates/admin/team_form.html` — Team create/edit form (NEW)
+
+### Migrations
+- `f34a3101bc19_add_taskreviewer_many_to_many_table_for_.py`
+- `76a36e71cb1c_add_team_model_and_task_team_assignments.py` (NEW)
+
+### Translations
+- `translations.py` — Added team-related translations
+
+---
+
+## Notes
+
+- Using Alembic for database migrations (Flask-Migrate wrapper)
+- Local Flask-Login auth for MVP, OIDC planned for Phase 2
+- PostgreSQL recommended for production, SQLite for development
+- Evidence files stored locally in uploads/ folder
+- Multi-reviewer requires ALL reviewers to approve before task is approved
+- ANY reviewer rejection immediately rejects the entire task
+
+```
+
+### docs/productContext.md
+```markdown
+# Product Context
+
+> Deloitte ProjectOps — Tax Compliance Calendar & Deadline Tracking
+
+## Purpose
+
+The **Deloitte ProjectOps** is a web application designed to centralize tax compliance deadline management for enterprises. It provides a single platform to:
+
+- **Plan** annual tax compliance calendars with all relevant deadlines
+- **Assign** tasks to responsible owners and **multiple reviewers**
+- **Track** progress against due dates with visual status indicators
+- **Review** submitted work through a structured **multi-reviewer approval process**
+- **Evidence** compliance with document uploads and audit trails
+
+### Core Promise
+
+> One place to plan, assign, track, review, and evidence tax compliance deadlines across entities and tax types.
+
+---
+
+## Target Users
+
+### Primary Personas
+
+| Role | Responsibilities | Key Needs |
+|------|------------------|-----------|
+| **Tax Manager (Owner)** | Accountable for compliance calendar completeness and reporting | Dashboard overview, KPIs, assignment tools, status reports |
+| **Contributor (Preparer)** | Prepares tasks, uploads evidence, submits for review | Task list, clear due dates, easy upload, status updates |
+| **Reviewer (Four-Eyes)** | Reviews submissions, requests changes, completes tasks | Review queue, comparison tools, approval workflow |
+| **Admin** | Configures entities, templates, tax types, users, permissions | CRUD interfaces, import tools, user management |
+| **Read-Only/Audit** | Views status and evidence, cannot modify | Read-only access, export capability |
+
+### User Roles (RBAC)
+
+```
+admin       Full access to all features and settings
+manager     Can assign tasks, view all entities, run reports
+reviewer    Can review and complete tasks (four-eyes)
+preparer    Can work on assigned tasks, upload evidence
+readonly    View-only access to task status and evidence
+```
+
+### Permission Scopes
+
+Access can be scoped by:
+- **Entity** — Which legal entities the user can see/manage
+- **Jurisdiction** — Country or regional filtering
+- **Tax Type** — Specific tax categories (KSt, USt, GewSt, etc.)
+
+---
+
+## Problems Solved
+
+### Current Pain Points (Without the App)
+
+| Problem | Impact | Solution |
+|---------|--------|----------|
+| **Scattered Excel files** | Deadlines missed, no single source of truth | Centralized database with web access |
+| **No visibility** | Managers don't know status until it's too late | Real-time dashboard with KPIs |
+| **Missing evidence** | Cannot prove compliance during audits | Attached documents with immutable log |
+| **Unclear ownership** | Tasks fall through the cracks | Explicit owner/reviewer assignment |
+| **Manual tracking** | Time-consuming status updates | Automatic due-soon/overdue detection |
+| **No audit trail** | Cannot explain what happened and when | Complete activity logging |
+| **Email chaos** | Evidence buried in inboxes | Centralized evidence storage |
+
+### Value Proposition
+
+1. **Reduce compliance risk** — Never miss a tax deadline again
+2. **Save time** — Automated status tracking and reminders
+3. **Prove compliance** — Immutable audit trail for regulators
+4. **Improve visibility** — Dashboard shows real-time status
+5. **Enable collaboration** — Clear handoffs between preparer/reviewer
+
+---
+
+## Key Features
+
+### Data Management (CRUD)
+
+#### Entities (Gesellschaften)
+
+| Field | Description |
+|-------|-------------|
+| Name | Legal entity name |
+| Country | Jurisdiction (DE, AT, CH, etc.) |
+| Group | Optional parent entity grouping |
+| Active | Soft delete flag |
+
+#### Tax Types (Steuerarten)
+
+| Field | Description |
+|-------|-------------|
+| Code | Short identifier (KSt, USt, GewSt) |
+| Name | Full name (Körperschaftsteuer) |
+
+#### Task Templates
+
+| Field | Description |
+|-------|-------------|
+| Tax Type | Associated tax category |
+| Keyword | Short task identifier |
+| Description | Detailed task description |
+| Default Recurrence | monthly, quarterly, annual |
+| Default Due Rule | Day of month, end of month, etc. |
+
+#### Tasks (Calendar Items)
+
+| Field | Description |
+|-------|-------------|
+| Template | Source template |
+| Entity | Associated legal entity |
+| Year | Fiscal year |
+| Due Date | Deadline |
+| Status | Draft, Submitted, In Review, Completed |
+| Owner | Responsible user |
+| Reviewer | Four-eyes reviewer |
+| Submitted At | Timestamp of submission |
+| Completed At | Timestamp of completion |
+
+#### Evidence
+
+| Field | Description |
+|-------|-------------|
+| Task | Parent task |
+| Type | File or Link |
+| Path/URL | File location or external URL |
+| Uploaded By | User who added |
+| Uploaded At | Timestamp |
+
+#### References
+
+- **Anträge** — Law-based applications library
+- **Kommentare** — Structured notes mapped to law references
+
+---
+
+### User Experience
+
+#### Dashboard
+
+- **KPI Cards**: #Overdue, #Due Soon, Completion Rate, Awaiting Review
+- **Filters**: Year/Period, Entity, Tax Type, Owner
+- **My Tasks Panel**: User's assigned tasks with quick actions
+- **Recent Activity**: Latest changes across the organization
+
+#### Calendar View
+
+- **Month/Week Toggle**: Switch between views
+- **Color-Coded Events**: Status indicated by Deloitte colors
+- **Click-to-Open**: Task drawer with quick actions
+- **Entity Filter**: Show tasks for specific entities
+
+#### Task List
+
+- **Sortable Columns**: Due date, status, owner, entity
+- **Filters**: Status, tax type, entity, date range
+- **Batch Operations**: Reassign, change due date, export
+- **Row Details**: Entity, tax type, keyword, due date, status badge, owner, reviewer
+
+#### Task Detail
+
+- **Header**: Status badge, due date, entity, tax type
+- **Tabs**:
+  - Overview: Description, checklist, recurrence info
+  - Evidence: Upload files, add links
+  - Comments: Discussion thread
+  - Audit Log: Read-only activity history
+
+#### Admin Interfaces
+
+- **User Management**: Create, edit, deactivate users
+- **Entity Management**: Add/edit legal entities
+- **Tax Type Catalog**: Manage tax categories
+- **Template Management**: View/edit task templates
+- **Excel Import**: Upload and process YEAR/Anträge/Kommentare
+
+---
+
+## Status Workflow
+
+### Task Lifecycle
+
+```
+┌─────────┐     ┌───────────┐     ┌───────────┐     ┌──────────┐     ┌───────────┐
+│  Draft  │────▶│ Submitted │────▶│ In Review │────▶│ Approved │────▶│ Completed │
+└─────────┘     └───────────┘     └─────┬─────┘     └──────────┘     └───────────┘
+                      ▲                 │
+                      │                 │
+                      └─────────────────┘
+                       (Rework Required)
+```
+
+### Multi-Reviewer Approval (NEW)
+
+When multiple reviewers are assigned to a task:
+
+1. **All Must Approve:** Task only transitions to "Approved" when every assigned reviewer has approved
+2. **Any Can Reject:** If any single reviewer rejects, the entire task is rejected
+3. **Progress Tracking:** Visual progress bar shows `X/Y` reviewers approved
+4. **Individual Actions:** Each reviewer has their own approve/reject buttons
+5. **Audit Trail:** Each approval/rejection is logged with timestamp and optional note
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        In Review                             │
+│                                                              │
+│  Reviewer 1: ✅ Approved (28.12.2025 14:30)                 │
+│  Reviewer 2: ⏳ Pending                                      │
+│  Reviewer 3: ⏳ Pending                                      │
+│                                                              │
+│  Progress: [████░░░░░░] 1/3 approved                        │
+│                                                              │
+│  → When all 3 approve → Auto-transition to "Approved"       │
+│  → If any rejects → Immediate transition to "Rejected"      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Automatic Overlays
+
+| Overlay | Condition | Color |
+|---------|-----------|-------|
+| **Due Soon** | Due date within 7 days | Orange |
+| **Overdue** | Past due date, not completed | Red |
+
+---
+
+## Reporting
+
+### MVP Reports
+
+| Report | Description |
+|--------|-------------|
+| **Task Export** | Filtered task list to Excel |
+| **Status Summary** | Count by status and entity |
+
+### Phase 2 Reports
+
+| Report | Description |
+|--------|-------------|
+| **Compliance Heatmap** | Entity × Month grid with status colors |
+| **Overdue Aging** | Tasks grouped by days overdue (0-7, 8-30, 31+) |
+| **On-Time Rate** | Completion rate by tax type |
+| **Workload Report** | Tasks due in next 30/60/90 days by owner |
+
+---
+
+## Import/Export
+
+### Excel Import
+
+**Source Sheets:**
+- **YEAR**: Task catalog with tax types, keywords, due dates
+- **Anträge**: Law-based applications library
+- **Kommentare**: Reference notes
+
+**Import Process:**
+1. Upload workbook
+2. Validate expected headers
+3. Normalize task rows
+4. Create/update templates
+5. Generate tasks for selected year + entities
+6. Display import report
+
+### Excel Export
+
+- Filtered task list download
+- Includes: Entity, Tax Type, Keyword, Due Date, Status, Owner, Reviewer
+- Format: XLSX with Deloitte branding
+
+---
+
+## Localization
+
+### Supported Languages
+
+| Code | Language | Status |
+|------|----------|--------|
+| `de` | German | Default |
+| `en` | English | Available |
+
+### Key UI Terms
+
+| German | English |
+|--------|---------|
+| Aufgaben | Tasks |
+| Fällig | Due |
+| Überfällig | Overdue |
+| Eingereicht | Submitted |
+| In Prüfung | In Review |
+| Abgeschlossen | Completed |
+| Gesellschaft | Entity |
+| Steuerart | Tax Type |
+
+```
+
+### docs/techContext.md
+```markdown
+# Technical Context
+
+> Development environment, dependencies, and project structure for Deloitte ProjectOps
+
+## Tech Stack
+
+### Backend
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Framework** | Flask 3.x | Web application framework |
+| **ORM** | SQLAlchemy (Flask-SQLAlchemy) | Database abstraction |
+| **Migrations** | Alembic (Flask-Migrate) | Schema version control |
+| **Authentication** | Flask-Login | Session management |
+| **Forms** | Flask-WTF + WTForms | Form handling & CSRF |
+| **Password Hashing** | Werkzeug | Secure password storage |
+| **Excel Processing** | openpyxl | Import/export Excel files |
+| **PDF Export** | WeasyPrint | HTML to PDF conversion |
+| **Environment** | python-dotenv | Configuration management |
+| **WebSocket** | Flask-SocketIO + eventlet | Real-time notifications |
+| **Date Handling** | python-dateutil | RRULE parsing, date calculations |
+| **iCal Generation** | icalendar | Calendar feed generation |
+
+### Frontend
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **CSS Framework** | Bootstrap 5.3 | Responsive UI components |
+| **Icons** | Bootstrap Icons + Deloitte Icons | UI iconography |
+| **Templating** | Jinja2 | Server-side rendering |
+| **JavaScript** | Vanilla JS + Socket.IO Client | Interactivity, WebSocket |
+| **Charts** | Chart.js 4.x (CDN) | Dashboard visualizations |
+
+### Database
+
+| Environment | Database | Notes |
+|-------------|----------|-------|
+| Development | SQLite | File-based, no setup |
+| Production | PostgreSQL | Recommended for enterprise |
+
+### Internationalization
+
+| Component | Implementation |
+|-----------|----------------|
+| **Translation System** | Custom `translations.py` dictionary |
+| **Supported Languages** | German (de), English (en) |
+| **Default Language** | German (de) |
+| **Language Storage** | Flask session (`session['lang']`) |
+| **Template Access** | `{{ t('key') }}` via context processor |
+
+---
+
+## Project Structure
+
+```
+deloitte-projectops-calendar/
+├── app.py                  # Application factory & routes (~3100 lines)
+├── config.py               # Configuration classes
+├── models.py               # SQLAlchemy models (~850 lines)
+├── services.py             # Business logic services (~650 lines)
+├── translations.py         # i18n dictionary (DE/EN)
+├── init_db.py              # Database initialization
+├── Pipfile                 # Dependencies (Pipenv)
+├── Pipfile.lock            # Locked dependencies
+├── .env                    # Environment variables (not in git)
+├── .flaskenv               # Flask CLI configuration
+│
+├── instance/               # Instance-specific files
+│   └── app.db              # SQLite database (dev)
+│
+├── migrations/             # Alembic migrations
+│   ├── alembic.ini
+│   ├── env.py
+│   └── versions/
+│       ├── ff00c7cfda61_add_projectops_calendar_models.py
+│       ├── ebe34cad8512_add_multi_stage_approval_workflow_fields.py
+│       ├── 76fd77636f22_add_taskpreset_model_for_predefined_.py
+│       ├── f34a3101bc19_add_taskreviewer_many_to_many_table_for_.py
+│       ├── 76a36e71cb1c_add_team_model_and_task_team_assignments.py
+│       ├── bc78eb8f008d_add_multilingual_name_fields_to_team_.py
+│       └── c3d4e5f6g7h8_add_recurring_task_fields.py
+│
+├── docs/                   # Memory Bank documentation
+│   ├── technicalConcept.md
+│   ├── techContext.md
+│   ├── systemPatterns.md
+│   ├── productContext.md
+│   ├── progress.md
+│   └── activeContext.md
+│
+├── tests/                  # Unit test suite
+│   ├── conftest.py         # Pytest fixtures & test app
+│   ├── factories.py        # Factory Boy model factories
+│   └── unit/               # Unit tests (536 tests)
+│       ├── test_models.py
+│       ├── test_task_model.py
+│       ├── test_project_methods.py
+│       ├── test_services.py
+│       ├── test_all_services.py
+│       ├── test_middleware.py
+│       ├── test_translations.py
+│       └── ...
+│
+├── data/                   # JSON data files for presets
+│   ├── steuerarten_aufgaben.json
+│   └── Antraege.json
+│
+├── scripts/                # Development & release scripts
+│   ├── check_memory_bank.py    # Memory Bank reader for releases
+│   ├── release.py              # Release automation (commit, tag, push)
+│   ├── create_demo_tenants.py  # Demo tenant creation
+│   ├── create_full_demo_data.py
+│   ├── create_sample_issues.py
+│   ├── create_sample_projects.py
+│   ├── create_sample_sprints.py
+│   ├── update_memory_bank.py   # AI-assisted Memory Bank updates
+│   └── memory_bank_prompt.md   # Prompt template for AI updates
+│
+├── static/                 # Static assets
+│   ├── Color Guide/        # Deloitte color documentation
+│   ├── Deloitte Special Case Web Icons/
+│   │   ├── SVG files/
+│   │   └── Web font/
+│   ├── Deloitte-Master-Logo/
+│   │   └── DIGITAL/
+│   ├── favicon/
+│   └── Mobile App Icons/
+│
+├── templates/              # Jinja2 templates
+│   ├── base.html           # Master layout
+│   ├── index.html          # Home page
+│   ├── login.html          # Authentication
+│   ├── dashboard.html      # Main dashboard
+│   ├── calendar.html       # Month calendar
+│   ├── calendar_year.html  # Year calendar
+│   ├── calendar_week.html  # Week calendar
+│   ├── tasks/
+│   │   ├── list.html       # Task list with filters
+│   │   ├── detail.html     # Task detail with tabs
+│   │   └── form.html       # Create/edit form
+│   ├── admin/
+│   │   ├── dashboard.html
+│   │   ├── users.html
+│   │   ├── user_form.html
+│   │   ├── entities.html
+│   │   ├── entity_form.html
+│   │   ├── tax_types.html
+│   │   ├── tax_type_form.html
+│   │   ├── presets.html
+│   │   └── preset_form.html
+│   └── errors/
+│       ├── 404.html
+│       └── 500.html
+│
+└── uploads/                # User uploads (evidence files)
+    └── task_*/             # Per-task folders with unique filenames
+```
+
+### Planned Structure Additions
+
+```
+├── blueprints/             # Modular route handlers
+│   ├── __init__.py
+│   ├── auth.py             # Login/logout routes
+│   ├── main.py             # Dashboard, calendar
+│   ├── tasks.py            # Task CRUD, status changes
+│   ├── admin.py            # Entity, user, template management
+│   └── api.py              # REST endpoints (optional)
+│
+├── services/               # Business logic layer
+│   ├── __init__.py
+│   ├── task_service.py     # Task lifecycle management
+│   ├── import_service.py   # Excel import logic
+│   ├── export_service.py   # Excel export logic
+│   └── audit_service.py    # Audit logging
+│
+├── forms/                  # WTForms form classes
+│   ├── __init__.py
+│   ├── auth_forms.py
+│   ├── task_forms.py
+│   ├── entity_forms.py
+│   └── import_forms.py
+│
+└── utils/                  # Helper utilities
+    ├── __init__.py
+    ├── decorators.py       # Custom decorators
+    ├── helpers.py          # Utility functions
+    └── validators.py       # Custom validators
+```
+
+---
+
+## Dependencies
+
+### Current (Installed)
+
+```toml
+[packages]
+flask = "*"
+flask-sqlalchemy = "*"
+flask-login = "*"
+flask-wtf = "*"
+flask-migrate = "*"
+flask-socketio = "*"
+werkzeug = "*"
+python-dotenv = "*"
+openpyxl = "*"
+python-dateutil = "*"
+weasyprint = "*"
+eventlet = "*"
+icalendar = "*"
+
+[dev-packages]
+pytest = "*"              # Testing framework
+pytest-cov = "*"          # Coverage reporting
+pytest-flask = "*"        # Flask test helpers
+factory-boy = "*"         # Test data factories
+
+[requires]
+python_version = "3.14"
+```
+
+### Production Additions (Deployment)
+
+```toml
+[packages]
+# Production database
+psycopg2-binary = "*"        # PostgreSQL adapter
+
+# Production server
+gunicorn = "*"
+
+# Background jobs (Phase 2)
+apscheduler = "*"            # Simple scheduler
+# OR
+# celery = "*"               # Distributed tasks
+# redis = "*"                # Message broker
+```
+
+---
+
+## Development Setup
+
+### Prerequisites
+
+- Python 3.9+
+- Pipenv (`pip install pipenv`)
+- Git
+
+### Initial Setup
+
+```bash
+# Clone repository
+git clone https://github.com/mkschulze/deloitte-projectops.git
+cd deloitte-projectops
+
+# Install dependencies
+pipenv install
+
+# Activate virtual environment
+pipenv shell
+
+# Create .env file
+cat > .env << EOF
+FLASK_APP=app.py
+FLASK_ENV=development
+SECRET_KEY=your-secret-key-here
+DATABASE_URL=sqlite:///instance/app.db
+EOF
+
+# Initialize database
+flask initdb
+
+# Create admin user
+flask createadmin
+
+# Run development server
+flask run
+```
+
+### Database Migrations (Alembic)
+
+```bash
+# Initialize migrations (first time only)
+flask db init
+
+# Create migration after model changes
+flask db migrate -m "Description of changes"
+
+# Apply migrations
+flask db upgrade
+
+# Rollback one version
+flask db downgrade
+```
+
+### Running Tests
+
+```bash
+# Run all tests (598 tests, ~35% coverage as of v1.18.0)
+pytest
+
+# Run with coverage
+pytest --cov=. --cov-report=term-missing
+
+# Run specific test file
+pytest tests/unit/test_models.py
+
+# Run with verbose output
+pytest -v
+```
+
+### Test Structure
+
+```
+tests/
+├── conftest.py           # App, db, user fixtures
+├── factories.py          # Factory Boy factories for models
+└── unit/
+    ├── test_models.py          # Model tests
+    ├── test_services.py        # Business logic tests
+    ├── test_translations.py    # i18n tests
+    ├── test_config.py          # Configuration tests
+    ├── test_methodology.py     # Project methodology tests
+    ├── test_sprint_board.py    # Sprint & board tests
+    ├── test_issue_workflow.py  # Issue workflow tests
+    ├── test_tenancy.py         # Multi-tenant tests
+    ├── test_permissions.py     # RBAC tests
+    └── test_calendar.py        # Calendar feature tests
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `FLASK_APP` | Application entry point | `app.py` |
+| `FLASK_ENV` | Environment mode | `development` |
+| `SECRET_KEY` | Session encryption key | (required) |
+| `DATABASE_URL` | Database connection string | SQLite |
+| `UPLOAD_FOLDER` | Path for file uploads | `uploads/` |
+| `MAX_CONTENT_LENGTH` | Max upload size (bytes) | 16MB |
+
+---
+
+## Deloitte Branding Integration
+
+### CSS Variables Available
+
+The base template includes the complete Deloitte 2024 color palette:
+
+```css
+/* Primary */
+--dtt-green: #86BC25;
+--dtt-black: #000000;
+
+/* Status Colors */
+--dtt-danger-red: #DA291C;      /* Overdue */
+--dtt-warning-orange: #ED8B00;  /* Due Soon */
+--dtt-sec-blue-4: #0076A8;      /* Submitted */
+--dtt-sec-teal-6: #007680;      /* In Review */
+--dtt-sec-green-5: #009A44;     /* Completed */
+
+/* Bootstrap Mapped */
+--bs-primary: var(--dtt-green);
+--bs-danger: var(--dtt-danger-red);
+--bs-success: var(--dtt-sec-green-5);
+```
+
+### Status Badge Classes (Implemented)
+
+```css
+/* Status colors using Deloitte palette */
+.badge-status--draft { background-color: var(--dtt-cool-gray-6); }
+.badge-status--due-soon { background-color: var(--dtt-warning-orange); }
+.badge-status--overdue { background-color: var(--dtt-danger-red); }
+.badge-status--submitted { background-color: var(--dtt-sec-blue-4); }
+.badge-status--in-review { background-color: var(--dtt-sec-teal-6); }
+.badge-status--approved { background-color: var(--dtt-sec-green-5); }
+.badge-status--completed { background-color: var(--dtt-sec-green-5); }
+.badge-status--rejected { background-color: var(--dtt-danger-red); }
+```
+
+---
+
+## Database Models
+
+### Core Models (models.py ~650 lines)
+
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| `User` | User accounts | email, name, role, password_hash |
+| `Entity` | Legal entities | name, country, group_id, is_active |
+| `TaxType` | Tax categories | code, name, description |
+| `TaskTemplate` | Reusable templates | keyword, tax_type_id, description |
+| `Task` | Core tasks | title, entity_id, due_date, status, owner_id |
+| `TaskReviewer` | Multi-reviewer tracking | task_id, user_id, has_approved, approved_at |
+| `TaskEvidence` | File/link attachments | task_id, evidence_type, file_path, url |
+| `Comment` | Discussion threads | task_id, text, created_by_id |
+| `TaskPreset` | Predefined templates | title, category, tax_type, description |
+| `AuditLog` | Activity logging | action, entity_type, entity_id, user_id |
+| `Team` | User grouping | name, description, color, manager_id, is_active |
+
+### TaskReviewer Model (Multi-Reviewer Support)
+
+```python
+class TaskReviewer(db.Model):
+    __tablename__ = 'task_reviewer'
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    order = db.Column(db.Integer, default=1)
+    has_approved = db.Column(db.Boolean, default=False)
+    approved_at = db.Column(db.DateTime)
+    approval_note = db.Column(db.Text)
+    has_rejected = db.Column(db.Boolean, default=False)
+    rejected_at = db.Column(db.DateTime)
+    rejection_note = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User')
+    
+    # Unique constraint: one reviewer per task
+    __table_args__ = (db.UniqueConstraint('task_id', 'user_id', name='unique_task_reviewer'),)
+```
+
+### Team Model (User Grouping)
+
+```python
+# Association table for team members
+team_members = db.Table('team_members',
+    db.Column('team_id', db.Integer, db.ForeignKey('team.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('joined_at', db.DateTime, default=datetime.utcnow),
+    db.Column('is_team_lead', db.Boolean, default=False)
+)
+
+class Team(db.Model):
+    __tablename__ = 'team'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    description = db.Column(db.Text)
+    color = db.Column(db.String(7), default='#86BC25')  # Deloitte Green
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    manager_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+    # Relationships
+    manager = db.relationship('User', foreign_keys=[manager_id])
+    members = db.relationship('User', secondary=team_members, lazy='dynamic',
+                             backref=db.backref('teams', lazy='dynamic'))
+    owned_tasks = db.relationship('Task', back_populates='owner_team', 
+                                  foreign_keys='Task.owner_team_id')
+    
+    # Methods
+    def add_member(self, user, is_lead=False): ...
+    def remove_member(self, user): ...
+    def is_member(self, user): ...
+    def get_member_count(self): ...
+```
+
+### Task Team Fields
+
+```python
+# Added to Task model
+owner_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True, index=True)
+reviewer_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
+
+owner_team = db.relationship('Team', back_populates='owned_tasks', foreign_keys=[owner_team_id])
+reviewer_team = db.relationship('Team', foreign_keys=[reviewer_team_id])
+
+# Methods
+def is_reviewer(self, user):
+    """Check if user is a direct reviewer OR member of reviewer_team"""
+def is_reviewer_via_team(self, user):
+    """Check if user can review via team membership"""
+def get_owner_display(self):
+    """Return owner user name or team name"""
+def is_assigned_to_user(self, user):
+    """Check if user is assigned directly or via team"""
+```
+
+---
+
+## IDE Configuration
+
+### VSCode Recommended Extensions
+
+- Python (Microsoft)
+- Pylance
+- Flask Snippets
+- Jinja2 Snippet Kit
+- SQLite Viewer
+- GitLens
+
+### VSCode Settings (`.vscode/settings.json`)
+
+```json
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.formatting.provider": "black",
+  "editor.formatOnSave": true,
+  "files.associations": {
+    "*.html": "jinja-html"
+  }
+}
+```
+
+```
+
+### docs/systemPatterns.md
+```markdown
+# System Patterns
+
+> Architecture patterns, conventions, and implementation guidelines for Deloitte ProjectOps
+
+## Architecture Overview
+
+### Application Factory Pattern
+
+The application uses Flask's application factory pattern for flexibility and testability:
+
+```python
+# app.py
+def create_app(config_name='default'):
+    app = Flask(__name__)
+    app.config.from_object(config[config_name])
+    
+    # Initialize extensions
+    db.init_app(app)
+    login_manager.init_app(app)
+    
+    # Register blueprints
+    # from blueprints.auth import auth_bp
+    # app.register_blueprint(auth_bp)
+    
+    return app
+
+app = create_app()
+```
+
+### Blueprint Structure (Planned)
+
+```python
+# blueprints/tasks.py
+from flask import Blueprint
+
+tasks_bp = Blueprint('tasks', __name__, url_prefix='/tasks')
+
+@tasks_bp.route('/')
+@login_required
+def task_list():
+    # ...
+
+@tasks_bp.route('/<int:task_id>')
+@login_required
+def task_detail(task_id):
+    # ...
+```
+
+---
+
+## Design Patterns
+
+### Decorator Pattern for Authorization
+
+```python
+# Current implementation in app.py
+from functools import wraps
+from flask import flash, redirect, url_for
+from flask_login import current_user
+
+def admin_required(f):
+    """Decorator that requires admin role."""
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if current_user.role != 'admin':
+            flash('Zugriff verweigert.', 'danger')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Usage
+@app.route('/admin/users')
+@admin_required
+def admin_users():
+    # ...
+```
+
+### Extended RBAC Decorators (Planned)
+
+```python
+# utils/decorators.py
+def role_required(*roles):
+    """Decorator requiring one of the specified roles."""
+    def decorator(f):
+        @wraps(f)
+        @login_required
+        def decorated_function(*args, **kwargs):
+            if current_user.role not in roles:
+                flash('Zugriff verweigert.', 'danger')
+                return redirect(url_for('main.index'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+# Usage
+@tasks_bp.route('/<int:task_id>/complete', methods=['POST'])
+@role_required('admin', 'reviewer', 'manager')
+def complete_task(task_id):
+    # ...
+```
+
+### Service Layer Pattern
+
+```python
+# services/task_service.py
+class TaskService:
+    """Business logic for task operations."""
+    
+    @staticmethod
+    def change_status(task_id, new_status, user):
+        """Change task status with validation and audit logging."""
+        task = Task.query.get_or_404(task_id)
+        
+        # Validate transition
+        if not TaskService._is_valid_transition(task.status, new_status):
+            raise ValueError(f"Invalid transition: {task.status} → {new_status}")
+        
+        old_status = task.status
+        task.status = new_status
+        
+        # Update timestamps
+        if new_status == 'submitted':
+            task.submitted_at = datetime.utcnow()
+        elif new_status == 'completed':
+            task.completed_at = datetime.utcnow()
+        
+        # Audit log
+        AuditService.log_change(
+            user=user,
+            action='STATUS_CHANGE',
+            object_type='task',
+            object_id=task.id,
+            old_value=old_status,
+            new_value=new_status
+        )
+        
+        db.session.commit()
+        return task
+```
+
+---
+
+## URL Structure
+
+### Current Routes
+
+| URL | Method | View Function | Auth |
+|-----|--------|---------------|------|
+| `/` | GET | `index` | No |
+| `/login` | GET, POST | `login` | No |
+| `/logout` | GET | `logout` | Yes |
+| `/set_language/<lang>` | GET | `set_language` | No |
+| `/admin/dashboard` | GET | `admin_dashboard` | Admin |
+| `/admin/users` | GET | `admin_users` | Admin |
+
+### Planned URL Structure
+
+```
+Authentication
+  /login                    GET, POST   Login form
+  /logout                   GET         Logout
+
+Main
+  /                         GET         Dashboard
+  /calendar                 GET         Calendar view
+  /calendar/<int:year>/<int:month>
+
+Tasks
+  /tasks                    GET         Task list
+  /tasks/<int:id>           GET         Task detail
+  /tasks/<int:id>/edit      GET, POST   Edit task
+  /tasks/<int:id>/status    POST        Change status
+  /tasks/<int:id>/evidence  POST        Upload evidence
+  /tasks/<int:id>/comment   POST        Add comment
+
+Admin
+  /admin                    GET         Admin dashboard
+  /admin/users              GET         User list
+  /admin/users/new          GET, POST   Create user
+  /admin/users/<int:id>     GET, POST   Edit user
+  /admin/entities           GET         Entity list
+  /admin/entities/new       GET, POST   Create entity
+  /admin/entities/<int:id>  GET, POST   Edit entity
+  /admin/tax-types          GET         Tax type list
+  /admin/templates          GET         Template list
+  /admin/import             GET, POST   Excel import
+
+API (optional)
+  /api/tasks                GET         Task list (JSON)
+  /api/tasks/<int:id>       GET, PUT    Task operations
+  /api/calendar-data        GET         Calendar events (JSON)
+```
+
+---
+
+## Template Inheritance
+
+### Hierarchy
+
+```
+base.html
+├── index.html
+├── login.html
+├── dashboard.html (new)
+├── calendar.html (new)
+├── tasks/
+│   ├── list.html
+│   └── detail.html
+├── admin/
+│   ├── dashboard.html
+│   ├── users.html
+│   ├── entities.html
+│   ├── tax_types.html
+│   ├── templates.html
+│   └── import.html
+└── errors/
+    ├── 404.html
+    └── 500.html
+```
+
+### Base Template Blocks
+
+```jinja2
+{# base.html provides these blocks #}
+{% block title %}{% endblock %}      {# Page title #}
+{% block extra_css %}{% endblock %}  {# Additional CSS #}
+{% block content %}{% endblock %}    {# Main content #}
+{% block extra_js %}{% endblock %}   {# Additional JavaScript #}
+```
+
+### Example Child Template
+
+```jinja2
+{# templates/tasks/list.html #}
+{% extends "base.html" %}
+
+{% block title %}{{ t('tasks') }} - {{ app_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .task-row:hover { background-color: var(--dtt-green-pale); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h1>{{ t('tasks') }}</h1>
+    {# Task list content #}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Task-specific JavaScript
+</script>
+{% endblock %}
+```
+
+---
+
+## Database Relationships
+
+### Current Models
+
+```python
+# models.py
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    name = db.Column(db.String(100))
+    password_hash = db.Column(db.String(256))
+    role = db.Column(db.String(20), default='user')
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime)
+    
+    # Relationships
+    audit_logs = db.relationship('AuditLog', backref='user', lazy='dynamic')
+
+class AuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    action = db.Column(db.String(50))
+    object_type = db.Column(db.String(50))
+    object_id = db.Column(db.Integer)
+    entity_name = db.Column(db.String(200))
+    old_value = db.Column(db.Text)
+    new_value = db.Column(db.Text)
+    ip_address = db.Column(db.String(50))
+    user_agent = db.Column(db.String(500))
+```
+
+### Planned Model Relationships
+
+```python
+# Planned relationships for ProjectOps models
+
+Entity (1) ─────< (N) Task
+    │
+    └── entity_id FK in tasks table
+
+TaskTemplate (1) ─────< (N) Task
+    │
+    └── template_id FK in tasks table
+
+TaxType (1) ─────< (N) TaskTemplate
+    │
+    └── tax_type_id FK in task_templates table
+
+User (1) ─────< (N) Task (as owner)
+    │
+    └── owner_id FK in tasks table
+
+User (1) ─────< (N) Task (as reviewer)
+    │
+    └── reviewer_id FK in tasks table
+
+Task (1) ─────< (N) TaskEvidence
+    │
+    └── task_id FK in task_evidence table
+
+Task (1) ─────< (N) Comment
+    │
+    └── task_id FK in comments table
+```
+
+---
+
+## Session Management
+
+### Language Preference
+
+```python
+# Stored in Flask session
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    if lang in app.config.get('SUPPORTED_LANGUAGES', ['de', 'en']):
+        session['lang'] = lang
+    return redirect(request.referrer or url_for('index'))
+
+# Accessed via context processor
+@app.context_processor
+def inject_globals():
+    lang = session.get('lang', 'de')
+    return {
+        'lang': lang,
+        't': lambda key: get_translation(key, lang)
+    }
+```
+
+### User Session (Flask-Login)
+
+```python
+# Login manager configuration
+login_manager = LoginManager()
+login_manager.login_view = 'login'
+login_manager.login_message = 'Bitte melden Sie sich an.'
+login_manager.login_message_category = 'warning'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Login action
+login_user(user, remember=form.remember.data)
+
+# Logout action
+logout_user()
+```
+
+---
+
+## Flash Message Pattern
+
+### Categories Used
+
+| Category | Bootstrap Class | Usage |
+|----------|-----------------|-------|
+| `success` | `alert-success` | Action completed successfully |
+| `danger` | `alert-danger` | Error or access denied |
+| `warning` | `alert-warning` | Caution or login required |
+| `info` | `alert-info` | Informational message |
+
+### Template Implementation
+
+```jinja2
+{# In base.html #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+```
+
+### Usage in Views
+
+```python
+# Success message
+flash('Aufgabe erfolgreich aktualisiert.', 'success')
+
+# Error message
+flash('Fehler beim Speichern.', 'danger')
+
+# Warning message
+flash('Bitte füllen Sie alle Pflichtfelder aus.', 'warning')
+```
+
+---
+
+## Error Handling
+
+### HTTP Error Handlers
+
+```python
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('errors/404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('errors/500.html'), 500
+```
+
+### Form Validation Errors
+
+```jinja2
+{# Display field errors #}
+{% if form.email.errors %}
+    {% for error in form.email.errors %}
+    <span class="text-danger">{{ error }}</span>
+    {% endfor %}
+{% endif %}
+```
+
+### Business Logic Errors
+
+```python
+# In services, raise exceptions
+class TaskService:
+    @staticmethod
+    def change_status(task_id, new_status, user):
+        task = Task.query.get_or_404(task_id)
+        
+        if not TaskService._can_change_status(task, user):
+            raise PermissionError("User cannot change this task's status")
+        
+        if not TaskService._is_valid_transition(task.status, new_status):
+            raise ValueError(f"Invalid status transition")
+        
+        # ... proceed with change
+
+# In views, catch and flash
+@tasks_bp.route('/<int:id>/status', methods=['POST'])
+@login_required
+def change_status(id):
+    try:
+        TaskService.change_status(id, request.form['status'], current_user)
+        flash('Status aktualisiert.', 'success')
+    except PermissionError as e:
+        flash('Keine Berechtigung.', 'danger')
+    except ValueError as e:
+        flash(str(e), 'warning')
+    return redirect(url_for('tasks.task_detail', id=id))
+```
+
+---
+
+## Audit Logging Pattern
+
+### Helper Function
+
+```python
+def log_audit(action, entity_type, entity_id, entity_name=None, 
+              old_value=None, new_value=None):
+    """Create an audit log entry."""
+    log = AuditLog(
+        user_id=current_user.id if current_user.is_authenticated else None,
+        action=action,
+        object_type=entity_type,
+        object_id=entity_id,
+        entity_name=entity_name,
+        old_value=old_value,
+        new_value=new_value,
+        ip_address=request.remote_addr,
+        user_agent=request.user_agent.string[:500]
+    )
+    db.session.add(log)
+    # Note: commit happens with the main transaction
+```
+
+### Action Types
+
+| Action | Description |
+|--------|-------------|
+| `CREATE` | New record created |
+| `UPDATE` | Record modified |
+| `DELETE` | Record removed |
+| `STATUS_CHANGE` | Task status changed |
+| `LOGIN` | User logged in |
+| `LOGOUT` | User logged out |
+| `UPLOAD` | File uploaded |
+| `IMPORT` | Excel data imported |
+
+---
+
+## Testing Patterns
+
+> Added in v1.13.0 - Unit test infrastructure with pytest
+
+### Test Configuration (pytest.ini)
+
+```ini
+[pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts = -v --tb=short
+filterwarnings = 
+    ignore::DeprecationWarning
+```
+
+### Factory Pattern for Test Data
+
+```python
+# tests/factories.py
+import factory
+from models import User, Tenant, Project, Task
+
+class TenantFactory(factory.Factory):
+    class Meta:
+        model = Tenant
+    
+    name = factory.Sequence(lambda n: f'Test Tenant {n}')
+    subdomain = factory.Sequence(lambda n: f'tenant{n}')
+
+class UserFactory(factory.Factory):
+    class Meta:
+        model = User
+    
+    email = factory.Sequence(lambda n: f'user{n}@test.com')
+    name = factory.Faker('name')
+    role = 'user'
+    tenant = factory.SubFactory(TenantFactory)
+```
+
+### Test Fixtures (conftest.py)
+
+```python
+# tests/conftest.py
+import pytest
+from app import create_app
+from extensions import db
+
+@pytest.fixture
+def app():
+    """Create test application."""
+    app = create_app({
+        'TESTING': True,
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
+        'WTF_CSRF_ENABLED': False,
+        'SERVER_NAME': 'localhost'
+    })
+    with app.app_context():
+        db.create_all()
+        yield app
+        db.session.remove()
+        db.drop_all()
+
+@pytest.fixture
+def db_session(app):
+    """Provide database session."""
+    with app.app_context():
+        yield db.session
+
+@pytest.fixture
+def client(app):
+    """Create test client."""
+    return app.test_client()
+```
+
+### Test Categories
+
+| Category | Purpose | Example Tests |
+|----------|---------|---------------|
+| **Unit Tests** | Individual functions/methods | Model validation, service logic |
+| **Integration Tests** | Component interactions | Database operations, workflows |
+| **Feature Tests** | End-to-end features | Multi-tenant isolation, approvals |
+
+### Current Coverage (v1.19.0)
+
+| Module | Coverage | Tests |
+|--------|----------|-------|
+| models.py | 71% | 145 tests |
+| services.py | 37% | 134 tests |
+| translations.py | 100% | 57 tests |
+| middleware/tenant.py | 98% | 53 tests |
+| modules/__init__.py | 88% | 16 tests |
+| modules/core/__init__.py | 100% | 11 tests |
+| config.py | 100% | 12 tests |
+| routes/__init__.py | 100% | - |
+| routes/auth.py | 57% | - |
+| routes/main.py | 64% | - |
+| routes/tasks.py | 21% | - |
+| routes/admin.py | 25% | - |
+| routes/api.py | 26% | - |
+| app.py | 17% | - |
+| modules/projects/routes.py | 19% | - |
+| **Total** | **~38%** | **626 tests** |
+
+> See [testCoveragePlan.md](testCoveragePlan.md) for the roadmap to 100% coverage.
+
+### Running Tests
+
+```bash
+# Full test suite
+pytest
+
+# With coverage report
+pytest --cov=. --cov-report=term-missing
+
+# Specific test file
+pytest tests/unit/test_models.py
+
+# Specific test function
+pytest tests/unit/test_models.py::TestTask::test_task_creation
+```
+
+```
+
+## Instructions
+
+Please update each Memory Bank file with the new release information:
+
+### 1. activeContext.md
+- Update **Date** to 2026-01-03
+- Update **Version** to 1.19.0
+- Update **Last Action** with the main feature from this release
+- Update **Status** to reflect completed work
+- Add a new section under "What Was Accomplished" with the release changes
+- Move previous accomplishments to "Previously Completed"
+
+### 2. progress.md
+- Update **Last Updated** date
+- Update **Version** to 1.19.0
+- Add new release section at the top of "Recent Releases"
+- Include all Added/Changed/Fixed items from the release
+
+### 3. productContext.md
+- Update if there are new features, user roles, or functionality changes
+- Add new features to the appropriate tables
+
+### 4. techContext.md
+- Update if there are new dependencies, routes, or technical changes
+- Update project structure if new files/folders were added
+
+### 5. systemPatterns.md
+- Update if there are new patterns, conventions, or architectural changes
+
+## Output Format
+
+Provide the complete updated content for each file that needs changes:
+
+```activeContext.md
+[Full updated content]
+```
+
+```progress.md
+[Full updated content]
+```
+
+(Only include files that need updates)

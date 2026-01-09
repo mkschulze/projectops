@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ t('notifications') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-bell text-brand me-2"></i>
+            {{ t('all_notifications') }}
+        </h1>
+        {% if notifications %}
+        <form action="{{ url_for('api.notifications_mark_all_read') }}" method="post" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-check-all me-1"></i> {{ t('mark_all_read') }}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    
+    {% if notifications %}
+    <div class="card shadow-sm">
+        <ul class="list-group list-group-flush">
+            {% for notification in notifications %}
+            <li class="list-group-item notification-item {% if not notification.is_read %}bg-light{% endif %}">
+                <a href="{% if notification.entity_type == 'task' %}{{ url_for('tasks.task_detail', task_id=notification.entity_id) }}{% else %}#{% endif %}" 
+                   class="text-decoration-none text-dark d-flex align-items-start"
+                   onclick="markAsRead({{ notification.id }})">
+                    <div class="notification-icon me-3 mt-1">
+                        <i class="bi {{ notification.get_icon() }} {{ notification.get_color() }} fs-4"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="mb-1 {% if not notification.is_read %}fw-bold{% endif %}">
+                                {{ notification.get_title(lang) }}
+                            </h6>
+                            <small class="text-muted ms-2">
+                                {{ notification.created_at.strftime('%d.%m.%Y %H:%M') if notification.created_at else '' }}
+                            </small>
+                        </div>
+                        <p class="mb-1 text-muted small">{{ notification.get_message(lang) }}</p>
+                        {% if notification.actor %}
+                        <small class="text-muted">
+                            <i class="bi bi-person me-1"></i>{{ notification.actor.name }}
+                        </small>
+                        {% endif %}
+                    </div>
+                    {% if not notification.is_read %}
+                    <span class="badge bg-primary ms-2">{{ t('unread_notifications') }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Notification pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.notifications', page=pagination.prev_num) }}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+            </li>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                    <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('main.notifications', page=page_num) }}">{{ page_num }}</a></li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.notifications', page=pagination.next_num) }}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-bell-slash fs-1 text-muted mb-3"></i>
+            <h5 class="text-muted">{{ t('no_notifications') }}</h5>
+            <p class="text-muted mb-0">Benachrichtigungen erscheinen hier, wenn Ihnen Aufgaben zugewiesen werden oder Kommentare hinzugefügt werden.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script nonce="{{ csp_nonce }}">
+function markAsRead(notificationId) {
+    fetch(`/api/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    }).catch(err => console.error('Error marking notification as read:', err));
+}
+</script>
+{% endblock %}

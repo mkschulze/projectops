@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}{{ tenant.name if tenant else ('Neuer Mandant' if lang == 'de' else 'New Tenant') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('admin_tenants.tenant_list') }}">
+                            {{ 'Mandantenverwaltung' if lang == 'de' else 'Tenant Management' }}
+                        </a>
+                    </li>
+                    {% if tenant %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('admin_tenants.tenant_detail', tenant_id=tenant.id) }}">
+                            {{ tenant.name }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">{{ 'Bearbeiten' if lang == 'de' else 'Edit' }}</li>
+                    {% else %}
+                    <li class="breadcrumb-item active">{{ 'Neuer Mandant' if lang == 'de' else 'New Tenant' }}</li>
+                    {% endif %}
+                </ol>
+            </nav>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="bi bi-building{% if tenant %}-gear{% else %}-add{% endif %} me-2"></i>
+                        {% if tenant %}
+                        {{ 'Mandant bearbeiten' if lang == 'de' else 'Edit Tenant' }}
+                        {% else %}
+                        {{ 'Neuen Mandanten erstellen' if lang == 'de' else 'Create New Tenant' }}
+                        {% endif %}
+                    </h4>
+                </div>
+                
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="card-body">
+                        <!-- Slug (ID) -->
+                        <div class="mb-3">
+                            <label for="slug" class="form-label">
+                                {{ 'Mandanten-Kennung' if lang == 'de' else 'Tenant ID' }} *
+                            </label>
+                            <input type="text" class="form-control" id="slug" name="slug" 
+                                   value="{{ tenant.slug if tenant else '' }}"
+                                   pattern="[a-z0-9_-]+" 
+                                   placeholder="z.B. company_germany"
+                                   {% if tenant %}readonly{% endif %}
+                                   required>
+                            <div class="form-text">
+                                {{ 'Eindeutige Kennung (Kleinbuchstaben, Zahlen, Bindestrich, Unterstrich)' if lang == 'de' else 'Unique identifier (lowercase letters, numbers, hyphens, underscores)' }}
+                            </div>
+                        </div>
+                        
+                        <!-- Name (Display Name) -->
+                        <div class="mb-3">
+                            <label for="name" class="form-label">
+                                {{ 'Anzeigename' if lang == 'de' else 'Display Name' }} *
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ tenant.name if tenant else '' }}"
+                                   placeholder="z.B. Demo Corporation"
+                                   required>
+                            <div class="form-text">
+                                {{ 'Name wie er angezeigt wird' if lang == 'de' else 'Name as displayed to users' }}
+                            </div>
+                        </div>
+                        
+                        <!-- Logo -->
+                        <div class="mb-3">
+                            <label for="logo" class="form-label">
+                                {{ 'Logo' if lang == 'de' else 'Logo' }}
+                            </label>
+                            
+                            {% if tenant and tenant.logo_data %}
+                            <div class="mb-2">
+                                <img src="data:{{ tenant.logo_mime_type or 'image/png' }};base64,{{ tenant.logo_data }}" 
+                                     alt="{{ tenant.name }}" 
+                                     class="rounded border" 
+                                     style="max-height: 80px;">
+                                <div class="form-check mt-2">
+                                    <input type="checkbox" class="form-check-input" id="remove_logo" name="remove_logo" value="true">
+                                    <label class="form-check-label text-danger" for="remove_logo">
+                                        {{ 'Logo entfernen' if lang == 'de' else 'Remove logo' }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <input type="file" class="form-control" id="logo" name="logo" 
+                                   accept="image/png,image/jpeg,image/svg+xml,image/gif">
+                            <div class="form-text">
+                                {{ 'PNG, JPEG, SVG oder GIF. Max. 500KB empfohlen.' if lang == 'de' else 'PNG, JPEG, SVG or GIF. Max 500KB recommended.' }}
+                            </div>
+                        </div>
+                        
+                        {% if tenant %}
+                        <!-- Status -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" class="form-check-input" id="is_active" name="is_active"
+                                       {% if tenant.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    {{ 'Mandant ist aktiv' if lang == 'de' else 'Tenant is active' }}
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                {{ 'Inaktive Mandanten können von Benutzern nicht verwendet werden.' if lang == 'de' else 'Inactive tenants cannot be used by users.' }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-footer d-flex justify-content-between">
+                        <a href="{{ url_for('admin_tenants.tenant_detail', tenant_id=tenant.id) if tenant else url_for('admin_tenants.tenant_list') }}" 
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>{{ 'Abbrechen' if lang == 'de' else 'Cancel' }}
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-2"></i>
+                            {% if tenant %}
+                            {{ 'Speichern' if lang == 'de' else 'Save' }}
+                            {% else %}
+                            {{ 'Mandant erstellen' if lang == 'de' else 'Create Tenant' }}
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

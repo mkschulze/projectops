@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block title %}{{ (project.get_name(lang) if project else ('Neues Projekt' if lang == 'de' else 'New Project')) }} - ProjectOps{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    /* Form Header */
+    .form-header-bar {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 3px solid #4A90D9;
+        padding: 1.25rem 0;
+        margin: -1rem -1rem 1.5rem -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .form-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #000;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .form-title i {
+        color: #4A90D9;
+    }
+    
+    /* Breadcrumb */
+    .breadcrumb {
+        background: none;
+        padding: 0;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .breadcrumb-item a {
+        color: #0076A8;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Form Card */
+    .form-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .form-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 1px solid #f0f0f0;
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .form-card .card-body {
+        padding: 2rem;
+    }
+    
+    /* Form Controls */
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.625rem 0.875rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4A90D9;
+        box-shadow: 0 0 0 3px rgba(134, 188, 37, 0.15);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Color Picker */
+    .color-picker-group {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .color-picker-group .form-control-color {
+        width: 50px;
+        height: 42px;
+        border-radius: 8px;
+        padding: 0;
+        border: 2px solid #dee2e6;
+        cursor: pointer;
+    }
+    
+    /* Icon Select */
+    .icon-select-wrapper {
+        position: relative;
+    }
+    
+    /* Preview Card */
+    .preview-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: 2px dashed #dee2e6;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .preview-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.75rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s;
+    }
+    
+    .preview-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #000;
+    }
+    
+    .preview-key {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #4A90D9 0%, #6fa01e 100%);
+        border: none;
+        color: white;
+    }
+    
+    .btn-save:hover {
+        background: linear-gradient(135deg, #6fa01e 0%, #5c8a18 100%);
+        color: white;
+    }
+    
+    /* Section Divider */
+    .section-divider {
+        height: 1px;
+        background: linear-gradient(to right, transparent, #dee2e6, transparent);
+        margin: 2rem 0;
+    }
+    
+    /* Field Row */
+    .field-row {
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <!-- Compact Header -->
+    <div class="form-header-bar">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}">{{ 'Projekte' if lang == 'de' else 'Projects' }}</a></li>
+                {% if project %}
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.key }}</a></li>
+                <li class="breadcrumb-item active">{{ 'Bearbeiten' if lang == 'de' else 'Edit' }}</li>
+                {% else %}
+                <li class="breadcrumb-item active">{{ 'Neu' if lang == 'de' else 'New' }}</li>
+                {% endif %}
+            </ol>
+        </nav>
+        <h1 class="form-title">
+            <i class="bi bi-{{ 'pencil-square' if project else 'folder-plus' }}"></i>
+            {% if project %}
+                {{ 'Projekt bearbeiten' if lang == 'de' else 'Edit Project' }}
+            {% else %}
+                {{ 'Neues Projekt' if lang == 'de' else 'New Project' }}
+            {% endif %}
+        </h1>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="form-card card">
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-lg-7">
+                                <!-- Key (only for new projects) -->
+                                {% if not project %}
+                                <div class="field-row">
+                                    <label for="key" class="form-label">
+                                        <i class="bi bi-key me-1"></i>
+                                        {{ 'Projektschlüssel' if lang == 'de' else 'Project Key' }} <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control text-uppercase" id="key" name="key" 
+                                           maxlength="10" pattern="[A-Z0-9]+" required
+                                           placeholder="{{ 'z.B. TAX, PROJ, FIN' if lang == 'de' else 'e.g. TAX, PROJ, FIN' }}">
+                                    <div class="form-text">
+                                        {{ 'Eindeutiger Schlüssel für Issues (z.B. TAX-123). Max. 10 Zeichen.' if lang == 'de' else 'Unique key for issues (e.g. TAX-123). Max 10 characters.' }}
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="field-row">
+                                    <label class="form-label text-muted">
+                                        <i class="bi bi-key me-1"></i>
+                                        {{ 'Projektschlüssel' if lang == 'de' else 'Project Key' }}
+                                    </label>
+                                    <div class="form-control bg-light fw-bold">{{ project.key }}</div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Name -->
+                                <div class="field-row">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="name" class="form-label">
+                                                {{ 'Name (Deutsch)' if lang == 'de' else 'Name (German)' }} <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="name" name="name" 
+                                                   value="{{ project.name if project else '' }}" required
+                                                   placeholder="{{ 'Projektname' if lang == 'de' else 'Project name' }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="name_en" class="form-label">
+                                                {{ 'Name (Englisch)' if lang == 'de' else 'Name (English)' }}
+                                            </label>
+                                            <input type="text" class="form-control" id="name_en" name="name_en" 
+                                                   value="{{ project.name_en if project else '' }}"
+                                                   placeholder="{{ 'Project name (EN)' if lang == 'de' else 'Project name' }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="field-row">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="description" class="form-label">
+                                                {{ 'Beschreibung (Deutsch)' if lang == 'de' else 'Description (German)' }}
+                                            </label>
+                                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                                      placeholder="{{ 'Projektbeschreibung...' if lang == 'de' else 'Project description...' }}">{{ project.description if project else '' }}</textarea>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="description_en" class="form-label">
+                                                {{ 'Beschreibung (Englisch)' if lang == 'de' else 'Description (English)' }}
+                                            </label>
+                                            <textarea class="form-control" id="description_en" name="description_en" rows="3"
+                                                      placeholder="{{ 'Description (EN)...' if lang == 'de' else 'Description...' }}">{{ project.description_en if project else '' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="section-divider"></div>
+
+                                <!-- Lead & Category -->
+                                <div class="field-row">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="lead_id" class="form-label">
+                                                <i class="bi bi-person-badge me-1"></i>
+                                                {{ 'Projektleiter' if lang == 'de' else 'Project Lead' }}
+                                            </label>
+                                            <select class="form-select" id="lead_id" name="lead_id">
+                                                <option value="">{{ '-- Auswählen --' if lang == 'de' else '-- Select --' }}</option>
+                                                {% for user in users %}
+                                                <option value="{{ user.id }}" {% if project and project.lead_id == user.id %}selected{% endif %}>
+                                                    {{ user.name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="category" class="form-label">
+                                                <i class="bi bi-tag me-1"></i>
+                                                {{ 'Kategorie' if lang == 'de' else 'Category' }}
+                                            </label>
+                                            <input type="text" class="form-control" id="category" name="category" 
+                                                   value="{{ project.category if project else '' }}"
+                                                   list="category-list" placeholder="{{ 'z.B. Tax, Advisory' if lang == 'de' else 'e.g. Tax, Advisory' }}">
+                                            <datalist id="category-list">
+                                                <option value="Tax">
+                                                <option value="Compliance">
+                                                <option value="Advisory">
+                                                <option value="Audit">
+                                                <option value="Internal">
+                                            </datalist>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Icon & Color -->
+                                <div class="field-row">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="icon" class="form-label">
+                                                <i class="bi bi-palette me-1"></i>
+                                                {{ 'Icon' if lang == 'de' else 'Icon' }}
+                                            </label>
+                                            <select class="form-select" id="icon" name="icon">
+                                                <option value="bi-folder" {% if not project or project.icon == 'bi-folder' %}selected{% endif %}>📁 Folder</option>
+                                                <option value="bi-briefcase" {% if project and project.icon == 'bi-briefcase' %}selected{% endif %}>💼 Briefcase</option>
+                                                <option value="bi-calculator" {% if project and project.icon == 'bi-calculator' %}selected{% endif %}>🧮 Calculator</option>
+                                                <option value="bi-bank" {% if project and project.icon == 'bi-bank' %}selected{% endif %}>🏦 Bank</option>
+                                                <option value="bi-graph-up" {% if project and project.icon == 'bi-graph-up' %}selected{% endif %}>📈 Graph</option>
+                                                <option value="bi-clipboard-check" {% if project and project.icon == 'bi-clipboard-check' %}selected{% endif %}>📋 Clipboard</option>
+                                                <option value="bi-gear" {% if project and project.icon == 'bi-gear' %}selected{% endif %}>⚙️ Gear</option>
+                                                <option value="bi-people" {% if project and project.icon == 'bi-people' %}selected{% endif %}>👥 People</option>
+                                                <option value="bi-file-earmark-text" {% if project and project.icon == 'bi-file-earmark-text' %}selected{% endif %}>📄 Document</option>
+                                                <option value="bi-star" {% if project and project.icon == 'bi-star' %}selected{% endif %}>⭐ Star</option>
+                                                <option value="bi-lightning" {% if project and project.icon == 'bi-lightning' %}selected{% endif %}>⚡ Lightning</option>
+                                                <option value="bi-shield-check" {% if project and project.icon == 'bi-shield-check' %}selected{% endif %}>🛡️ Shield</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="color" class="form-label">
+                                                {{ 'Farbe' if lang == 'de' else 'Color' }}
+                                            </label>
+                                            <div class="color-picker-group">
+                                                <input type="color" class="form-control form-control-color" id="color" name="color" 
+                                                       value="{{ project.color if project else '#4A90D9' }}">
+                                                <input type="text" class="form-control flex-grow-1" id="color-text" 
+                                                       value="{{ project.color if project else '#4A90D9' }}" pattern="#[0-9A-Fa-f]{6}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column - Preview -->
+                            <div class="col-lg-5">
+                                <div class="preview-card">
+                                    <h6 class="text-muted mb-3">{{ 'Vorschau' if lang == 'de' else 'Preview' }}</h6>
+                                    <div class="preview-icon" id="preview-icon" style="background-color: {{ project.color if project else '#4A90D9' }};">
+                                        <i class="{{ project.icon if project else 'bi-folder' }}"></i>
+                                    </div>
+                                    <div class="preview-name" id="preview-name">{{ project.name if project else 'Projektname' }}</div>
+                                    <div class="preview-key" id="preview-key">{{ project.key if project else 'KEY' }}</div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-3 mt-4">
+                                    <a href="{{ url_for('projects.project_detail', project_id=project.id) if project else url_for('projects.project_list') }}" 
+                                       class="btn btn-outline-secondary action-btn flex-grow-1">
+                                        <i class="bi bi-x-lg me-1"></i>
+                                        {{ 'Abbrechen' if lang == 'de' else 'Cancel' }}
+                                    </a>
+                                    <button type="submit" class="btn btn-save action-btn flex-grow-1">
+                                        <i class="bi bi-check-lg me-1"></i>
+                                        {{ 'Speichern' if lang == 'de' else 'Save' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    const colorInput = document.getElementById('color');
+    const colorText = document.getElementById('color-text');
+    const iconSelect = document.getElementById('icon');
+    const nameInput = document.getElementById('name');
+    const keyInput = document.getElementById('key');
+    const previewIcon = document.getElementById('preview-icon');
+    const previewName = document.getElementById('preview-name');
+    const previewKey = document.getElementById('preview-key');
+
+    // Sync color inputs
+    colorInput.addEventListener('input', function() {
+        colorText.value = this.value;
+        previewIcon.style.backgroundColor = this.value;
+    });
+    colorText.addEventListener('input', function() {
+        if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+            colorInput.value = this.value;
+            previewIcon.style.backgroundColor = this.value;
+        }
+    });
+
+    // Update preview
+    iconSelect.addEventListener('change', function() {
+        previewIcon.innerHTML = '<i class="' + this.value + '"></i>';
+    });
+    nameInput.addEventListener('input', function() {
+        previewName.textContent = this.value || 'Projektname';
+    });
+    if (keyInput) {
+        keyInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            previewKey.textContent = this.value || 'KEY';
+        });
+    }
+});
+</script>
+{% endblock %}

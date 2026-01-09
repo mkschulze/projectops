@@ -1,0 +1,29 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+flask-sqlalchemy = "*"
+flask-login = "*"
+flask-wtf = "*"
+werkzeug = "*"
+python-dotenv = "*"
+flask-migrate = "*"
+openpyxl = "*"
+python-dateutil = "*"
+flask-socketio = "*"
+eventlet = "*"
+weasyprint = "*"
+icalendar = "*"
+flask-limiter = "*"
+
+[dev-packages]
+pytest = "*"
+pytest-cov = "*"
+pytest-flask = "*"
+factory-boy = "*"
+
+[requires]
+python_version = "3.9"

@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Kalender-Abonnement' if lang == 'de' else 'Calendar Subscription' }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="mb-0">
+                        <i class="bi bi-calendar2-plus me-2" style="color: var(--dtt-green-3);"></i>
+                        {{ 'Kalender-Abonnement' if lang == 'de' else 'Calendar Subscription' }}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {{ 'Synchronisieren Sie Ihre Aufgaben mit Outlook, Google Calendar oder anderen Kalendern.' if lang == 'de' else 'Sync your tasks with Outlook, Google Calendar, or other calendars.' }}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Subscription URL Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-link-45deg me-2"></i>
+                        {{ 'Abonnement-URL' if lang == 'de' else 'Subscription URL' }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        {{ 'Kopieren Sie diese URL und fügen Sie sie in Ihrer Kalender-App als neues Abonnement ein:' if lang == 'de' else 'Copy this URL and add it as a new subscription in your calendar app:' }}
+                    </p>
+                    
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control font-monospace" id="subscriptionUrl" 
+                               value="{{ subscription_url }}" readonly>
+                        <button class="btn btn-brand" type="button" id="copyBtn" 
+                                onclick="copySubscriptionUrl()">
+                            <i class="bi bi-clipboard me-1"></i>
+                            {{ 'Kopieren' if lang == 'de' else 'Copy' }}
+                        </button>
+                    </div>
+                    
+                    <div class="alert alert-info py-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <small>
+                            {{ 'Diese URL ist persönlich und ermöglicht Zugriff auf Ihre Aufgaben. Teilen Sie sie nicht mit anderen.' if lang == 'de' else 'This URL is personal and provides access to your tasks. Do not share it with others.' }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Instructions Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-question-circle me-2"></i>
+                        {{ 'Anleitung' if lang == 'de' else 'Instructions' }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="instructionsAccordion">
+                        <!-- Outlook -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#collapseOutlook">
+                                    <i class="bi bi-microsoft me-2"></i>
+                                    Microsoft Outlook
+                                </button>
+                            </h2>
+                            <div id="collapseOutlook" class="accordion-collapse collapse" 
+                                 data-bs-parent="#instructionsAccordion">
+                                <div class="accordion-body">
+                                    <ol class="mb-0">
+                                        <li>{{ 'Öffnen Sie Outlook und gehen Sie zu Kalender' if lang == 'de' else 'Open Outlook and go to Calendar' }}</li>
+                                        <li>{{ 'Klicken Sie auf "Kalender hinzufügen" → "Aus dem Internet abonnieren"' if lang == 'de' else 'Click "Add Calendar" → "Subscribe from web"' }}</li>
+                                        <li>{{ 'Fügen Sie die kopierte URL ein' if lang == 'de' else 'Paste the copied URL' }}</li>
+                                        <li>{{ 'Geben Sie dem Kalender einen Namen und klicken Sie auf "Importieren"' if lang == 'de' else 'Name the calendar and click "Import"' }}</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Google Calendar -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#collapseGoogle">
+                                    <i class="bi bi-google me-2"></i>
+                                    Google Calendar
+                                </button>
+                            </h2>
+                            <div id="collapseGoogle" class="accordion-collapse collapse" 
+                                 data-bs-parent="#instructionsAccordion">
+                                <div class="accordion-body">
+                                    <ol class="mb-0">
+                                        <li>{{ 'Öffnen Sie Google Calendar' if lang == 'de' else 'Open Google Calendar' }}</li>
+                                        <li>{{ 'Klicken Sie auf das + neben "Weitere Kalender"' if lang == 'de' else 'Click the + next to "Other calendars"' }}</li>
+                                        <li>{{ 'Wählen Sie "Per URL"' if lang == 'de' else 'Select "From URL"' }}</li>
+                                        <li>{{ 'Fügen Sie die kopierte URL ein und klicken Sie auf "Kalender hinzufügen"' if lang == 'de' else 'Paste the copied URL and click "Add calendar"' }}</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Apple Calendar -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#collapseApple">
+                                    <i class="bi bi-apple me-2"></i>
+                                    Apple Calendar (macOS/iOS)
+                                </button>
+                            </h2>
+                            <div id="collapseApple" class="accordion-collapse collapse" 
+                                 data-bs-parent="#instructionsAccordion">
+                                <div class="accordion-body">
+                                    <ol class="mb-0">
+                                        <li>{{ 'Öffnen Sie die Kalender-App' if lang == 'de' else 'Open the Calendar app' }}</li>
+                                        <li>{{ 'Wählen Sie "Ablage" → "Neues Kalenderabonnement..."' if lang == 'de' else 'Select "File" → "New Calendar Subscription..."' }}</li>
+                                        <li>{{ 'Fügen Sie die kopierte URL ein' if lang == 'de' else 'Paste the copied URL' }}</li>
+                                        <li>{{ 'Passen Sie die Einstellungen an und klicken Sie auf "Abonnieren"' if lang == 'de' else 'Adjust settings and click "Subscribe"' }}</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Regenerate Token Card -->
+            <div class="card border-warning">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0 text-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {{ 'Sicherheit' if lang == 'de' else 'Security' }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        {{ 'Wenn Sie glauben, dass Ihre Kalender-URL kompromittiert wurde, können Sie eine neue generieren. Dies macht die alte URL ungültig und Sie müssen alle Kalender-Abonnements aktualisieren.' if lang == 'de' else 'If you believe your calendar URL has been compromised, you can generate a new one. This will invalidate the old URL and you will need to update all calendar subscriptions.' }}
+                    </p>
+                    
+                    <form action="{{ url_for('main.regenerate_calendar_token') }}" method="POST" 
+                          onsubmit="return confirm('{{ 'Sind Sie sicher? Alle bestehenden Kalender-Abonnements werden ungültig.' if lang == 'de' else 'Are you sure? All existing calendar subscriptions will become invalid.' }}');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-warning">
+                            <i class="bi bi-arrow-repeat me-1"></i>
+                            {{ 'Neue URL generieren' if lang == 'de' else 'Generate New URL' }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+function copySubscriptionUrl() {
+    const urlInput = document.getElementById('subscriptionUrl');
+    const copyBtn = document.getElementById('copyBtn');
+    
+    urlInput.select();
+    urlInput.setSelectionRange(0, 99999); // For mobile
+    
+    navigator.clipboard.writeText(urlInput.value).then(() => {
+        // Success feedback
+        const originalHtml = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i class="bi bi-check me-1"></i>{{ "Kopiert!" if lang == "de" else "Copied!" }}';
+        copyBtn.classList.remove('btn-brand');
+        copyBtn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            copyBtn.innerHTML = originalHtml;
+            copyBtn.classList.remove('btn-success');
+            copyBtn.classList.add('btn-brand');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('{{ "Kopieren fehlgeschlagen. Bitte manuell kopieren." if lang == "de" else "Copy failed. Please copy manually." }}');
+    });
+}
+</script>
+{% endblock %}

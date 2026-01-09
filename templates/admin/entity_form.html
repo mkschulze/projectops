@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('edit_entity') if entity else t('new_entity') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building me-2"></i>
+                        {{ t('edit_entity') if entity else t('new_entity') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="name_de" class="form-label">
+                                    🇩🇪 {{ t('name') }} ({{ t('german') }}) <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="name_de" name="name_de" 
+                                       value="{{ entity.name_de if entity else '' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="name_en" class="form-label">
+                                    🇬🇧 {{ t('name') }} ({{ t('english') }}) <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="name_en" name="name_en" 
+                                       value="{{ entity.name_en if entity else '' }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="short_name" class="form-label">{{ t('short_name') }}</label>
+                                <input type="text" class="form-control" id="short_name" name="short_name" 
+                                       value="{{ entity.short_name if entity and entity.short_name else '' }}"
+                                       maxlength="50" placeholder="z.B. DEU, AUT">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="country" class="form-label">{{ t('country') }}</label>
+                                <select class="form-select" id="country" name="country">
+                                    <option value="DE" {{ 'selected' if not entity or entity.country == 'DE' }}>Deutschland (DE)</option>
+                                    <option value="AT" {{ 'selected' if entity and entity.country == 'AT' }}>Österreich (AT)</option>
+                                    <option value="CH" {{ 'selected' if entity and entity.country == 'CH' }}>Schweiz (CH)</option>
+                                    <option value="LU" {{ 'selected' if entity and entity.country == 'LU' }}>Luxemburg (LU)</option>
+                                    <option value="NL" {{ 'selected' if entity and entity.country == 'NL' }}>Niederlande (NL)</option>
+                                    <option value="BE" {{ 'selected' if entity and entity.country == 'BE' }}>Belgien (BE)</option>
+                                    <option value="FR" {{ 'selected' if entity and entity.country == 'FR' }}>Frankreich (FR)</option>
+                                    <option value="GB" {{ 'selected' if entity and entity.country == 'GB' }}>Großbritannien (GB)</option>
+                                    <option value="US" {{ 'selected' if entity and entity.country == 'US' }}>USA (US)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="group_id" class="form-label">{{ t('parent_entity') }}</label>
+                            <select class="form-select" id="group_id" name="group_id">
+                                <option value="">-- {{ t('no_parent') }} --</option>
+                                {% for parent in parent_entities %}
+                                <option value="{{ parent.id }}" 
+                                    {{ 'selected' if entity and entity.group_id == parent.id }}>
+                                    {{ parent.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">{{ t('parent_entity_help') }}</div>
+                        </div>
+                        
+                        {% if entity %}
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                       {{ 'checked' if entity.is_active }}>
+                                <label class="form-check-label" for="is_active">{{ t('active') }}</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.entities') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>{{ t('back') }}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>{{ t('save') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

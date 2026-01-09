@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{{ t('nav_users') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-people me-2"></i>{{ t('users') }}</h1>
+        <a href="{{ url_for('admin.user_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>{{ t('new_user') }}
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{{ t('name') }}</th>
+                            <th>{{ t('email') }}</th>
+                            <th>{{ t('role') }}</th>
+                            <th>{{ t('status') }}</th>
+                            <th>Letzter Login</th>
+                            <th class="text-end">{{ t('actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr class="{{ 'text-muted' if not user.is_active }}">
+                            <td>
+                                <i class="bi bi-person-circle me-2"></i>
+                                <strong>{{ user.name }}</strong>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.role == 'admin' %}
+                                <span class="badge bg-dark">Admin</span>
+                                {% elif user.role == 'manager' %}
+                                <span class="badge bg-primary">Manager</span>
+                                {% elif user.role == 'reviewer' %}
+                                <span class="badge bg-info">{{ 'Prüfer' if lang == 'de' else 'Reviewer' }}</span>
+                                {% elif user.role == 'preparer' %}
+                                <span class="badge bg-secondary">{{ 'Bearbeiter' if lang == 'de' else 'Preparer' }}</span>
+                                {% else %}
+                                <span class="badge bg-light text-dark">{{ 'Nur Lesen' if lang == 'de' else 'Readonly' }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                <span class="badge bg-success">{{ t('active') }}</span>
+                                {% else %}
+                                <span class="badge bg-danger">{{ t('inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.last_login %}
+                                {{ user.last_login.strftime('%d.%m.%Y %H:%M') }}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ url_for('admin.user_modules', user_id=user.id) }}" 
+                                   class="btn btn-sm btn-outline-info me-1"
+                                   title="{{ 'Module' if lang == 'de' else 'Modules' }}">
+                                    <i class="bi bi-puzzle"></i>
+                                </a>
+                                <a href="{{ url_for('admin.user_entities', user_id=user.id) }}" 
+                                   class="btn btn-sm btn-outline-secondary me-1"
+                                   title="{{ 'Berechtigungen' if lang == 'de' else 'Permissions' }}">
+                                    <i class="bi bi-shield-lock"></i>
+                                </a>
+                                <a href="{{ url_for('admin.user_edit', user_id=user.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                Keine Benutzer gefunden.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

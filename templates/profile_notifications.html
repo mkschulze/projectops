@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}{{ 'E-Mail-Einstellungen' if lang == 'de' else 'Email Preferences' }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">{{ t('dashboard') }}</a></li>
+                    <li class="breadcrumb-item active">{{ 'E-Mail-Einstellungen' if lang == 'de' else 'Email Preferences' }}</li>
+                </ol>
+            </nav>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-envelope-at me-2" style="color: var(--dtt-green-3);"></i>
+                        {{ 'E-Mail-Benachrichtigungen' if lang == 'de' else 'Email Notifications' }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- Master Toggle -->
+                        <div class="mb-4 p-3 rounded" style="background: var(--dtt-neutral-6);">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" 
+                                       id="email_notifications" name="email_notifications"
+                                       {% if user.email_notifications %}checked{% endif %}
+                                       onchange="toggleAllPreferences(this.checked)">
+                                <label class="form-check-label fw-bold" for="email_notifications">
+                                    {{ 'E-Mail-Benachrichtigungen aktivieren' if lang == 'de' else 'Enable email notifications' }}
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                {{ 'Schaltet alle E-Mail-Benachrichtigungen ein oder aus.' if lang == 'de' else 'Turn all email notifications on or off.' }}
+                            </small>
+                        </div>
+                        
+                        <!-- Individual Preferences -->
+                        <div id="emailPreferences" class="{% if not user.email_notifications %}opacity-50{% endif %}">
+                            <h6 class="text-muted mb-3">
+                                {{ 'Benachrichtigungstypen' if lang == 'de' else 'Notification Types' }}
+                            </h6>
+                            
+                            <!-- Task Assignment -->
+                            <div class="mb-3 p-3 border rounded">
+                                <div class="form-check">
+                                    <input class="form-check-input pref-checkbox" type="checkbox" 
+                                           id="email_on_assignment" name="email_on_assignment"
+                                           {% if user.email_on_assignment %}checked{% endif %}
+                                           {% if not user.email_notifications %}disabled{% endif %}>
+                                    <label class="form-check-label" for="email_on_assignment">
+                                        <i class="bi bi-person-plus text-primary me-2"></i>
+                                        <strong>{{ 'Aufgabenzuweisung' if lang == 'de' else 'Task Assignment' }}</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4 mt-1">
+                                    {{ 'E-Mail erhalten, wenn Ihnen eine Aufgabe zugewiesen wird.' if lang == 'de' else 'Receive email when a task is assigned to you.' }}
+                                </small>
+                            </div>
+                            
+                            <!-- Status Change -->
+                            <div class="mb-3 p-3 border rounded">
+                                <div class="form-check">
+                                    <input class="form-check-input pref-checkbox" type="checkbox" 
+                                           id="email_on_status_change" name="email_on_status_change"
+                                           {% if user.email_on_status_change %}checked{% endif %}
+                                           {% if not user.email_notifications %}disabled{% endif %}>
+                                    <label class="form-check-label" for="email_on_status_change">
+                                        <i class="bi bi-arrow-left-right text-info me-2"></i>
+                                        <strong>{{ 'Statusänderungen' if lang == 'de' else 'Status Changes' }}</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4 mt-1">
+                                    {{ 'E-Mail erhalten, wenn sich der Status einer Ihrer Aufgaben ändert.' if lang == 'de' else 'Receive email when the status of your task changes.' }}
+                                </small>
+                            </div>
+                            
+                            <!-- Due Reminder -->
+                            <div class="mb-3 p-3 border rounded">
+                                <div class="form-check">
+                                    <input class="form-check-input pref-checkbox" type="checkbox" 
+                                           id="email_on_due_reminder" name="email_on_due_reminder"
+                                           {% if user.email_on_due_reminder %}checked{% endif %}
+                                           {% if not user.email_notifications %}disabled{% endif %}>
+                                    <label class="form-check-label" for="email_on_due_reminder">
+                                        <i class="bi bi-alarm text-warning me-2"></i>
+                                        <strong>{{ 'Fälligkeitserinnerungen' if lang == 'de' else 'Due Date Reminders' }}</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4 mt-1">
+                                    {{ 'E-Mail erhalten, wenn eine Aufgabe bald fällig oder überfällig ist.' if lang == 'de' else 'Receive email when a task is due soon or overdue.' }}
+                                </small>
+                            </div>
+                            
+                            <!-- Comments -->
+                            <div class="mb-3 p-3 border rounded">
+                                <div class="form-check">
+                                    <input class="form-check-input pref-checkbox" type="checkbox" 
+                                           id="email_on_comment" name="email_on_comment"
+                                           {% if user.email_on_comment %}checked{% endif %}
+                                           {% if not user.email_notifications %}disabled{% endif %}>
+                                    <label class="form-check-label" for="email_on_comment">
+                                        <i class="bi bi-chat-dots text-success me-2"></i>
+                                        <strong>{{ 'Neue Kommentare' if lang == 'de' else 'New Comments' }}</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4 mt-1">
+                                    {{ 'E-Mail erhalten, wenn jemand einen Kommentar zu einer Ihrer Aufgaben hinzufügt.' if lang == 'de' else 'Receive email when someone comments on your task.' }}
+                                </small>
+                                <span class="badge bg-secondary ms-4 mt-2">{{ 'Standardmäßig deaktiviert' if lang == 'de' else 'Off by default' }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>
+                                {{ 'Zurück' if lang == 'de' else 'Back' }}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>
+                                {{ 'Speichern' if lang == 'de' else 'Save' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Info Card -->
+            <div class="card mt-4 border-info">
+                <div class="card-body">
+                    <h6 class="card-title text-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        {{ 'Hinweis' if lang == 'de' else 'Note' }}
+                    </h6>
+                    <p class="card-text text-muted small mb-0">
+                        {% if lang == 'de' %}
+                        E-Mail-Benachrichtigungen werden zusätzlich zu den In-App-Benachrichtigungen gesendet. 
+                        Sie können die In-App-Benachrichtigungen über das Glocken-Symbol in der Navigationsleiste verwalten.
+                        {% else %}
+                        Email notifications are sent in addition to in-app notifications. 
+                        You can manage in-app notifications via the bell icon in the navigation bar.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Link to Calendar Subscription -->
+            <div class="text-center mt-4">
+                <a href="{{ url_for('main.calendar_subscription') }}" class="text-decoration-none">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    {{ 'Kalender-Abonnement verwalten' if lang == 'de' else 'Manage calendar subscription' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+function toggleAllPreferences(enabled) {
+    const container = document.getElementById('emailPreferences');
+    const checkboxes = container.querySelectorAll('.pref-checkbox');
+    
+    if (enabled) {
+        container.classList.remove('opacity-50');
+        checkboxes.forEach(cb => cb.disabled = false);
+    } else {
+        container.classList.add('opacity-50');
+        checkboxes.forEach(cb => cb.disabled = true);
+    }
+}
+</script>
+{% endblock %}

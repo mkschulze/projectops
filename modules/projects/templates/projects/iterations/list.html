@@ -1,0 +1,671 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.get_term('sprint_plural', lang) }} - {{ project.name }} - {{ 'Projekte' if lang == 'de' else 'Projects' }}{% endblock %}
+
+{% block content %}
+<!-- Hero Header -->
+<div class="sprints-hero mb-4">
+    <div class="container-fluid py-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark mb-3">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_list') }}" class="text-white-50">{{ 'Projekte' if lang == 'de' else 'Projects' }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.project_detail', project_id=project.id) }}" class="text-white-50">{{ project.key }}</a></li>
+                <li class="breadcrumb-item active text-white">{{ project.get_term('sprint_plural', lang) }}</li>
+            </ol>
+        </nav>
+
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="hero-icon">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                </div>
+            </div>
+            <div class="col">
+                <h1 class="text-white mb-1">{{ project.get_term('sprint_plural', lang) }}</h1>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-white-50">
+                        <i class="bi bi-folder me-1"></i>
+                        {{ project.get_name(lang) }}
+                    </span>
+                    <span class="text-white-50">
+                        <i class="bi bi-collection me-1"></i>
+                        {{ sprints|length if sprints else 0 }} {{ project.get_term('sprint_plural', lang) }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-auto">
+                <a href="{{ url_for('projects.iteration_create', project_id=project.id) }}" class="btn btn-brand">
+                    <i class="bi bi-plus-lg me-1"></i>
+                    {{ project.get_term('sprint_new', lang) }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    {% if sprints %}
+        {% set active_sprints = sprints|selectattr('state', 'equalto', 'active')|list %}
+        {% set future_sprints = sprints|selectattr('state', 'equalto', 'future')|list %}
+        {% set closed_sprints = sprints|selectattr('state', 'equalto', 'closed')|list %}
+        
+        <!-- Quick Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="quick-stat-card">
+                    <div class="quick-stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-play-circle-fill"></i>
+                    </div>
+                    <div class="quick-stat-content">
+                        <div class="quick-stat-value">{{ active_sprints|length }}</div>
+                        <div class="quick-stat-label">{{ (project.get_term('sprint_plural', lang) + ' aktiv') if lang == 'de' else ('Active ' + project.get_term('sprint_plural', lang)) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="quick-stat-card">
+                    <div class="quick-stat-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <div class="quick-stat-content">
+                        <div class="quick-stat-value">{{ future_sprints|length }}</div>
+                        <div class="quick-stat-label">{{ (project.get_term('sprint_plural', lang) + ' geplant') if lang == 'de' else ('Planned ' + project.get_term('sprint_plural', lang)) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="quick-stat-card">
+                    <div class="quick-stat-icon bg-secondary bg-opacity-10 text-secondary">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                    <div class="quick-stat-content">
+                        <div class="quick-stat-value">{{ closed_sprints|length }}</div>
+                        <div class="quick-stat-label">{{ (project.get_term('sprint_plural', lang) + ' abgeschlossen') if lang == 'de' else ('Completed ' + project.get_term('sprint_plural', lang)) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="quick-stat-card">
+                    <div class="quick-stat-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <div class="quick-stat-content">
+                        <div class="quick-stat-value">{{ average_velocity }}</div>
+                        <div class="quick-stat-label">{{ ('Ø ' + project.get_term('velocity', lang) + ' (Story Points)') if lang == 'de' else ('Avg ' + project.get_term('velocity', lang) + ' (Story Points)') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Sprints -->
+        {% if active_sprints %}
+        <div class="section-header mb-3">
+            <span class="section-badge section-badge-active">
+                <i class="bi bi-play-circle-fill me-1"></i>
+                {{ 'Aktiver Sprint' if lang == 'de' else 'Active Sprint' }}
+            </span>
+        </div>
+        {% for sprint in active_sprints %}
+            {% set total_points = sprint.total_points %}
+            {% set completed_points = sprint.completed_points %}
+            {% set progress = (completed_points / total_points * 100) if total_points > 0 else 0 %}
+            
+            <div class="sprint-card sprint-card-active mb-3">
+                <div class="sprint-card-accent"></div>
+                <div class="sprint-card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h3 class="sprint-title mb-1">{{ sprint.name }}</h3>
+                            {% if sprint.goal %}
+                            <p class="sprint-goal mb-0">
+                                <i class="bi bi-flag-fill text-success me-1"></i>{{ sprint.goal }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <span class="sprint-status-badge sprint-status-active">
+                            <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>
+                            {{ 'Aktiv' if lang == 'de' else 'Active' }}
+                        </span>
+                    </div>
+                    
+                    <div class="sprint-meta-grid mb-3">
+                        <div class="sprint-meta-item">
+                            <i class="bi bi-calendar-event"></i>
+                            <span class="label">{{ 'Start' if lang == 'de' else 'Start' }}</span>
+                            <span class="value">{{ sprint.start_date.strftime('%d.%m.%Y') if sprint.start_date else '-' }}</span>
+                        </div>
+                        <div class="sprint-meta-item">
+                            <i class="bi bi-calendar-check"></i>
+                            <span class="label">{{ 'Ende' if lang == 'de' else 'End' }}</span>
+                            <span class="value">{{ sprint.end_date.strftime('%d.%m.%Y') if sprint.end_date else '-' }}</span>
+                        </div>
+                        <div class="sprint-meta-item">
+                            <i class="bi bi-list-task"></i>
+                            <span class="label">Issues</span>
+                            <span class="value">{{ sprint.issues|length }}</span>
+                        </div>
+                        <div class="sprint-meta-item">
+                            <i class="bi bi-lightning-charge"></i>
+                            <span class="label">Story Points</span>
+                            <span class="value">{{ completed_points }}/{{ total_points }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="sprint-progress-container mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="progress-label">{{ 'Fortschritt' if lang == 'de' else 'Progress' }}</span>
+                            <span class="progress-value">{{ progress|int }}%</span>
+                        </div>
+                        <div class="sprint-progress">
+                            <div class="sprint-progress-bar" style="width: {{ progress }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="sprint-actions">
+                        <a href="{{ url_for('projects.iteration_board', project_id=project.id, sprint_id=sprint.id) }}" class="btn btn-brand">
+                            <i class="bi bi-kanban me-1"></i>
+                            {{ project.get_term('sprint', lang) }} Board
+                        </a>
+                        <a href="{{ url_for('projects.iteration_report', project_id=project.id, sprint_id=sprint.id) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-graph-up me-1"></i>
+                            {{ 'Report' if lang == 'de' else 'Report' }}
+                        </a>
+                        <a href="{{ url_for('projects.iteration_edit', project_id=project.id, sprint_id=sprint.id) }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-pencil me-1"></i>
+                            {{ 'Bearbeiten' if lang == 'de' else 'Edit' }}
+                        </a>
+                        <form action="{{ url_for('projects.iteration_complete', project_id=project.id, sprint_id=sprint.id) }}" method="POST" class="d-inline" 
+                              onsubmit="return confirm('{{ (project.get_term('sprint', lang) + ' wirklich abschließen?') if lang == 'de' else ('Really complete this ' + project.get_term('sprint', lang)|lower + '?') }}')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-success">
+                                <i class="bi bi-check-circle me-1"></i>
+                                {{ 'Abschließen' if lang == 'de' else 'Complete' }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        {% endif %}
+        
+        <!-- Future Sprints -->
+        {% if future_sprints %}
+        <div class="section-header mb-3 mt-4">
+            <span class="section-badge section-badge-future">
+                <i class="bi bi-hourglass-split me-1"></i>
+                {{ ('Geplante ' + project.get_term('sprint_plural', lang)) if lang == 'de' else ('Planned ' + project.get_term('sprint_plural', lang)) }} ({{ future_sprints|length }})
+            </span>
+        </div>
+        
+        <div class="row g-3">
+            {% for sprint in future_sprints %}
+            <div class="col-md-6 col-lg-4">
+                <div class="sprint-card sprint-card-future h-100">
+                    <div class="sprint-card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h4 class="sprint-title-sm mb-0">{{ sprint.name }}</h4>
+                            <span class="sprint-status-badge sprint-status-future">
+                                {{ 'Geplant' if lang == 'de' else 'Planned' }}
+                            </span>
+                        </div>
+                        
+                        {% if sprint.goal %}
+                        <p class="sprint-goal-sm text-muted mb-3">{{ sprint.goal|truncate(80) }}</p>
+                        {% endif %}
+                        
+                        <div class="sprint-meta-mini mb-3">
+                            <div class="meta-item">
+                                <i class="bi bi-calendar3"></i>
+                                {{ sprint.start_date.strftime('%d.%m') if sprint.start_date else '-' }} - {{ sprint.end_date.strftime('%d.%m.%y') if sprint.end_date else '-' }}
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-list-task"></i>
+                                {{ sprint.issues|length }} Issues
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-lightning"></i>
+                                {{ sprint.total_points }} SP
+                            </div>
+                        </div>
+                        
+                        <div class="sprint-actions-sm">
+                            {% if not active_sprints %}
+                            <form action="{{ url_for('projects.iteration_start', project_id=project.id, sprint_id=sprint.id) }}" method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-brand">
+                                    <i class="bi bi-play-fill me-1"></i>
+                                    {{ 'Starten' if lang == 'de' else 'Start' }}
+                                </button>
+                            </form>
+                            {% endif %}
+                            <a href="{{ url_for('projects.iteration_edit', project_id=project.id, sprint_id=sprint.id) }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form action="{{ url_for('projects.iteration_delete', project_id=project.id, sprint_id=sprint.id) }}" method="POST" class="d-inline"
+                                  onsubmit="return confirm('{{ (project.get_term('sprint', lang) + ' wirklich löschen?') if lang == 'de' else ('Really delete this ' + project.get_term('sprint', lang)|lower + '?') }}')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Closed Sprints -->
+        {% if closed_sprints %}
+        <div class="section-header mb-3 mt-4">
+            <span class="section-badge section-badge-closed">
+                <i class="bi bi-archive me-1"></i>
+                {{ 'Abgeschlossene Sprints' if lang == 'de' else 'Completed Sprints' }} ({{ closed_sprints|length }})
+            </span>
+        </div>
+        
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sprint</th>
+                            <th>{{ 'Zeitraum' if lang == 'de' else 'Period' }}</th>
+                            <th class="text-center">Issues</th>
+                            <th class="text-center">Story Points</th>
+                            <th style="width: 100px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sprint in closed_sprints %}
+                        {% set total_points = sprint.total_points %}
+                        {% set completed_points = sprint.completed_points %}
+                        {% set progress = (completed_points / total_points * 100) if total_points > 0 else 0 %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="closed-sprint-icon me-2">
+                                        <i class="bi bi-check-circle-fill text-secondary"></i>
+                                    </span>
+                                    <div>
+                                        <div class="fw-medium">{{ sprint.name }}</div>
+                                        {% if sprint.goal %}
+                                        <small class="text-muted">{{ sprint.goal|truncate(50) }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-muted">
+                                    {{ sprint.start_date.strftime('%d.%m.%Y') if sprint.start_date else '-' }} - 
+                                    {{ sprint.end_date.strftime('%d.%m.%Y') if sprint.end_date else '-' }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ sprint.issues|length }}</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <div class="closed-progress" style="width: 60px;">
+                                        <div class="closed-progress-bar" style="width: {{ progress }}%"></div>
+                                    </div>
+                                    <span class="small text-muted">{{ progress|int }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a href="{{ url_for('projects.iteration_report', project_id=project.id, sprint_id=sprint.id) }}" class="btn btn-sm btn-outline-primary" title="{{ 'Report' if lang == 'de' else 'Report' }}">
+                                        <i class="bi bi-graph-up"></i>
+                                    </a>
+                                    <a href="{{ url_for('projects.iteration_board', project_id=project.id, sprint_id=sprint.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ 'Ansehen' if lang == 'de' else 'View' }}">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <form action="{{ url_for('projects.iteration_delete', project_id=project.id, sprint_id=sprint.id) }}" method="POST" class="d-inline"
+                                          onsubmit="return confirm('{{ (project.get_term('sprint', lang) + ' wirklich löschen?') if lang == 'de' else ('Really delete this ' + project.get_term('sprint', lang)|lower + '?') }}')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ 'Löschen' if lang == 'de' else 'Delete' }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state-card">
+            <div class="empty-icon">
+                <i class="bi bi-lightning-charge"></i>
+            </div>
+            <h4>{{ ('Keine ' + project.get_term('sprint_plural', lang) + ' vorhanden') if lang == 'de' else ('No ' + project.get_term('sprint_plural', lang)|lower + ' yet') }}</h4>
+            <p class="text-muted mb-4">
+                {{ ('Erstellen Sie Ihre erste ' + project.get_term('sprint', lang) + ', um mit der Arbeit zu beginnen.') if lang == 'de' else ('Create your first ' + project.get_term('sprint', lang)|lower + ' to start working.') }}
+            </p>
+            <a href="{{ url_for('projects.iteration_create', project_id=project.id) }}" class="btn btn-brand btn-lg">
+                <i class="bi bi-plus-lg me-1"></i>
+                {{ ('Erste ' + project.get_term('sprint', lang) + ' erstellen') if lang == 'de' else ('Create First ' + project.get_term('sprint', lang)) }}
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<style nonce="{{ csp_nonce }}">
+/* Hero Section */
+.sprints-hero {
+    background: linear-gradient(135deg, #00A3E0 0%, #0076A8 50%, #000000 100%);
+    margin-top: -1rem;
+    margin-left: -15px;
+    margin-right: -15px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.breadcrumb-dark .breadcrumb-item + .breadcrumb-item::before {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.hero-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.75rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-brand {
+    background-color: #4A90D9;
+    border-color: #4A90D9;
+    color: white;
+    font-weight: 500;
+}
+
+.btn-brand:hover {
+    background-color: #75a821;
+    border-color: #75a821;
+    color: white;
+}
+
+/* Quick Stats */
+.quick-stat-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.quick-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+}
+
+.quick-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+}
+
+.quick-stat-label {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    align-items: center;
+}
+
+.section-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.section-badge-active {
+    background: rgba(134, 188, 37, 0.15);
+    color: #4A90D9;
+}
+
+.section-badge-future {
+    background: rgba(0, 118, 168, 0.15);
+    color: #0076A8;
+}
+
+.section-badge-closed {
+    background: rgba(108, 117, 125, 0.15);
+    color: #6c757d;
+}
+
+/* Sprint Cards */
+.sprint-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.sprint-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.sprint-card-active {
+    position: relative;
+}
+
+.sprint-card-accent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #4A90D9, #26890D);
+}
+
+.sprint-card-body {
+    padding: 1.5rem;
+}
+
+.sprint-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #000;
+    margin: 0;
+}
+
+.sprint-title-sm {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #000;
+}
+
+.sprint-goal {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.sprint-goal-sm {
+    font-size: 0.85rem;
+}
+
+.sprint-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.sprint-status-active {
+    background: #4A90D9;
+    color: white;
+}
+
+.sprint-status-future {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.sprint-status-closed {
+    background: #e9ecef;
+    color: #6c757d;
+}
+
+/* Sprint Meta Grid */
+.sprint-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.sprint-meta-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.sprint-meta-item i {
+    font-size: 1.25rem;
+    color: #4A90D9;
+    margin-bottom: 0.25rem;
+}
+
+.sprint-meta-item .label {
+    font-size: 0.7rem;
+    color: #999;
+    text-transform: uppercase;
+}
+
+.sprint-meta-item .value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.sprint-meta-mini {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.meta-item i {
+    color: #999;
+}
+
+/* Progress */
+.sprint-progress-container .progress-label {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.sprint-progress-container .progress-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #4A90D9;
+}
+
+.sprint-progress {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.sprint-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4A90D9, #26890D);
+    transition: width 0.5s;
+}
+
+.closed-progress {
+    height: 4px;
+    background: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.closed-progress-bar {
+    height: 100%;
+    background: #6c757d;
+}
+
+/* Actions */
+.sprint-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.sprint-actions-sm {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Empty State */
+.empty-state-card {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.empty-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #adb5bd;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .sprint-meta-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+{% endblock %}

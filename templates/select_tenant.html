@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}{{ t('select_tenant') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <!-- Header Section -->
+            <div class="text-center mb-5">
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" 
+                     style="width: 80px; height: 80px; background: linear-gradient(135deg, #4A90D9 0%, #0076A8 100%);">
+                    <i class="bi bi-buildings text-white" style="font-size: 2.5rem;"></i>
+                </div>
+                <h2 class="fw-bold mb-2">{{ 'Mandant auswählen' if lang == 'de' else 'Select Tenant' }}</h2>
+                <p class="text-muted">
+                    {{ 'Wählen Sie den Mandanten, mit dem Sie arbeiten möchten' if lang == 'de' else 'Choose the tenant you want to work with' }}
+                </p>
+            </div>
+            
+            {% if tenants %}
+            <!-- Tenant Grid -->
+            <div class="row g-4 mb-4">
+                {% for tenant in tenants %}
+                <div class="col-md-6">
+                    <form action="{{ url_for('auth.switch_tenant', tenant_id=tenant.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="card h-100 border-0 shadow-sm text-start w-100 tenant-card
+                            {% if current_tenant and current_tenant.id == tenant.id %}border-start border-4{% endif %}"
+                            style="transition: all 0.2s ease; {% if current_tenant and current_tenant.id == tenant.id %}border-left-color: #4A90D9 !important;{% endif %}">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-start">
+                                    <!-- Tenant Logo -->
+                                    <div class="me-3 flex-shrink-0">
+                                        {% if tenant.logo_data %}
+                                        <img src="data:{{ tenant.logo_mime_type or 'image/png' }};base64,{{ tenant.logo_data }}" 
+                                             alt="{{ tenant.name }}" 
+                                             class="rounded-3" 
+                                             style="width: 56px; height: 56px; object-fit: contain; background: #f8f9fa; padding: 4px;">
+                                        {% else %}
+                                        <div class="rounded-3 d-flex align-items-center justify-content-center" 
+                                             style="width: 56px; height: 56px; background: linear-gradient(135deg, #0076A8 0%, #62B5E5 100%);">
+                                            <i class="bi bi-building text-white fs-4"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Tenant Info -->
+                                    <div class="flex-grow-1 min-width-0">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <h5 class="mb-0 fw-semibold text-truncate">{{ tenant.name }}</h5>
+                                            {% if current_tenant and current_tenant.id == tenant.id %}
+                                            <span class="badge ms-2 flex-shrink-0" style="background-color: #4A90D9;">
+                                                <i class="bi bi-check2"></i> {{ 'Aktiv' if lang == 'de' else 'Active' }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-muted small mb-0">
+                                            <i class="bi bi-people me-1"></i>
+                                            {{ tenant.member_count }} {{ 'Mitglieder' if lang == 'de' else 'Members' }}
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Arrow -->
+                                    <div class="ms-2 flex-shrink-0 align-self-center">
+                                        <i class="bi bi-arrow-right-circle fs-4" style="color: #0076A8;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if current_user.is_superadmin %}
+            <!-- Super-Admin Section -->
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 48px; height: 48px; background-color: #DA291C;">
+                                <i class="bi bi-shield-lock text-white fs-5"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-semibold">{{ 'Super-Admin Bereich' if lang == 'de' else 'Super-Admin Area' }}</h6>
+                                <small class="text-muted">{{ 'Mandanten erstellen und verwalten' if lang == 'de' else 'Create and manage tenants' }}</small>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('admin_tenants.tenant_list') }}" class="btn text-white" style="background-color: #0076A8;">
+                            <i class="bi bi-gear-fill me-2"></i>{{ 'Verwalten' if lang == 'de' else 'Manage' }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <!-- No Tenants State -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" 
+                         style="width: 80px; height: 80px; background-color: #f8f9fa;">
+                        <i class="bi bi-building-x" style="font-size: 2.5rem; color: #6c757d;"></i>
+                    </div>
+                    <h5 class="mb-2">{{ 'Keine Mandanten verfügbar' if lang == 'de' else 'No Tenants Available' }}</h5>
+                    <p class="text-muted mb-4">
+                        {{ 'Sie sind keinem Mandanten zugeordnet. Bitte kontaktieren Sie Ihren Administrator.' if lang == 'de' else 'You are not assigned to any tenant. Please contact your administrator.' }}
+                    </p>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-box-arrow-left me-2"></i>{{ 'Abmelden' if lang == 'de' else 'Logout' }}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style nonce="{{ csp_nonce }}">
+.tenant-card {
+    cursor: pointer;
+    background: white;
+}
+.tenant-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+}
+.tenant-card:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 118, 168, 0.25) !important;
+}
+.min-width-0 {
+    min-width: 0;
+}
+</style>
+{% endblock %}

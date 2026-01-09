@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('edit_task') if task else t('new_task') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-{% if task %}pencil{% else %}plus-circle{% endif %} me-2"></i>
+                        {{ t('edit_task') if task else t('new_task') }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if not task and presets %}
+                    <!-- Preset Selection (only for new tasks) -->
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <label for="preset_id" class="form-label fw-bold">
+                            <i class="bi bi-bookmark-star me-1"></i>
+                            {{ 'Use Preset' if lang == 'en' else 'Aus Vorlage wählen' }}
+                        </label>
+                        <select class="form-select" id="preset_id" onchange="applyPreset(this.value)">
+                            <option value="">-- {{ 'Select preset...' if lang == 'en' else 'Vorlage auswählen...' }} --</option>
+                            <optgroup label="{{ 'Tasks' if lang == 'en' else 'Aufgaben' }}">
+                                {% for preset in presets if preset.category == 'aufgabe' %}
+                                <option value="{{ preset.id }}" 
+                                        data-title="{{ preset.title }}"
+                                        data-description="{{ preset.description or '' }}"
+                                        data-tax-type="{{ preset.tax_type or '' }}">
+                                    {{ preset.title[:60] }}{% if preset.title|length > 60 %}...{% endif %}
+                                    {% if preset.tax_type %}({{ preset.tax_type }}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="{{ 'Applications' if lang == 'en' else 'Anträge' }}">
+                                {% for preset in presets if preset.category == 'antrag' %}
+                                <option value="{{ preset.id }}" 
+                                        data-title="{{ preset.title }}"
+                                        data-description="{{ preset.description or '' }}"
+                                        data-tax-type="{{ preset.tax_type or '' }}"
+                                        data-law-ref="{{ preset.law_reference or '' }}">
+                                    {{ preset.title[:60] }}{% if preset.title|length > 60 %}...{% endif %}
+                                    {% if preset.law_reference %}({{ preset.law_reference }}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                        <div class="form-text">
+                            {{ 'Select a preset to auto-fill the form, then customize as needed.' if lang == 'en' else 'Wählen Sie eine Vorlage, um das Formular automatisch auszufüllen.' }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- Title -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">{{ t('name') }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   value="{{ task.title if task else '' }}" required
+                                   placeholder="z.B. USt-Voranmeldung Januar 2025">
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">{{ t('description') }}</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"
+                                      placeholder="{{ t('description_placeholder') }}">{{ task.description if task else '' }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Entity -->
+                            <div class="col-md-6 mb-3">
+                                <label for="entity_id" class="form-label">{{ t('entity') }} <span class="text-danger">*</span></label>
+                                <select class="form-select" id="entity_id" name="entity_id" required>
+                                    <option value="">-- {{ t('entity') }} {{ t('select') if lang == 'en' else 'wählen' }} --</option>
+                                    {% for entity in entities %}
+                                    <option value="{{ entity.id }}" 
+                                            {{ 'selected' if task and task.entity_id == entity.id }}>
+                                        {{ entity.get_name(lang) }} {% if entity.short_name %}({{ entity.short_name }}){% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Template (Tax Type) -->
+                            <div class="col-md-6 mb-3">
+                                <label for="template_id" class="form-label">{{ t('tax_type') }} / Template</label>
+                                <select class="form-select" id="template_id" name="template_id">
+                                    <option value="">-- Optional --</option>
+                                    {% for template in templates %}
+                                    <option value="{{ template.id }}" 
+                                            {{ 'selected' if task and task.template_id == template.id }}>
+                                        {{ template.keyword }}
+                                        {% if template.tax_type %}({{ template.tax_type.code }}){% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Due Date -->
+                            <div class="col-md-4 mb-3">
+                                <label for="due_date" class="form-label">{{ t('due_date') }} <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="due_date" name="due_date" 
+                                       value="{{ task.due_date.strftime('%Y-%m-%d') if task and task.due_date else '' }}" required>
+                            </div>
+                            
+                            <!-- Tax Year -->
+                            <div class="col-md-4 mb-3">
+                                <label for="year" class="form-label">{{ 'Tax Year' if lang == 'en' else 'Steuerjahr' }}</label>
+                                <input type="number" class="form-control" id="year" name="year" 
+                                       value="{{ task.year if task else current_year }}" 
+                                       min="2000" max="2100"
+                                       placeholder="{{ current_year }}">
+                            </div>
+                            
+                            <!-- Period -->
+                            <div class="col-md-4 mb-3">
+                                <label for="period" class="form-label">{{ t('period') if lang == 'en' else 'Periode' }}</label>
+                                <select class="form-select" id="period" name="period">
+                                    <option value="">-- Optional --</option>
+                                    <option value="M01" {{ 'selected' if task and task.period == 'M01' }}>Januar (M01)</option>
+                                    <option value="M02" {{ 'selected' if task and task.period == 'M02' }}>Februar (M02)</option>
+                                    <option value="M03" {{ 'selected' if task and task.period == 'M03' }}>März (M03)</option>
+                                    <option value="M04" {{ 'selected' if task and task.period == 'M04' }}>April (M04)</option>
+                                    <option value="M05" {{ 'selected' if task and task.period == 'M05' }}>Mai (M05)</option>
+                                    <option value="M06" {{ 'selected' if task and task.period == 'M06' }}>Juni (M06)</option>
+                                    <option value="M07" {{ 'selected' if task and task.period == 'M07' }}>Juli (M07)</option>
+                                    <option value="M08" {{ 'selected' if task and task.period == 'M08' }}>August (M08)</option>
+                                    <option value="M09" {{ 'selected' if task and task.period == 'M09' }}>September (M09)</option>
+                                    <option value="M10" {{ 'selected' if task and task.period == 'M10' }}>Oktober (M10)</option>
+                                    <option value="M11" {{ 'selected' if task and task.period == 'M11' }}>November (M11)</option>
+                                    <option value="M12" {{ 'selected' if task and task.period == 'M12' }}>Dezember (M12)</option>
+                                    <option value="Q1" {{ 'selected' if task and task.period == 'Q1' }}>Q1</option>
+                                    <option value="Q2" {{ 'selected' if task and task.period == 'Q2' }}>Q2</option>
+                                    <option value="Q3" {{ 'selected' if task and task.period == 'Q3' }}>Q3</option>
+                                    <option value="Q4" {{ 'selected' if task and task.period == 'Q4' }}>Q4</option>
+                                    <option value="YEAR" {{ 'selected' if task and task.period == 'YEAR' }}>Jährlich</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        <h5 class="mb-3"><i class="bi bi-people me-2"></i>{{ t('assignment') if lang == 'en' else 'Zuweisung' }}</h5>
+                        
+                        <div class="row">
+                            <!-- Owner -->
+                            <div class="col-md-6 mb-3">
+                                <label for="owner_id" class="form-label">{{ t('owner') }}</label>
+                                <select class="form-select" id="owner_id" name="owner_id">
+                                    <option value="">-- {{ t('owner') }} {{ t('select') if lang == 'en' else 'wählen' }} --</option>
+                                    {% for user in users %}
+                                    <option value="{{ user.id }}" 
+                                            {{ 'selected' if task and task.owner_id == user.id }}>
+                                        {{ user.name }} ({{ user.role }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">{{ t('owner_help') if lang == 'en' else 'Wer ist für diese Aufgabe verantwortlich?' }}</small>
+                            </div>
+                            
+                            <!-- Owner Team -->
+                            <div class="col-md-6 mb-3">
+                                <label for="owner_team_id" class="form-label">{{ t('owner_team') }}</label>
+                                <select class="form-select" id="owner_team_id" name="owner_team_id">
+                                    <option value="">-- {{ t('no_team') }} --</option>
+                                    {% for team in teams %}
+                                    <option value="{{ team.id }}" 
+                                            {{ 'selected' if task and task.owner_team_id == team.id }}
+                                            style="border-left: 4px solid {{ team.color }}">
+                                        {{ team.get_name(lang) }} ({{ team.get_member_count() }} {{ t('members') }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">{{ 'Alternative: Assign to a team' if lang == 'en' else 'Alternativ: Einem Team zuweisen' }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Reviewer (Multi-Select) -->
+                            <div class="col-md-6 mb-3">
+                                <label for="reviewer_ids" class="form-label">{{ t('reviewer') }}</label>
+                                <select class="form-select" id="reviewer_ids" name="reviewer_ids" multiple size="4">
+                                    {% for user in users %}
+                                    <option value="{{ user.id }}" 
+                                            {{ 'selected' if task and user.id in (task.get_reviewer_users()|map(attribute='id')|list) }}>
+                                        {{ user.name }} ({{ user.role }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">{{ 'Hold Ctrl/Cmd to select multiple reviewers. All must approve.' if lang == 'en' else 'Strg/Cmd gedrückt halten für Mehrfachauswahl. Alle müssen genehmigen.' }}</small>
+                            </div>
+                            
+                            <!-- Reviewer Team -->
+                            <div class="col-md-6 mb-3">
+                                <label for="reviewer_team_id" class="form-label">{{ t('reviewer_team') }}</label>
+                                <select class="form-select" id="reviewer_team_id" name="reviewer_team_id">
+                                    <option value="">-- {{ t('no_team') }} --</option>
+                                    {% for team in teams %}
+                                    <option value="{{ team.id }}" 
+                                            {{ 'selected' if task and task.reviewer_team_id == team.id }}
+                                            style="border-left: 4px solid {{ team.color }}">
+                                        {{ team.get_name(lang) }} ({{ team.get_member_count() }} {{ t('members') }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">{{ 'Any team member can review' if lang == 'en' else 'Jedes Teammitglied kann prüfen' }}</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('tasks.task_detail', task_id=task.id) if task else url_for('tasks.task_list') }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> {{ t('cancel') }}
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg me-1"></i> {{ t('save') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+function applyPreset(presetId) {
+    if (!presetId) return;
+    
+    const option = document.querySelector(`#preset_id option[value="${presetId}"]`);
+    if (!option) return;
+    
+    // Fill in the form fields from data attributes
+    const title = option.dataset.title;
+    const description = option.dataset.description;
+    const taxType = option.dataset.taxType;
+    const lawRef = option.dataset.lawRef;
+    
+    if (title) {
+        document.getElementById('title').value = title;
+    }
+    if (description) {
+        document.getElementById('description').value = description;
+    }
+    
+    // Highlight filled fields
+    ['title', 'description'].forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field && field.value) {
+            field.classList.add('border-success');
+            setTimeout(() => field.classList.remove('border-success'), 2000);
+        }
+    });
+}
+</script>
+{% endblock %}

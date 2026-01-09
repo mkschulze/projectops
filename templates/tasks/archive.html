@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% block title %}{{ t('archive') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-archive me-2"></i>{{ t('archive') }}</h1>
+        <a href="{{ url_for('tasks.task_list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>{{ 'Zurück zu Aufgaben' if lang == 'de' else 'Back to Tasks' }}
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">{{ t('entity') }}</label>
+                    <select name="entity_id" class="form-select form-select-sm">
+                        <option value="">{{ 'Alle' if lang == 'de' else 'All' }}</option>
+                        {% for entity in entities %}
+                        <option value="{{ entity.id }}" {{ 'selected' if current_filters.entity_id == entity.id }}>
+                            {{ entity.get_name(lang) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{{ 'Jahr' if lang == 'de' else 'Year' }}</label>
+                    <select name="year" class="form-select form-select-sm">
+                        <option value="">{{ 'Alle' if lang == 'de' else 'All' }}</option>
+                        {% for year in years %}
+                        <option value="{{ year }}" {{ 'selected' if current_filters.year == year }}>
+                            {{ year }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{{ t('status') }}</label>
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">{{ 'Alle' if lang == 'de' else 'All' }}</option>
+                        <option value="draft" {{ 'selected' if current_filters.status == 'draft' }}>{{ t('status_draft') }}</option>
+                        <option value="submitted" {{ 'selected' if current_filters.status == 'submitted' }}>{{ t('status_submitted') }}</option>
+                        <option value="in_review" {{ 'selected' if current_filters.status == 'in_review' }}>{{ t('status_in_review') }}</option>
+                        <option value="approved" {{ 'selected' if current_filters.status == 'approved' }}>{{ t('status_approved') }}</option>
+                        <option value="completed" {{ 'selected' if current_filters.status == 'completed' }}>{{ t('status_completed') }}</option>
+                        <option value="rejected" {{ 'selected' if current_filters.status == 'rejected' }}>{{ t('status_rejected') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-funnel me-1"></i>{{ 'Filtern' if lang == 'de' else 'Filter' }}
+                    </button>
+                    <a href="{{ url_for('tasks.task_archive_list') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-lg me-1"></i>{{ 'Zurücksetzen' if lang == 'de' else 'Reset' }}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Toolbar (hidden by default) -->
+    {% if current_user.is_admin() or current_user.is_manager() %}
+    <div id="bulkActionsBar" class="card shadow-sm mb-3 d-none" style="background-color: var(--dtt-green-1); border-color: var(--dtt-green-3);">
+        <div class="card-body py-2 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-dark" id="selectedCount">0</span>
+                <span>{{ 'Aufgaben ausgewählt' if lang == 'de' else 'tasks selected' }}</span>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-success btn-sm" id="btnBulkRestore">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>{{ 'Wiederherstellen' if lang == 'de' else 'Restore' }}
+                </button>
+                {% if current_user.is_admin() %}
+                <button type="button" class="btn btn-danger btn-sm" id="btnBulkDelete" data-bs-toggle="modal" data-bs-target="#bulkDeleteModal">
+                    <i class="bi bi-trash me-1"></i>{{ 'Endgültig löschen' if lang == 'de' else 'Permanently delete' }}
+                </button>
+                {% endif %}
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnClearSelection">
+                    <i class="bi bi-x-lg me-1"></i>{{ 'Abbrechen' if lang == 'de' else 'Cancel' }}
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Archived Tasks Table -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            {% if tasks %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            {% if current_user.is_admin() or current_user.is_manager() %}
+                            <th style="width: 40px;">
+                                <input type="checkbox" class="form-check-input" id="selectAll">
+                            </th>
+                            {% endif %}
+                            <th>{{ t('title') }}</th>
+                            <th>{{ t('entity') }}</th>
+                            <th>{{ 'Fälligkeitsdatum' if lang == 'de' else 'Due Date' }}</th>
+                            <th>{{ t('status') }}</th>
+                            <th>{{ 'Archiviert am' if lang == 'de' else 'Archived on' }}</th>
+                            <th>{{ 'Archiviert von' if lang == 'de' else 'Archived by' }}</th>
+                            <th class="text-end">{{ 'Aktionen' if lang == 'de' else 'Actions' }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr>
+                            {% if current_user.is_admin() or current_user.is_manager() %}
+                            <td>
+                                <input type="checkbox" class="form-check-input task-checkbox" value="{{ task.id }}">
+                            </td>
+                            {% endif %}
+                            <td>
+                                <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="text-decoration-none fw-medium">
+                                    {{ task.title }}
+                                </a>
+                                {% if task.archive_reason %}
+                                <br><small class="text-muted"><i class="bi bi-chat-quote me-1"></i>{{ task.archive_reason[:50] }}{% if task.archive_reason|length > 50 %}…{% endif %}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ task.entity.get_name(lang) if task.entity else '-' }}</td>
+                            <td>{{ task.due_date.strftime('%d.%m.%Y') if task.due_date else '-' }}</td>
+                            <td>
+                                <span class="badge {% if task.status == 'completed' %}bg-success{% elif task.status == 'in_review' %}bg-info{% elif task.status == 'submitted' %}bg-primary{% elif task.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                    {{ t('status_' + task.status) }}
+                                </span>
+                            </td>
+                            <td>{{ task.archived_at.strftime('%d.%m.%Y %H:%M') if task.archived_at else '-' }}</td>
+                            <td>{{ task.archived_by.name if task.archived_by else '-' }}</td>
+                            <td class="text-end">
+                                <div class="btn-group" role="group">
+                                    {% if current_user.is_admin() or current_user.is_manager() %}
+                                    <form method="POST" action="{{ url_for('tasks.task_restore', task_id=task.id) }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-success btn-sm" style="width: 36px; height: 32px;"
+                                                title="{{ 'Wiederherstellen' if lang == 'de' else 'Restore' }}"
+                                                onclick="return confirm('{{ 'Aufgabe wirklich wiederherstellen?' if lang == 'de' else 'Really restore this task?' }}')">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    {% if current_user.is_admin() %}
+                                    <button type="button" class="btn btn-danger btn-sm" style="width: 36px; height: 32px;"
+                                            title="{{ 'Endgültig löschen' if lang == 'de' else 'Permanently delete' }}"
+                                            onclick="confirmSingleDelete({{ task.id }}, '{{ task.title|e }}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                    <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="btn btn-outline-primary btn-sm" style="width: 36px; height: 32px;"
+                                       title="{{ 'Details anzeigen' if lang == 'de' else 'View details' }}">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if pagination.pages > 1 %}
+            <nav class="d-flex justify-content-center p-3">
+                <ul class="pagination mb-0">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('tasks.task_archive_list', page=pagination.prev_num, **current_filters) }}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if p %}
+                            <li class="page-item {{ 'active' if p == pagination.page else '' }}">
+                                <a class="page-link" href="{{ url_for('tasks.task_archive_list', page=p, **current_filters) }}">{{ p }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('tasks.task_archive_list', page=pagination.next_num, **current_filters) }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-archive display-1 text-muted"></i>
+                <h4 class="mt-3 text-muted">{{ 'Keine archivierten Aufgaben' if lang == 'de' else 'No archived tasks' }}</h4>
+                <p class="text-muted">{{ 'Das Archiv ist leer.' if lang == 'de' else 'The archive is empty.' }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if current_user.is_admin() or current_user.is_manager() %}
+<!-- Bulk Delete Modal (admin only) -->
+{% if current_user.is_admin() %}
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>{{ 'Endgültig löschen' if lang == 'de' else 'Permanently Delete' }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-octagon me-2"></i>
+                    <strong>{{ 'Warnung:' if lang == 'de' else 'Warning:' }}</strong> 
+                    {{ 'Diese Aktion kann nicht rückgängig gemacht werden! Alle ausgewählten Aufgaben und deren Anhänge, Kommentare und Genehmigungen werden unwiderruflich gelöscht.' if lang == 'de' else 'This action cannot be undone! All selected tasks and their attachments, comments, and approvals will be permanently deleted.' }}
+                </div>
+                <p><span id="bulkDeleteCount">0</span> {{ 'Aufgabe(n) werden gelöscht.' if lang == 'de' else 'task(s) will be deleted.' }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Abbrechen' if lang == 'de' else 'Cancel' }}</button>
+                <button type="button" class="btn btn-danger" id="confirmBulkDelete">
+                    <i class="bi bi-trash me-1"></i>{{ 'Endgültig löschen' if lang == 'de' else 'Permanently Delete' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Single Delete Modal -->
+<div class="modal fade" id="singleDeleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>{{ 'Endgültig löschen' if lang == 'de' else 'Permanently Delete' }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-octagon me-2"></i>
+                    <strong>{{ 'Warnung:' if lang == 'de' else 'Warning:' }}</strong> 
+                    {{ 'Diese Aktion kann nicht rückgängig gemacht werden!' if lang == 'de' else 'This action cannot be undone!' }}
+                </div>
+                <p>{{ 'Aufgabe' if lang == 'de' else 'Task' }}: <strong id="deleteTaskTitle"></strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Abbrechen' if lang == 'de' else 'Cancel' }}</button>
+                <form id="singleDeleteForm" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i>{{ 'Endgültig löschen' if lang == 'de' else 'Permanently Delete' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.task-checkbox');
+    const bulkBar = document.getElementById('bulkActionsBar');
+    const selectedCount = document.getElementById('selectedCount');
+    const btnBulkRestore = document.getElementById('btnBulkRestore');
+    const btnClearSelection = document.getElementById('btnClearSelection');
+    
+    function updateBulkBar() {
+        const checked = document.querySelectorAll('.task-checkbox:checked');
+        const count = checked.length;
+        selectedCount.textContent = count;
+        
+        // Update bulk delete modal count
+        const bulkDeleteCount = document.getElementById('bulkDeleteCount');
+        if (bulkDeleteCount) bulkDeleteCount.textContent = count;
+        
+        if (count > 0) {
+            bulkBar.classList.remove('d-none');
+        } else {
+            bulkBar.classList.add('d-none');
+        }
+    }
+    
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateBulkBar();
+        });
+    }
+    
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateBulkBar);
+    });
+    
+    if (btnClearSelection) {
+        btnClearSelection.addEventListener('click', function() {
+            checkboxes.forEach(cb => cb.checked = false);
+            if (selectAll) selectAll.checked = false;
+            updateBulkBar();
+        });
+    }
+    
+    if (btnBulkRestore) {
+        btnBulkRestore.addEventListener('click', function() {
+            const taskIds = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => parseInt(cb.value));
+            
+            if (taskIds.length === 0) return;
+            
+            if (!confirm('{{ "Ausgewählte Aufgaben wirklich wiederherstellen?" if lang == "de" else "Really restore selected tasks?" }}')) return;
+            
+            fetch('{{ url_for("api_bulk_restore") }}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({task_ids: taskIds})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Error');
+                }
+            });
+        });
+    }
+    
+    // Bulk delete (admin only)
+    const confirmBulkDelete = document.getElementById('confirmBulkDelete');
+    if (confirmBulkDelete) {
+        confirmBulkDelete.addEventListener('click', function() {
+            const taskIds = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => parseInt(cb.value));
+            
+            if (taskIds.length === 0) return;
+            
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{{ "Lösche..." if lang == "de" else "Deleting..." }}';
+            
+            fetch('{{ url_for("api_bulk_permanent_delete") }}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({task_ids: taskIds})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Error');
+                    this.disabled = false;
+                    this.innerHTML = '<i class="bi bi-trash me-1"></i>{{ "Endgültig löschen" if lang == "de" else "Permanently Delete" }}';
+                }
+            });
+        });
+    }
+});
+
+// Single delete function
+function confirmSingleDelete(taskId, taskTitle) {
+    document.getElementById('deleteTaskTitle').textContent = taskTitle;
+    document.getElementById('singleDeleteForm').action = '/tasks/' + taskId + '/delete';
+    new bootstrap.Modal(document.getElementById('singleDeleteModal')).show();
+}
+</script>
+{% endif %}
+{% endblock %}

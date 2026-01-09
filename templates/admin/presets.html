@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Task Presets' if lang == 'en' else 'Aufgabenvorlagen' }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <h1><i class="bi bi-bookmark-star me-2"></i>{{ 'Task Presets' if lang == 'en' else 'Aufgabenvorlagen' }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('presets.preset_new') }}" class="btn btn-success">
+                <i class="bi bi-plus-lg me-1"></i> {{ t('create') }}
+            </a>
+        </div>
+    </div>
+    
+    <!-- Actions Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- Search and Filter -->
+                <div class="col-md-8">
+                    <form method="GET" class="row g-2">
+                        <div class="col-auto">
+                            <select name="category" class="form-select" onchange="this.form.submit()">
+                                <option value="">{{ 'All Categories' if lang == 'en' else 'Alle Kategorien' }}</option>
+                                <option value="aufgabe" {{ 'selected' if category_filter == 'aufgabe' }}>
+                                    {{ 'Tasks' if lang == 'en' else 'Aufgaben' }}
+                                </option>
+                                <option value="antrag" {{ 'selected' if category_filter == 'antrag' }}>
+                                    {{ 'Applications' if lang == 'en' else 'Anträge' }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" 
+                                       placeholder="{{ t('search') }}..." value="{{ search }}">
+                                <button type="submit" class="btn btn-outline-secondary">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Import/Export -->
+                <div class="col-md-4">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{{ url_for('presets.preset_template') }}" class="btn btn-outline-primary btn-sm" title="Excel-Vorlage herunterladen">
+                            <i class="bi bi-download me-1"></i> Vorlage
+                        </a>
+                        <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+                            <i class="bi bi-upload me-1"></i> Import
+                        </button>
+                        <form method="POST" action="{{ url_for('presets.preset_seed') }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm" 
+                                    onclick="return confirm('JSON-Dateien aus data/ Ordner importieren?')"
+                                    title="Aus data/ Ordner laden">
+                                <i class="bi bi-database-add me-1"></i> Seed
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body text-center py-2">
+                    <h4 class="mb-0">{{ presets|length }}</h4>
+                    <small class="text-muted">{{ 'Total' if lang == 'en' else 'Gesamt' }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body text-center py-2">
+                    <h4 class="mb-0">{{ presets|selectattr('category', 'equalto', 'aufgabe')|list|length }}</h4>
+                    <small class="text-muted">{{ 'Tasks' if lang == 'en' else 'Aufgaben' }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body text-center py-2">
+                    <h4 class="mb-0">{{ presets|selectattr('category', 'equalto', 'antrag')|list|length }}</h4>
+                    <small class="text-muted">{{ 'Applications' if lang == 'en' else 'Anträge' }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Presets Table -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            {% if presets %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 100px;">{{ 'Category' if lang == 'en' else 'Kategorie' }}</th>
+                            <th>{{ 'Title' if lang == 'en' else 'Titel' }}</th>
+                            <th>{{ 'Tax Type' if lang == 'en' else 'Steuerart' }}</th>
+                            <th>{{ '§ Reference' if lang == 'en' else '§ Referenz' }}</th>
+                            <th style="width: 80px;">{{ t('status') }}</th>
+                            <th style="width: 100px;">{{ t('actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for preset in presets %}
+                        <tr class="{{ 'table-secondary' if not preset.is_active }}">
+                            <td>
+                                {% if preset.category == 'antrag' %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-file-earmark-text me-1"></i>Antrag
+                                </span>
+                                {% else %}
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-check2-square me-1"></i>Aufgabe
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('presets.preset_edit', preset_id=preset.id) }}" 
+                                   class="text-decoration-none">
+                                    {{ preset.get_title(lang) }}
+                                </a>
+                                {% if preset.get_description(lang) %}
+                                <i class="bi bi-info-circle text-muted ms-1" 
+                                   data-bs-toggle="tooltip" 
+                                   title="{{ preset.get_description(lang)[:200] }}"></i>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if preset.tax_type %}
+                                <span class="badge bg-secondary">{{ preset.tax_type }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if preset.law_reference %}
+                                <code>{{ preset.law_reference }}</code>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if preset.is_active %}
+                                <span class="badge bg-success">{{ t('active') }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ t('inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('presets.preset_edit', preset_id=preset.id) }}" 
+                                       class="btn btn-outline-primary" title="{{ t('edit') }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('presets.preset_delete', preset_id=preset.id) }}" 
+                                          class="d-inline" onsubmit="return confirm('{{ t('confirm_delete') }}');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-danger" title="{{ t('delete') }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-bookmark-star display-4 text-muted"></i>
+                <p class="mt-3 text-muted">
+                    {{ 'No presets found.' if lang == 'en' else 'Keine Vorlagen gefunden.' }}
+                </p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="{{ url_for('presets.preset_new') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> {{ t('create') }}
+                    </a>
+                    <form method="POST" action="{{ url_for('presets.preset_seed') }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-secondary">
+                            <i class="bi bi-database-add me-1"></i> Aus JSON laden
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-upload me-2"></i>{{ 'Import Presets' if lang == 'en' else 'Vorlagen importieren' }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('presets.preset_import') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">{{ 'File' if lang == 'en' else 'Datei' }}</label>
+                        <input type="file" class="form-control" id="file" name="file" 
+                               accept=".json,.xlsx,.xls" required>
+                        <div class="form-text">
+                            {{ 'Supported formats: .json, .xlsx, .xls' if lang == 'en' else 'Unterstützte Formate: .json, .xlsx, .xls' }}
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <strong>{{ 'Excel Format' if lang == 'en' else 'Excel-Format' }}:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>{{ 'Column "Titel" or "Aufgabe" required' if lang == 'en' else 'Spalte "Titel" oder "Aufgabe" erforderlich' }}</li>
+                            <li>{{ 'Optional: Kategorie, Steuerart, § Paragraph, Beschreibung' }}</li>
+                            <li><a href="{{ url_for('presets.preset_template') }}">{{ 'Download template' if lang == 'en' else 'Vorlage herunterladen' }}</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel') }}</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-upload me-1"></i> Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}

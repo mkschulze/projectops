@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Module für' if lang == 'de' else 'Modules for' }} {{ user.name }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="bi bi-puzzle me-2"></i>{{ 'Modulzuweisungen' if lang == 'de' else 'Module Assignments' }}</h1>
+            <p class="text-muted mb-0">
+                <i class="bi bi-person me-1"></i>{{ user.name }} ({{ user.email }})
+            </p>
+        </div>
+        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>{{ t('back') }}
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form action="{{ url_for('admin.user_modules_save', user_id=user.id) }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        <i class="bi bi-puzzle me-2"></i>{{ 'Verfügbare Module' if lang == 'de' else 'Available Modules' }}
+                    </div>
+                    <div class="card-body">
+                        {% for module in modules %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" 
+                                   name="modules" value="{{ module.id }}" 
+                                   id="module_{{ module.id }}"
+                                   {{ 'checked' if module.id in assigned_module_ids or module.is_core }}
+                                   {{ 'disabled' if module.is_core }}>
+                            <label class="form-check-label" for="module_{{ module.id }}">
+                                <i class="{{ module.icon }} me-2" style="color: var(--dtt-green);"></i>
+                                <strong>{{ module.get_name(lang) }}</strong>
+                                {% if module.is_core %}
+                                <span class="badge bg-dark ms-2">{{ 'Kern' if lang == 'de' else 'Core' }}</span>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted ms-4">{{ module.get_description(lang) or '-' }}</small>
+                            </label>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">{{ 'Keine Module verfügbar.' if lang == 'de' else 'No modules available.' }}</p>
+                        {% endfor %}
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>{{ t('save') }}
+                        </button>
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-secondary ms-2">
+                            {{ t('cancel') }}
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <i class="bi bi-person-badge me-2"></i>{{ 'Benutzerinfo' if lang == 'de' else 'User Info' }}
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <th>{{ t('name') }}</th>
+                            <td>{{ user.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('email') }}</th>
+                            <td>{{ user.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('role') }}</th>
+                            <td>
+                                {% if user.role == 'admin' %}
+                                <span class="badge bg-dark">Admin</span>
+                                {% elif user.role == 'manager' %}
+                                <span class="badge bg-primary">Manager</span>
+                                {% elif user.role == 'reviewer' %}
+                                <span class="badge bg-info">{{ 'Prüfer' if lang == 'de' else 'Reviewer' }}</span>
+                                {% elif user.role == 'preparer' %}
+                                <span class="badge bg-secondary">{{ 'Bearbeiter' if lang == 'de' else 'Preparer' }}</span>
+                                {% else %}
+                                <span class="badge bg-light text-dark">{{ 'Nur Lesen' if lang == 'de' else 'Readonly' }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h6><i class="bi bi-info-circle me-2"></i>{{ 'Hinweis' if lang == 'de' else 'Note' }}</h6>
+                    <p class="mb-0 small text-muted">
+                        {% if user.role == 'admin' %}
+                        {{ 'Administratoren haben automatisch Zugriff auf alle Module.' if lang == 'de' else 'Administrators automatically have access to all modules.' }}
+                        {% else %}
+                        {{ 'Wählen Sie die Module, auf die dieser Benutzer Zugriff haben soll.' if lang == 'de' else 'Select the modules this user should have access to.' }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
